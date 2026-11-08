@@ -25,6 +25,13 @@ export const fetchScore = (dagId: string, signal?: AbortSignal) =>
 
 export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {}, signal);
 
+export interface UiConfig {
+  /** "auto", "off", or the list of enabled mood ids. */
+  seasonal_moods: "auto" | "off" | string[];
+}
+
+export const fetchConfig = (signal?: AbortSignal) => get<UiConfig>("/config", {}, signal);
+
 /** Load data, with abort-on-unmount and a reload() trigger. */
 
 export function useLoad<T>(load: (signal: AbortSignal) => Promise<T>, deps: unknown[]) {

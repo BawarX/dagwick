@@ -302,6 +302,89 @@ html.dark .dagwick {
   .dagwick-row-go { display: none; }
 }
 
+/* Seasonal moods: decoration only, behind the hero content */
+.dagwick-hero { position: relative; overflow: hidden; isolation: isolate; }
+.dagwick-hero > :not(.dagwick-fx) { position: relative; z-index: 1; }
+.dagwick-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.dagwick-season-halloween { --dagwick-flame: #22c55e; --dagwick-flame-deep: #15803d; --dagwick-flame-core: #d9f99d; --dagwick-glass: #fb923c; }
+.dagwick-season-newroz { --dagwick-flame: #f97316; --dagwick-flame-deep: #dc2626; --dagwick-flame-core: #fde68a; }
+.dagwick-season-ramadan, .dagwick-season-eid { --dagwick-glass: #e6fffa; }
+
+.dagwick-fx--christmas { background: linear-gradient(180deg, rgba(37, 66, 122, .35), transparent 80%); }
+.dagwick-fx--halloween { background: radial-gradient(420px 220px at 55% 0%, rgba(124, 58, 237, .28), transparent 70%), linear-gradient(180deg, rgba(42, 22, 64, .45), transparent 90%); }
+.dagwick-fx--newroz { background: linear-gradient(180deg, rgba(30, 58, 95, .28), rgba(120, 50, 70, .28)); }
+.dagwick-fx--ramadan { background: linear-gradient(180deg, rgba(15, 60, 80, .4), transparent 90%); }
+.dagwick-fx--eid { background: radial-gradient(500px 200px at 50% 0%, rgba(233, 196, 106, .18), transparent 70%); }
+.dagwick-fx--new-year, .dagwick-fx--birthday { background: radial-gradient(500px 220px at 50% 0%, rgba(192, 132, 252, .16), transparent 70%); }
+.dagwick-fx--language-day { background: radial-gradient(500px 220px at 50% 100%, rgba(251, 191, 36, .12), transparent 70%); }
+
+.dagwick-flake { position: absolute; top: -10px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(255, 255, 255, .7);
+  animation-name: dagwick-fall, dagwick-sway; animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite; animation-direction: normal, alternate; }
+html:not(.dark) .dagwick-flake { background: #a9c9ea; box-shadow: none; }
+.dagwick-snowbank { position: absolute; left: 0; bottom: 0; width: 100%; height: 16px; fill: #f8fbff; opacity: .9; }
+html:not(.dark) .dagwick-snowbank { fill: #dceaf8; }
+@keyframes dagwick-fall { from { top: -8%; } to { top: 108%; } }
+@keyframes dagwick-sway { from { transform: translateX(-10px); } to { transform: translateX(10px); } }
+
+.dagwick-moon { position: absolute; right: 30%; top: 14px; width: 54px; height: 54px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fffbea, #f5e6b8 60%, #e3cf8f); box-shadow: 0 0 40px rgba(245, 230, 184, .45); }
+.dagwick-bat { position: absolute; left: -8%; animation: dagwick-fly linear infinite; }
+.dagwick-bat-bob { display: block; animation: dagwick-bob 1.6s ease-in-out infinite alternate; }
+.dagwick-bat svg { display: block; fill: #140b22; stroke: #140b22; filter: drop-shadow(0 0 2px rgba(190, 242, 100, .45)); }
+html:not(.dark) .dagwick-bat svg { filter: none; }
+.dagwick-wing-l, .dagwick-wing-r { transform-box: view-box; transform-origin: 20px 10px; animation: dagwick-flap .2s ease-in-out infinite alternate; }
+@keyframes dagwick-fly { from { left: -8%; } to { left: 108%; } }
+@keyframes dagwick-bob { from { transform: translateY(-9px); } to { transform: translateY(9px); } }
+@keyframes dagwick-flap { from { transform: scaleY(1); } to { transform: scaleY(.25); } }
+
+.dagwick-confetti { position: absolute; top: -10px; width: 7px; height: 4px; border-radius: 1px;
+  animation-name: dagwick-fall, dagwick-spin; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes dagwick-spin { to { transform: rotate(360deg); } }
+.dagwick-firework { position: absolute; width: 0; height: 0; animation: dagwick-burst 3.3s ease-out infinite; }
+.dagwick-firework i { position: absolute; width: 4px; height: 4px; border-radius: 50%; }
+@keyframes dagwick-burst { 0% { transform: scale(.2); opacity: 0; } 15% { opacity: 1; } 60% { transform: scale(1.2); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
+.dagwick-balloon { position: absolute; bottom: -60px; width: 22px; height: 28px; border-radius: 50% 50% 46% 46%; opacity: .85; animation: dagwick-rise linear infinite; }
+.dagwick-balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 24px; background: rgba(160, 160, 160, .6); }
+@keyframes dagwick-rise { from { bottom: -60px; } to { bottom: 110%; } }
+
+.dagwick-ember { position: absolute; bottom: 10%; width: 4px; height: 4px; border-radius: 50%; background: #fdba74; box-shadow: 0 0 6px #fb923c; animation: dagwick-ember linear infinite; }
+@keyframes dagwick-ember { 0% { bottom: 12%; opacity: 0; transform: translateX(0); } 15% { opacity: 1; } 100% { bottom: 95%; opacity: 0; transform: translateX(16px); } }
+.dagwick-mountains { position: absolute; left: 0; bottom: 0; width: 100%; height: 55%; }
+.dagwick-mountains .far { fill: rgba(80, 44, 74, .55); }
+.dagwick-mountains .near { fill: rgba(36, 20, 40, .85); }
+html:not(.dark) .dagwick-mountains .far { fill: rgba(140, 100, 120, .22); }
+html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
+.dagwick-fire { position: absolute; width: 14px; height: 20px; margin: -20px 0 0 -7px; border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 50% 72%, #fff1b8 0 18%, #fbbf24 38%, #f97316 62%, #dc2626 100%);
+  box-shadow: 0 0 14px 4px rgba(249, 115, 22, .55), 0 0 40px 10px rgba(249, 115, 22, .2);
+  transform-origin: 50% 100%; animation: dagwick-flicker .45s ease-in-out infinite alternate; }
+@keyframes dagwick-flicker { from { transform: scaleY(.8); } to { transform: scaleY(1.12); } }
+.dagwick-govend { position: absolute; left: 54%; bottom: 0; display: flex; }
+.dagwick-dancer { display: block; margin: 0 -2px; animation: dagwick-govend 1.1s ease-in-out infinite; }
+.dagwick-dancer svg { display: block; overflow: visible; }
+@keyframes dagwick-govend { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-3px) rotate(-4deg); } 75% { transform: translateY(-1px) rotate(4deg); } }
+
+.dagwick-star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fde68a; box-shadow: 0 0 6px #fde68a; animation: dagwick-twinkle ease-in-out infinite; }
+@keyframes dagwick-twinkle { 0%, 100% { opacity: .2; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.3); } }
+.dagwick-hanging span { position: absolute; top: 0; display: flex; flex-direction: column; align-items: center; transform-origin: top center; animation: dagwick-swing 3s ease-in-out infinite alternate; }
+.dagwick-hanging span::before { content: ""; width: 1px; flex: 1; background: #e9c46a; }
+@keyframes dagwick-swing { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.dagwick-bunting { position: absolute; top: 0; left: 0; width: 100%; height: 34px; }
+.dagwick-letter { position: absolute; bottom: -30px; color: var(--dagwick-accent); opacity: 0; font-weight: 700; animation: dagwick-letter linear infinite; }
+@keyframes dagwick-letter { 0% { bottom: -10%; opacity: 0; } 15% { opacity: .3; } 85% { opacity: .2; } 100% { bottom: 105%; opacity: 0; } }
+
+.dagwick-greeting {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; padding: 4px 6px 4px 12px;
+  border-radius: 999px; font-size: 13px; border: 1px solid var(--dagwick-border);
+  background: color-mix(in srgb, var(--dagwick-bg) 72%, transparent); backdrop-filter: blur(4px);
+}
+.dagwick-greeting-hide { font: inherit; font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 0; cursor: pointer; background: var(--dagwick-surface); color: var(--dagwick-muted); }
+.dagwick-greeting-hide:hover { color: var(--dagwick-text); }
+.dagwick-greeting-show { all: unset; display: inline-block; margin-bottom: 8px; font-size: 12px; color: var(--dagwick-muted); cursor: pointer; }
+.dagwick-greeting-show:hover { color: var(--dagwick-accent); }
+.dagwick-greeting-hide:focus-visible, .dagwick-greeting-show:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
+
 /* The lamp */
 .dagwick-lamp { flex: none; overflow: visible; }
 .dagwick-flame { transform-box: fill-box; transform-origin: 50% 100%; }

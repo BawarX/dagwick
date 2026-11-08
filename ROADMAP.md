@@ -32,6 +32,14 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
   - [ ] hard-coded secrets in DAG code
   - [ ] slow DAG parse times
 
+- [x] **Seasonal moods, experimental and off by default** (0.2.0): Newroz, Eid, Kurdish Language Day, Christmas,
+      New Year, Halloween, Ramadan and Dagwick's birthday.
+- [ ] **Make seasonal moods production-ready** and turn them on by default.
+- [ ] **Airflow-wide seasonal themes** (config only, `themes/`): realistic snow,
+      then Halloween, Newroz and Kurdish Language Day.
+- [ ] **More moods:** the Lantern Festival, Diwali, Yazidi New Year
+      (Çarşema Sor).
+
 ## 3. Grow it (0.3+)
 
 - [ ] **Check packs.** Team- or company-specific rules shipped as separate

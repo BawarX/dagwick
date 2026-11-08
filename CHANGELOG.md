@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - unreleased
+
+### Added
+
+- **Seasonal moods (experimental, off by default).** During holidays the lantern dresses up and the page
+  header gets an animated scene: falling snow at Christmas, bats at Halloween,
+  bonfires and govend dancers at Newroz, Kurdish letters on Kurdish Language
+  Day, lanterns at Ramadan, kulîçe at Eid, fireworks at New Year. Each mood
+  shows a short English greeting. Decoration only: scores never change.
+- One optional, non-secret setting: `[dagwick] seasonal_moods`
+  (`off` by default | `auto` | a list of moods). Viewers can also hide moods for themselves.
+- Preview any mood with `?dagwick_mood=<id>`.
+
 ## [0.1.0] - 2026-11-08
 
 ### Added

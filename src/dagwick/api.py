@@ -162,6 +162,14 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
     return {"dags": dags, "truncated": len(rows) >= FLEET_LIMIT}
 
 
+@app.get("/api/config", dependencies=[_require_login()])
+def config() -> dict[str, Any]:
+    """Non-secret UI settings."""
+    from dagwick.settings import seasonal_moods
+
+    return {"seasonal_moods": seasonal_moods()}
+
+
 @app.get("/api/checks", dependencies=[_require_login()])
 def checks() -> list[dict[str, Any]]:
     return [

@@ -10,6 +10,7 @@ You need [uv](https://docs.astral.sh/uv/) and Node.js 20+.
 uv sync                 # dev environment (Airflow is installed here for tests only)
 uv run pytest           # tests with a 70 % coverage gate
 uv run ruff check       # lint
+npm test --prefix ui    # UI tests (seasonal mood dates)
 ./dev/run.sh            # build the UI and start a sandbox Airflow on http://localhost:8080
 ```
 

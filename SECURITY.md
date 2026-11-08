@@ -24,8 +24,9 @@ surface beyond what Airflow already exposes:
 - **Read-only.** Dagwick reads serialized DAGs from the metadata database. It
   never writes to the database, never executes DAG code, and never makes network
   calls.
-- **No configuration and no secrets.** Dagwick reads no environment variables,
-  Airflow Variables, Connections or credentials.
+- **No secrets.** Dagwick reads no Airflow Variables, Connections or
+  credentials. Its only setting, `[dagwick] seasonal_moods`, is optional and
+  cosmetic.
 - **Safe errors.** Error responses contain only a generic message and a
   reference id. Details go to the server log, never to the browser.
 - **Same origin only.** No CORS headers are added.
