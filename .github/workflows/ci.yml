@@ -34,6 +34,12 @@ jobs:
       - name: Test (coverage >= 70 %)
         run: uv run --locked pytest -q
 
+      - name: Code compiles on every supported Python (no Airflow install, seconds)
+        run: |
+          for v in 3.10 3.11 3.12 3.14 3.15; do
+            uvx -q --python "$v" python -m compileall -q src/dagwick || exit 1
+          done
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"

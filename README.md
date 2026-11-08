@@ -15,7 +15,7 @@ Airflow 3 UI:
 
 ## Install
 
-Dagwick needs **Apache Airflow 3.1 or newer** and **Python 3.10 or newer**.
+Dagwick needs **Apache Airflow 3.1 or newer** and **Python 3.10 – 3.15**.
 Install it into the same environment (or image) as Airflow:
 
 ```bash

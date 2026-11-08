@@ -6,7 +6,7 @@ every DAG and a fleet page in the sidebar). It is installed into an existing
 Airflow environment; it is not deployed on its own.
 
 - **Package:** `dagwick` on PyPI (`pip install dagwick`)
-- **Stack:** Python ≥ 3.10 (backend, runs inside the Airflow api-server) +
+- **Stack:** Python 3.10 – 3.15 (backend, runs inside the Airflow api-server) +
   React/TypeScript built with Vite (UI bundle shipped inside the wheel)
 - **Supported hosts:** Apache Airflow 3.1+
 
