@@ -1,8 +1,6 @@
 # Dagwick
 
-**Grade your Airflow DAGs from A to F, right inside the Airflow UI.**
-
-![Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
+![Dagwick: grade your Airflow DAGs from A to F, right inside the Airflow UI](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/banner.png)
 
 ## Setup
 
@@ -23,7 +21,9 @@ Using Docker? Add `dagwick` to your Airflow image's `requirements.txt`.
 
 That's it. There is nothing to configure.
 
-![Dagwick fleet page](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/fleet.png)
+![The Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
+
+![The Dagwick fleet page](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/fleet.png)
 
 ## Requirements
 

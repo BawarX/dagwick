@@ -28,6 +28,7 @@ not apply to a DAG is left out of the score.
 # my_checks/rules.py
 from dagwick import Category, Finding, Status, check
 
+
 @check(
     id="team_tag",
     title="Has a team tag",

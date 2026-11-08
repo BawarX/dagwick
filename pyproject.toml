@@ -49,6 +49,12 @@ dev = [
   "ruff>=0.14",
 ]
 
+[tool.uv]
+# Resolve the dev lockfile (Airflow + test tools) for Python 3.11+ only, so it can
+# use current, patched versions (e.g. dnspython >= 2.9 needs 3.11). This does not
+# change the published package, which has no dependencies and supports 3.10.
+environments = ["python_version >= '3.11'"]
+
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"

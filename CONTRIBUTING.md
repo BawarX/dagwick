@@ -16,6 +16,10 @@ uv run ruff check       # lint
 The sandbox keeps everything in `dev/airflow_home/` and loads only the demo
 DAGs in `dev/dags/`.
 
+The README banner `docs/banner.png` is rendered from `docs/banner.html`: open it
+in a browser at 1280 × 640 and take a screenshot (or use headless Chrome with
+`--window-size=1280,640 --screenshot`).
+
 ## Rules
 
 1. **Branch from `dev`** and open your pull request against `dev`.

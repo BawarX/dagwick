@@ -1,0 +1,126 @@
+<!doctype html>
+<!-- Source of docs/banner.png. Render: open at 1280x640 and screenshot (see CONTRIBUTING.md). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dagwick banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    position: relative;
+    font-family: Inter, system-ui, sans-serif;
+    color: #f6efe2;
+    background:
+      radial-gradient(520px 420px at 330px 330px, rgba(251, 191, 36, .30), transparent 70%),
+      radial-gradient(900px 600px at 1100px -100px, rgba(99, 102, 241, .18), transparent 70%),
+      linear-gradient(160deg, #141826 0%, #0d1019 60%, #0a0c13 100%);
+  }
+  .stars i {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: #fde68a; opacity: .5; box-shadow: 0 0 6px #fbbf24;
+  }
+  .lantern { position: absolute; left: 92px; top: 70px; width: 470px; height: 470px; }
+  .bubble {
+    position: absolute; left: 360px; top: 74px; padding: 12px 20px; border-radius: 18px;
+    font: 500 22px Fredoka, sans-serif; color: #2a1a0c; background: #fff7e6;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+  .bubble::after {
+    content: ""; position: absolute; left: 34px; bottom: -10px; width: 20px; height: 20px;
+    background: #fff7e6; transform: rotate(45deg); border-radius: 3px;
+  }
+  .text { position: absolute; left: 600px; top: 160px; width: 620px; }
+  h1 {
+    font: 700 112px/1 Fredoka, sans-serif; letter-spacing: -1px;
+    background: linear-gradient(180deg, #fff3d1 0%, #fbbf24 70%, #f59e0b 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 4px 24px rgba(251, 191, 36, .25));
+  }
+  .tag { margin-top: 18px; font-size: 30px; line-height: 1.3; color: #e9e2d4; }
+  .tag b { color: #fbbf24; font-weight: 500; }
+  .grades { display: flex; gap: 10px; margin-top: 30px; }
+  .g {
+    display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px;
+    font: 700 24px Fredoka, sans-serif; color: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+  }
+  .install {
+    display: inline-flex; align-items: center; gap: 12px; margin-top: 30px; padding: 12px 20px;
+    border-radius: 12px; font: 500 22px "JetBrains Mono", monospace; color: #f6efe2;
+    background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12);
+  }
+  .install span { color: #8b93a7; }
+</style>
+</head>
+<body>
+  <div class="stars">
+    <i style="left:610px;top:90px"></i><i style="left:1180px;top:120px"></i>
+    <i style="left:1050px;top:560px"></i><i style="left:540px;top:580px"></i>
+    <i style="left:80px;top:90px"></i><i style="left:1230px;top:400px"></i>
+    <i style="left:860px;top:60px;opacity:.3"></i><i style="left:40px;top:520px;opacity:.3"></i>
+  </div>
+
+  <svg class="lantern" viewBox="0 0 160 160" aria-label="Dagwick, a happy lantern">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fde68a" stop-opacity=".75"/>
+        <stop offset="55%" stop-color="#f59e0b" stop-opacity=".25"/>
+        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#ea580c"/><stop offset="55%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#fde68a"/>
+      </linearGradient>
+      <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#8a5a1c"/><stop offset="45%" stop-color="#e8aa48"/><stop offset="100%" stop-color="#8a5a1c"/>
+      </linearGradient>
+      <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#dbeefa" stop-opacity=".38"/><stop offset="30%" stop-color="#dbeefa" stop-opacity=".08"/><stop offset="100%" stop-color="#dbeefa" stop-opacity=".24"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="80" cy="146" rx="44" ry="5" fill="rgba(0,0,0,.45)"/>
+    <circle cx="80" cy="88" r="70" fill="url(#glow)"/>
+    <g fill="#fde68a">
+      <path d="M128 52 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/>
+      <path d="M28 66 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z"/>
+      <path d="M134 102 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2z"/>
+    </g>
+    <path d="M56 50 C 56 16, 104 16, 104 50" fill="none" stroke="#8a5a1c" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="80" cy="24" r="5" fill="none" stroke="#8a5a1c" stroke-width="3.5"/>
+    <path d="M62 44 L98 44 L110 58 L50 58 Z" fill="url(#metal)"/>
+    <rect x="70" y="38" width="20" height="7" rx="2" fill="#8a5a1c"/>
+    <g transform="translate(80 106) scale(1.15) translate(-80 -106)">
+      <path d="M80 106 C 67 98, 71 82, 80 68 C 82 79, 93 86, 89 97 C 87 102, 84 105, 80 106 Z" fill="url(#flame)"/>
+      <path d="M80 104 C 75 99, 77 92, 80 86 C 81 92, 86 95, 84 99 C 83 102, 81 103, 80 104 Z" fill="#fde68a"/>
+    </g>
+    <path d="M70 114 L90 114 L87 106 L73 106 Z" fill="#8a5a1c"/>
+    <path d="M58 58 C 40 72, 40 100, 58 114 L102 114 C 120 100, 120 72, 102 58 Z" fill="url(#glass)" stroke="rgba(200,225,240,.45)" stroke-width="1.5"/>
+    <path d="M54 72 C 50 82, 50 92, 54 102" fill="none" stroke="#dbeefa" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+    <path d="M66 58 C 58 76, 58 96, 66 114" fill="none" stroke="#8a5a1c" stroke-width="2.5"/>
+    <path d="M94 58 C 102 76, 102 96, 94 114" fill="none" stroke="#8a5a1c" stroke-width="2.5"/>
+    <path d="M48 114 L112 114 L116 134 C 116 141, 44 141, 44 134 Z" fill="url(#metal)"/>
+    <rect x="44" y="132" width="72" height="5" rx="2.5" fill="#8a5a1c" opacity=".6"/>
+    <path d="M65 122 q4 -4.5 8 0" stroke="#3b1f12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M87 122 q4 -4.5 8 0" stroke="#3b1f12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M73 127 Q 80 134 87 127" stroke="#3b1f12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="127" r="3.5" fill="#f4a28c"/>
+    <circle cx="100" cy="127" r="3.5" fill="#f4a28c"/>
+  </svg>
+
+  <div class="bubble">Let's light up your DAGs!</div>
+
+  <div class="text">
+    <h1>Dagwick</h1>
+    <p class="tag">Grade your <b>Airflow DAGs</b> from A to F,<br>right inside the Airflow UI.</p>
+    <div class="grades">
+      <span class="g" style="background:#16a34a">A</span>
+      <span class="g" style="background:#65a30d">B</span>
+      <span class="g" style="background:#d97706">C</span>
+      <span class="g" style="background:#ea580c">D</span>
+      <span class="g" style="background:#dc2626">F</span>
+    </div>
+    <div class="install"><span>$</span> pip install dagwick</div>
+  </div>
+</body>
+</html>
