@@ -1,0 +1,28 @@
+[project]
+name = "dagwick"
+version = "0.1.0"
+description = "The wick that keeps your DAGs lit: quality scores, a fleet view, and fixes you can act on, inside the Airflow 3 UI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["apache-airflow>=3.1"]
+
+[project.entry-points."airflow.plugins"]
+dagwick = "dagwick.plugin:DagwickPlugin"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dagwick"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

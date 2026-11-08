@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Start a throwaway Airflow on http://localhost:${PORT:-8080} with Dagwick installed.
+# Everything lives in dev/airflow_home; delete that folder to start fresh.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+(cd ui && npm run build --silent)
+VIRTUAL_ENV=.venv uv pip install -q -e .
+
+export AIRFLOW_HOME="$ROOT/dev/airflow_home"
+export AIRFLOW__CORE__DAGS_FOLDER="$ROOT/dev/dags"
+export AIRFLOW__CORE__LOAD_EXAMPLES=False
+export AIRFLOW__API__PORT="${PORT:-8080}"
+# Local sandbox only: skip the login screen. Never set this in a real deployment.
+export AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS=True
+export AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL=10
+
+export PATH="$ROOT/.venv/bin:$PATH"
+exec airflow standalone
