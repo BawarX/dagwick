@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo, useState } from "react";
 
 import { fetchFleet, useLoad } from "./api";
+import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
 import type { FleetDag, Grade } from "./types";
 
@@ -264,7 +265,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
       </div>
       <footer className="dagwick-foot dagwick-muted">
         {truncated ? `Showing the first ${dags.length} DAGs. ` : ""}Scored automatically from the latest parsed
-        version of each DAG.
+        version of each DAG. · {BRAND} {VERSION}
       </footer>
     </>
   );

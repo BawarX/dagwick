@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
-from enum import StrEnum
+from enum import Enum
 from importlib.metadata import entry_points
 from typing import Any
 
@@ -20,14 +20,14 @@ log = logging.getLogger(__name__)
 ENTRY_POINT_GROUP = "dagwick.checks"
 
 
-class Status(StrEnum):
+class Status(str, Enum):  # str mixin: StrEnum needs Python 3.11
     PASS = "pass"
     WARN = "warn"  # half the points: works, but could be better
     FAIL = "fail"
     SKIP = "skip"  # check does not apply to this DAG; excluded from the score
 
 
-class Category(StrEnum):
+class Category(str, Enum):
     RELIABILITY = "reliability"
     SCHEDULING = "scheduling"
     OBSERVABILITY = "observability"

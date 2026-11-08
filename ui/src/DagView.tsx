@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo, useState } from "react";
 
 import { fetchScore, useLoad } from "./api";
+import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
 import type { CheckResult, Grade, ScoreReport, Status } from "./types";
 
@@ -178,7 +179,7 @@ function Report({ report }: { report: ScoreReport }) {
         )}
       </section>
       <footer className="dagwick-foot dagwick-muted">
-        {report.points} / {report.max_points} points · scored automatically from the latest parsed version of this DAG
+        {report.points} / {report.max_points} points · scored automatically from the latest parsed version of this DAG · {BRAND} {VERSION}
       </footer>
     </>
   );

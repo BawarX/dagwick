@@ -11,3 +11,8 @@ ui/dist/
 *.pem
 *.key
 dev/*.log
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/

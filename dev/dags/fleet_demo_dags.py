@@ -11,53 +11,53 @@ def alert(context):
     """Stand-in for a Slack notifier."""
 
 
-START = pendulum.datetime(2025, 1, 1, tz="Asia/Baghdad")
+START = pendulum.datetime(2025, 1, 1, tz="UTC")
 
 SPECS = {
     # dag_id: (default_args, dag kwargs, task count)
-    "demo_payroll_ingest": (
+    "demo_sales_ingest": (
         {
-            "owner": "data-ai",
+            "owner": "data-team",
             "retries": 2,
             "execution_timeout": timedelta(minutes=20),
             "on_failure_callback": alert,
         },
         {
             "schedule": "0 2 * * *",
-            "tags": ["payroll", "ingest"],
-            "doc_md": "Nightly payroll load.",
+            "tags": ["sales", "ingest"],
+            "doc_md": "Nightly sales load.",
             "max_active_runs": 1,
             "dagrun_timeout": timedelta(hours=1),
         },
         4,
     ),
-    "demo_geo_refresh": (
-        {"owner": "data-ai", "retries": 1, "on_failure_callback": alert},
+    "demo_weather_refresh": (
+        {"owner": "data-team", "retries": 1, "on_failure_callback": alert},
         {
             "schedule": "@weekly",
-            "tags": ["geo"],
+            "tags": ["weather"],
             "description": "Weekly refresh.",
             "max_active_runs": 1,
         },
         3,
     ),
-    "demo_runaki_sync": (
-        {"owner": "data-ai", "retries": 3, "execution_timeout": timedelta(minutes=15)},
+    "demo_orders_sync": (
+        {"owner": "data-team", "retries": 3, "execution_timeout": timedelta(minutes=15)},
         {
             "schedule": "*/30 * * * *",
-            "tags": ["runaki"],
+            "tags": ["orders"],
             "max_active_runs": 2,
             "dagrun_timeout": timedelta(minutes=25),
         },
         5,
     ),
-    "demo_moda_export": (
+    "demo_report_export": (
         {"retries": 0},
         {"schedule": "@daily", "catchup": True},
         2,
     ),
     "demo_adhoc_backfill": (
-        {"owner": "data-ai"},
+        {"owner": "data-team"},
         {"schedule": None, "tags": ["ops"]},
         1,
     ),

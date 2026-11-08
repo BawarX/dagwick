@@ -18,15 +18,15 @@ def notify_retry(context):
 with DAG(
     dag_id="demo_shining_pipeline",
     schedule="0 3 * * *",
-    start_date=pendulum.datetime(2025, 1, 1, tz="Asia/Baghdad"),
+    start_date=pendulum.datetime(2025, 1, 1, tz="UTC"),
     catchup=False,
     max_active_runs=1,
     max_consecutive_failed_dag_runs=3,
     dagrun_timeout=timedelta(hours=2),
     tags=["demo", "dagwick"],
-    doc_md="Loads demo data every night at 03:00. Owner: data-ai.",
+    doc_md="Loads demo data every night at 03:00. Owner: data-team.",
     default_args={
-        "owner": "data-ai",
+        "owner": "data-team",
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
         "execution_timeout": timedelta(minutes=30),

@@ -12,7 +12,7 @@ with DAG(
     start_date=pendulum.datetime(2025, 1, 1, tz="UTC"),
     tags=["demo"],
     description="Hourly sync of demo data.",
-    default_args={"owner": "data-ai", "retries": 1, "retry_delay": timedelta(minutes=2)},
+    default_args={"owner": "data-team", "retries": 1, "retry_delay": timedelta(minutes=2)},
 ):
     start = EmptyOperator(task_id="start")
     sync = EmptyOperator(task_id="SyncData", execution_timeout=timedelta(minutes=10))

@@ -1,28 +1,88 @@
 [project]
 name = "dagwick"
-version = "0.1.0"
-description = "The wick that keeps your DAGs lit: quality scores, a fleet view, and fixes you can act on, inside the Airflow 3 UI."
+dynamic = ["version"]
+description = "The wick that keeps your DAGs lit: DAG quality scores, a fleet view, and fixes you can act on, inside the Airflow 3 UI."
 readme = "README.md"
-requires-python = ">=3.11"
 license = "MIT"
-dependencies = ["apache-airflow>=3.1"]
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "The Dagwick Authors" }]
+keywords = ["airflow", "apache-airflow", "airflow-plugin", "dag", "data-quality", "linting"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Plugins",
+  "Environment :: Web Environment",
+  "Framework :: Apache Airflow",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
+]
+# Intentionally empty: Dagwick runs inside an existing Airflow 3.1+ installation and
+# uses the Airflow (and FastAPI) that is already there. Installing it never pulls in,
+# upgrades or downgrades Airflow.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ardalan-jalal/dagwick"
+Repository = "https://github.com/ardalan-jalal/dagwick"
+Issues = "https://github.com/ardalan-jalal/dagwick/issues"
+Changelog = "https://github.com/ardalan-jalal/dagwick/blob/main/CHANGELOG.md"
 
 [project.entry-points."airflow.plugins"]
 dagwick = "dagwick.plugin:DagwickPlugin"
 
+# Development only (never published as a dependency): tests and the local sandbox.
+[dependency-groups]
+dev = [
+  "apache-airflow==3.3.2",
+  "pytest>=8",
+  "pytest-cov>=6",
+  "ruff>=0.14",
+]
+
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/dagwick/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dagwick"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/dagwick",
+  "ui/src",
+  "ui/package.json",
+  "ui/package-lock.json",
+  "ui/tsconfig.json",
+  "ui/vite.config.ts",
+  "tests",
+  "README.md",
+  "LICENSE",
+  "CHANGELOG.md",
+  "SECURITY.md",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=dagwick --cov-report=term-missing --cov-fail-under=70"
+
+[tool.coverage.run]
+branch = true
+source = ["dagwick"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]

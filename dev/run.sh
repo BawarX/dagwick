@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 (cd ui && npm run build --silent)
-VIRTUAL_ENV=.venv uv pip install -q -e .
+uv sync --quiet   # dev group: Airflow + Dagwick (editable)
 
 export AIRFLOW_HOME="$ROOT/dev/airflow_home"
 export AIRFLOW__CORE__DAGS_FOLDER="$ROOT/dev/dags"

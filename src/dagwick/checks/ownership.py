@@ -12,8 +12,8 @@ DEFAULT_OWNERS = {"", "airflow"}
     title="Has a real owner",
     category=Category.OWNERSHIP,
     weight=8,
-    example='default_args={"owner": "data-ai"}',
-    fix="Set owner in default_args to the responsible team (e.g. 'data-ai').",
+    example='default_args={"owner": "data-team"}',
+    fix="Set owner in default_args to the responsible team (e.g. 'data-team').",
 )
 def owner(dag: Any) -> Finding:
     owners = {o.strip().lower() for o in (getattr(dag, "owner", "") or "").split(",")}
@@ -27,7 +27,7 @@ def owner(dag: Any) -> Finding:
     title="Tagged",
     category=Category.OWNERSHIP,
     weight=5,
-    example='DAG(..., tags=["payroll", "ingest"])',
+    example='DAG(..., tags=["sales", "ingest"])',
     fix="Add tags (domain, layer) so the DAG is easy to find and filter.",
 )
 def tags(dag: Any) -> Finding:
