@@ -2,6 +2,22 @@
 
 Thanks for helping. A few rules keep Dagwick safe to install anywhere.
 
+## Development setup
+
+You need [uv](https://docs.astral.sh/uv/) and Node.js 20+.
+
+```bash
+uv sync                 # dev environment (Airflow is installed here for tests only)
+uv run pytest           # tests with a 70 % coverage gate
+uv run ruff check       # lint
+./dev/run.sh            # build the UI and start a sandbox Airflow on http://localhost:8080
+```
+
+The sandbox keeps everything in `dev/airflow_home/` and loads only the demo
+DAGs in `dev/dags/`.
+
+## Rules
+
 1. **Branch from `dev`** and open your pull request against `dev`.
 2. **Keep the package dependency-free.** Do not add anything to
    `[project].dependencies`.
