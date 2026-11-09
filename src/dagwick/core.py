@@ -3,7 +3,14 @@
 A *check* is a function that receives a DAG (normally the serialized DAG read
 from the metadata database) and returns a :class:`Finding`. Checks are
 registered with the :func:`check` decorator, either inside this package or in
-any third-party package that exposes a ``dagwick.checks`` entry point.
+any third-party package (a *check pack*) that exposes a ``dagwick.checks`` entry
+point.
+
+The check interface that packs can rely on is ``check``, ``Finding``,
+``Status``, ``Category`` and ``Context``, all importable from ``dagwick``.
+Everything else in this module (``CheckSpec``, ``CheckResult``, the registry,
+``score_dag``'s report layout) is internal and may change before 1.0. See
+docs/checks.md, "Write a check pack".
 """
 
 from __future__ import annotations
@@ -21,6 +28,7 @@ from dagwick.settings import DEFAULT_GRADES, Scoring
 log = logging.getLogger(__name__)
 
 ENTRY_POINT_GROUP = "dagwick.checks"
+BUILTIN_PACK = "dagwick"
 
 
 class Status(str, Enum):  # str mixin: StrEnum needs Python 3.11
@@ -84,6 +92,7 @@ class CheckSpec:
     wants_context: bool = False
     acknowledgeable: bool = False
     ack_hint: str = ""
+    pack: str = BUILTIN_PACK  # the distribution that registered the check
 
 
 @dataclass(frozen=True)
@@ -100,10 +109,20 @@ class CheckResult:
     example: str
     ack_reason: str = ""  # why the DAG breaks this check on purpose (status "ack")
     ack_note: str = ""  # why a "# dagwick: ack" comment for this check was ignored
+    pack: str = BUILTIN_PACK  # the distribution that registered the check
 
 
 _REGISTRY: dict[str, CheckSpec] = {}
 _plugins_loaded = False
+_loading_pack: str | None = None  # set while an entry point is being imported
+
+
+def _pack_for(module: str) -> str:
+    """The pack a check belongs to: the entry point being loaded, else its module."""
+    if _loading_pack:
+        return _loading_pack
+    top = module.split(".")[0]
+    return BUILTIN_PACK if top == "dagwick" else top
 
 
 def check(
@@ -146,6 +165,7 @@ def check(
             wants_context,
             acknowledgeable or bool(ack_hint),
             ack_hint,
+            _pack_for(func.__module__),
         )
         return func
 
@@ -153,16 +173,23 @@ def check(
 
 
 def load_plugin_checks() -> None:
-    """Import every module advertised under the ``dagwick.checks`` entry point."""
-    global _plugins_loaded
+    """Import every module advertised under the ``dagwick.checks`` entry point.
+
+    A pack that fails to import is logged and skipped; the other checks still run.
+    """
+    global _plugins_loaded, _loading_pack
     if _plugins_loaded:
         return
     _plugins_loaded = True
     for ep in entry_points(group=ENTRY_POINT_GROUP):
+        dist = getattr(ep, "dist", None)
+        _loading_pack = getattr(dist, "name", None) or ep.name
         try:
             ep.load()
         except Exception:
             log.exception("Failed to load dagwick checks from entry point %s", ep.name)
+        finally:
+            _loading_pack = None
 
 
 def registered_checks() -> list[CheckSpec]:
@@ -267,6 +294,7 @@ def score_dag(
                 example=spec.example if needs_work else "",
                 ack_reason=ack_reason,
                 ack_note=ack_note,
+                pack=spec.pack,
             )
         )
 

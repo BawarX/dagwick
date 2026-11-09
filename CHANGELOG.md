@@ -15,6 +15,11 @@ All notable changes to this project are documented here. The format follows
   `dagwick check` all follow them. See `docs/checks.md`.
 - `/api/checks` shows each check's `default_weight` and whether it is
   `enabled`; `/api/config` includes the grade thresholds.
+- **Check packs.** A guide, "Write a check pack", in `docs/checks.md`, and an
+  example pack in `examples/dagwick-pack-example` with one check and its
+  tests. The guide says which parts of the check interface are stable.
+- Each check now records which pack it came from: `pack` in `/api/checks` and
+  in score reports, and a tag on pack checks in the DAG tab.
 
 ## [0.2.0] - 2026-11-09
 

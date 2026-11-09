@@ -370,6 +370,7 @@ def checks() -> list[dict[str, Any]]:
             "fix": c.fix,
             "acknowledgeable": c.acknowledgeable,
             "ack_hint": c.ack_hint,
+            "pack": c.pack,
         }
         for c in registered_checks()
     ]
