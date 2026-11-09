@@ -16,6 +16,8 @@ from enum import Enum
 from importlib.metadata import entry_points
 from typing import Any
 
+from dagwick.settings import DEFAULT_GRADES, Scoring
+
 log = logging.getLogger(__name__)
 
 ENTRY_POINT_GROUP = "dagwick.checks"
@@ -170,11 +172,28 @@ def registered_checks() -> list[CheckSpec]:
     return list(_REGISTRY.values())
 
 
-def grade_for(score: float) -> str:
-    for threshold, grade in ((90, "A"), (75, "B"), (60, "C"), (40, "D")):
+def grade_for(score: float, grades: tuple[tuple[str, float], ...] = DEFAULT_GRADES) -> str:
+    for grade, threshold in grades:
         if score >= threshold:
             return grade
     return "F"
+
+
+_warned_unknown: set[str] = set()
+
+
+def _configured_checks(scoring: Scoring) -> list[tuple[CheckSpec, int]]:
+    """The checks that count under ``scoring``, each with its effective weight."""
+    specs = registered_checks()
+    unknown = (set(scoring.disabled) | set(scoring.weights)) - {s.id for s in specs}
+    if unknown - _warned_unknown:
+        log.warning("dagwick: [dagwick] settings name unknown check ids %s", sorted(unknown))
+        _warned_unknown.update(unknown)
+    return [
+        (spec, scoring.weights.get(spec.id, spec.weight))
+        for spec in specs
+        if spec.id not in scoring.disabled
+    ]
 
 
 def _run_one(spec: CheckSpec, dag: Any, context: Context) -> Finding:
@@ -212,29 +231,34 @@ def _acknowledge(
     return Status.ACK, reason, ""
 
 
-def score_dag(dag: Any, context: Context | None = None) -> dict[str, Any]:
+def score_dag(
+    dag: Any, context: Context | None = None, scoring: Scoring | None = None
+) -> dict[str, Any]:
+    """Score a DAG. ``scoring`` defaults to the ``[dagwick]`` settings in airflow.cfg."""
     from dagwick.acknowledge import acknowledgements
+    from dagwick.settings import scoring as configured_scoring
 
+    scoring = scoring if scoring is not None else configured_scoring()
     context = context or Context()
     acks = acknowledgements(context.source) if context.source else {}
     results: list[CheckResult] = []
     earned = 0.0
     possible = 0
-    for spec in registered_checks():
+    for spec, weight in _configured_checks(scoring):
         finding = _run_one(spec, dag, context)
         status, ack_reason, ack_note = _acknowledge(spec, finding.status, acks)
         points = 0.0
         needs_work = status in (Status.FAIL, Status.WARN)
         if status not in (Status.SKIP, Status.ACK):
-            possible += spec.weight
-            points = spec.weight * STATUS_CREDIT[status]
+            possible += weight
+            points = weight * STATUS_CREDIT[status]
             earned += points
         results.append(
             CheckResult(
                 id=spec.id,
                 title=spec.title,
                 category=spec.category.value,
-                weight=spec.weight,
+                weight=weight,
                 status=status.value,
                 message=finding.message,
                 fix=spec.fix if needs_work else "",
@@ -251,7 +275,7 @@ def score_dag(dag: Any, context: Context | None = None) -> dict[str, Any]:
     return {
         "dag_id": dag.dag_id,
         "score": score,
-        "grade": grade_for(score),
+        "grade": grade_for(score, scoring.grades),
         "points": round(earned, 1),
         "max_points": possible,
         "counts": counts,

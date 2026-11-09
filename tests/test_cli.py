@@ -122,3 +122,18 @@ def test_version_flag(capsys):
     with pytest.raises(SystemExit):
         main(["--version"])
     assert capsys.readouterr().out.strip() == f"dagwick {__version__}"
+
+
+def test_check_command_uses_the_dagwick_settings(monkeypatch):
+    path = str(DAGS / "demo_shining_pipeline.py")
+    monkeypatch.delenv("AIRFLOW__DAGWICK__GRADES", raising=False)
+    monkeypatch.setenv("AIRFLOW__DAGWICK__DISABLED_CHECKS", "tags")
+    monkeypatch.setenv("AIRFLOW__DAGWICK__WEIGHTS", "retries:40")
+    code, out = run("check", path, "--json")
+    (report,) = json.loads(out)["dags"]
+    assert "tags" not in checks(report)
+    assert checks(report)["retries"]["weight"] == 40
+
+    monkeypatch.setenv("AIRFLOW__DAGWICK__GRADES", "A:100.1")  # invalid: defaults apply
+    code, _ = run("check", path, "--min-grade", "A")
+    assert code == OK

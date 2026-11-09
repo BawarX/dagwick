@@ -34,9 +34,20 @@ export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {
 export interface UiConfig {
   /** "auto", "off", or the list of enabled mood ids. */
   seasonal_moods: "auto" | "off" | string[];
+  /** Lowest score for each grade, for example {"A": 90, "B": 75, "C": 60, "D": 40}. */
+  grades?: Record<string, number>;
 }
 
-export const fetchConfig = (signal?: AbortSignal) => get<UiConfig>("/config", {}, signal);
+let configRequest: Promise<UiConfig> | undefined;
+
+/** The UI settings, fetched once per page and shared by every caller. */
+export function loadConfig(): Promise<UiConfig> {
+  configRequest ??= get<UiConfig>("/config", {}).catch((e: unknown) => {
+    configRequest = undefined; // let a later caller retry
+    throw e;
+  });
+  return configRequest;
+}
 
 /** Load data, with abort-on-unmount and a reload() trigger. */
 

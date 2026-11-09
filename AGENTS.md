@@ -21,7 +21,7 @@ Airflow environment; it is not deployed on its own.
   dependencies (`requires_access_dag`, `requires_authenticated`, `get_user` +
   `get_authorized_dag_ids`). Never add an unauthenticated endpoint.
 - **No secrets.** Settings are optional, non-secret and live under `[dagwick]`
-  in `airflow.cfg` (today only `seasonal_moods`).
+  in `airflow.cfg` (`seasonal_moods`, `disabled_checks`, `weights`, `grades`).
 - **Errors never leak internals:** return a generic message plus a reference
   id; log the details server-side.
 - **Never push to `main`, tag, or publish a release yourself.** Publishing a

@@ -51,7 +51,18 @@ def test_config_endpoint_shape(monkeypatch):
     from dagwick import api
 
     monkeypatch.setenv("AIRFLOW__DAGWICK__SEASONAL_MOODS", "off")
-    assert api.config() == {"seasonal_moods": "off"}
+    monkeypatch.delenv("AIRFLOW__DAGWICK__GRADES", raising=False)
+    assert api.config() == {
+        "seasonal_moods": "off",
+        "grades": {"A": 90, "B": 75, "C": 60, "D": 40},
+    }
+
+
+def test_config_endpoint_follows_configured_grades(monkeypatch):
+    from dagwick import api
+
+    monkeypatch.setenv("AIRFLOW__DAGWICK__GRADES", "A:95, D:30")
+    assert api.config()["grades"] == {"A": 95, "B": 75, "C": 60, "D": 30}
 
 
 def test_off_by_default_when_not_configured(monkeypatch):

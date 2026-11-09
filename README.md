@@ -19,7 +19,9 @@ Using Docker? Add `dagwick` to your Airflow image's `requirements.txt`.
 - a **Dagwick** tab on every DAG page, and
 - a **Dagwick** page in the sidebar that grades all your DAGs.
 
-That's it. There is nothing to configure.
+That's it. There is nothing to configure. If you want to, you can turn checks
+off, change their weights or move the grade thresholds in `airflow.cfg`
+([tune the scoring](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md#tune-the-scoring)).
 
 ## What you get
 

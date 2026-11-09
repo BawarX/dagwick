@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchConfig } from "./api";
+import { loadConfig } from "./api";
 import { SEASONS, type Season, isSeasonId, seasonFor } from "./season";
 
 const STORAGE_KEY = "dagwick.moods.hidden";
@@ -51,8 +51,9 @@ export function useSeason(): SeasonState {
   useEffect(() => {
     if (preview !== undefined) return; // a preview ignores the admin setting
     const ctrl = new AbortController();
-    fetchConfig(ctrl.signal)
+    loadConfig()
       .then((cfg) => {
+        if (ctrl.signal.aborted) return;
         const allowed =
           cfg.seasonal_moods === "auto" || cfg.seasonal_moods === "off"
             ? cfg.seasonal_moods
