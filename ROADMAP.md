@@ -13,7 +13,7 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 - [ ] **Optional settings without code.** A `[dagwick]` section in
       `airflow.cfg` to turn checks off, change weights and set grade thresholds.
       Still read-only, still no secrets.
-- [ ] **Test against several Airflow versions** (3.1, 3.2, 3.3) in CI.
+- [x] **Test against several Airflow versions** (3.1, 3.2, 3.3) in CI.
 
 ## 2. Make it more useful (0.2)
 
