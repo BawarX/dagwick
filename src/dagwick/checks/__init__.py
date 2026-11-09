@@ -6,7 +6,16 @@ from dagwick.checks import (
     performance,
     reliability,
     scheduling,
+    security,
     structure,
 )
 
-__all__ = ["observability", "ownership", "performance", "reliability", "scheduling", "structure"]
+__all__ = [
+    "observability",
+    "ownership",
+    "performance",
+    "reliability",
+    "scheduling",
+    "security",
+    "structure",
+]

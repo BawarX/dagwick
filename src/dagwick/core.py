@@ -36,6 +36,7 @@ class Category(str, Enum):
     OWNERSHIP = "ownership"
     STRUCTURE = "structure"
     PERFORMANCE = "performance"
+    SECURITY = "security"
 
 
 STATUS_CREDIT = {Status.PASS: 1.0, Status.WARN: 0.5, Status.FAIL: 0.0}
