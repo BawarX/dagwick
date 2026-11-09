@@ -92,8 +92,15 @@ class FakeSession:
         self.serialized = serialized
         self.sources = sources
         self.serialized_reads = 0
+        self.dag_hashes = {v: f"dag-{v}" for v in serialized}
+        self.source_hashes = {v: f"src-{v}" for v in sources}
 
     def execute(self, query):
+        sql = str(query)
+        if "serialized_dag" in sql:
+            return _Result(list(self.dag_hashes.items()))
+        if "dag_code" in sql:
+            return _Result(list(self.source_hashes.items()))
         return _Result(self.versions)
 
     def scalars(self, query):
@@ -158,3 +165,22 @@ def test_dag_history_caps_the_number_of_versions(monkeypatch, shining):
     assert result["truncated"] is True
     assert len(result["versions"]) == MAX_VERSIONS
     assert result["versions"][-1]["version"] == MAX_VERSIONS + 1
+
+
+def test_a_version_rewritten_in_place_is_scored_again(monkeypatch, shining, dim):
+    """Airflow updates the newest version in place until the DAG runs again."""
+    from types import SimpleNamespace
+
+    from dagwick.history import dag_history
+
+    session = FakeSession([("v1", 1, None)], {"v1": SimpleNamespace(dag=dim)}, {})
+    fake_db(monkeypatch, session)
+    assert dag_history("demo")["versions"][0]["grade"] == "F"
+
+    session.serialized["v1"] = SimpleNamespace(dag=shining)  # same version, new code
+    session.dag_hashes["v1"] = "dag-v1-edited"
+    assert dag_history("demo")["versions"][0]["score"] == 100.0
+
+    reads = session.serialized_reads
+    dag_history("demo")  # unchanged since: served from the cache
+    assert session.serialized_reads == reads

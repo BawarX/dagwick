@@ -63,12 +63,16 @@ def timeline(versions: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return points
 
 
-def _score_version(dag_id: str, version_id: Any, session: Any) -> dict[str, Any] | None:
+def _score_version(
+    dag_id: str, version_id: Any, session: Any, fingerprint: tuple[Any, Any] = (None, None)
+) -> dict[str, Any] | None:
     from airflow.models.dagcode import DagCode
     from airflow.models.serialized_dag import SerializedDagModel
     from sqlalchemy import select
 
-    key = f"{dag_id}:{version_id}"
+    # Airflow rewrites the newest version in place until the DAG runs again, so the
+    # version id alone is not a stable key: include the DAG and source hashes.
+    key = f"{dag_id}:{version_id}:{fingerprint[0]}:{fingerprint[1]}"
     cached = _cache.get(key)
     if cached is not None:
         return cached
@@ -86,6 +90,29 @@ def _score_version(dag_id: str, version_id: Any, session: Any) -> dict[str, Any]
     return report
 
 
+def _fingerprints(ids: list[Any], session: Any) -> dict[Any, tuple[Any, Any]]:
+    """(serialized DAG hash, source hash) per version id, in two queries."""
+    from airflow.models.dagcode import DagCode
+    from airflow.models.serialized_dag import SerializedDagModel
+    from sqlalchemy import select
+
+    dag_hashes = dict(
+        session.execute(
+            select(SerializedDagModel.dag_version_id, SerializedDagModel.dag_hash).where(
+                SerializedDagModel.dag_version_id.in_(ids)
+            )
+        ).all()
+    )
+    source_hashes = dict(
+        session.execute(
+            select(DagCode.dag_version_id, DagCode.source_code_hash).where(
+                DagCode.dag_version_id.in_(ids)
+            )
+        ).all()
+    )
+    return {i: (dag_hashes.get(i), source_hashes.get(i)) for i in ids}
+
+
 def dag_history(dag_id: str) -> dict[str, Any]:
     from airflow.models.dag_version import DagVersion
     from airflow.utils.session import create_session
@@ -99,9 +126,11 @@ def dag_history(dag_id: str) -> dict[str, Any]:
             .limit(MAX_VERSIONS + 1)
         ).all()
         truncated = len(rows) > MAX_VERSIONS
+        rows = rows[:MAX_VERSIONS]
+        fingerprints = _fingerprints([r[0] for r in rows], session)
         versions = []
-        for version_id, number, created_at in reversed(rows[:MAX_VERSIONS]):
-            report = _score_version(dag_id, version_id, session)
+        for version_id, number, created_at in reversed(rows):
+            report = _score_version(dag_id, version_id, session, fingerprints[version_id])
             if report is not None:
                 versions.append(
                     {

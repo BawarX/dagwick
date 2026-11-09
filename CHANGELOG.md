@@ -65,8 +65,10 @@ All notable changes to this project are documented here. The format follows
   versions, re-scored from the serialized DAG and source code Airflow keeps
   for every version, with which checks started or stopped passing at each
   step. Nothing is stored by Dagwick; each version's score is cached in
-  memory since a version never changes. Only code checks count (parse time
-  and other run-time facts describe the present, not past versions).
+  memory until that version's DAG or source changes (Airflow updates the
+  newest version in place until the DAG runs again). Only code checks
+  count (parse time and other run-time facts describe the present, not past
+  versions).
 - New endpoint `GET /dagwick/api/history?dag_id=...`, behind the same DAG
   permission as `/api/score`.
 - **`dagwick check` command** and a **pre-commit hook**: grade DAG files
