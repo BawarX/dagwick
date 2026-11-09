@@ -171,6 +171,16 @@ def static(name: str) -> FileResponse:
     )
 
 
+@app.get("/api/history", dependencies=[_require_dag_read()])
+def history(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, Any]:
+    from dagwick.history import dag_history
+
+    try:
+        return dag_history(dag_id)
+    except Exception as exc:
+        raise _server_error(f"failed to read score history for DAG {dag_id}", exc) from None
+
+
 @app.get("/api/score", dependencies=[_require_dag_read()])
 def score(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, Any]:
     try:

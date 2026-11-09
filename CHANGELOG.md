@@ -46,6 +46,15 @@ All notable changes to this project are documented here. The format follows
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
 
+- **Score history** on the DAG tab: the score of each of the last 20 DAG
+  versions, re-scored from the serialized DAG and source code Airflow keeps
+  for every version, with which checks started or stopped passing at each
+  step. Nothing is stored by Dagwick; each version's score is cached in
+  memory since a version never changes. Only code checks count (parse time
+  and other run-time facts describe the present, not past versions).
+- New endpoint `GET /dagwick/api/history?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
+
 ### Fixed
 
 - Fleet headline no longer contradicts the stats: it describes the average
