@@ -32,6 +32,7 @@ export const STYLES = `
   padding: 8px 4px 24px;
   width: 100%;
   max-width: 1440px;
+  margin-inline: auto;
   box-sizing: border-box;
   container: dagwick / inline-size;
 }
