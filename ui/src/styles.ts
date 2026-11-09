@@ -98,6 +98,7 @@ html.dark .dagwick {
   color: var(--dagwick-text); background: var(--dagwick-surface); border: 1px solid var(--dagwick-border);
 }
 .dagwick-btn:hover:not(:disabled) { border-color: var(--dagwick-accent); }
+.dagwick-csv { margin-left: auto; }
 .dagwick-btn:disabled { opacity: .6; cursor: progress; }
 .dagwick-btn:focus-visible, .dagwick-tab:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
 
