@@ -11,6 +11,7 @@ from dagwick.core import Category, Finding, Status, check
     title="Someone hears about failures",
     category=Category.OBSERVABILITY,
     weight=15,
+    ack_hint="where failures are alerted instead (e.g. a central listener or a Grafana rule)",
     example='default_args={"on_failure_callback": send_slack_alert}',
     fix="Add on_failure_callback (e.g. a Slack notifier) in default_args.",
 )
@@ -31,6 +32,7 @@ def failure_alerts(dag: Any) -> Finding:
     title="Retries are visible",
     category=Category.OBSERVABILITY,
     weight=3,
+    acknowledgeable=True,
     example='default_args={"on_retry_callback": send_slack_alert}',
     fix="Add on_retry_callback so flaky tasks surface before they start failing.",
 )

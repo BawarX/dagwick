@@ -65,6 +65,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
   );
   const needsCare = dags.filter((d) => d.counts.fail > 0).length;
   const healthy = dist.A + dist.B;
+  const acknowledged = dags.reduce((s, d) => s + (d.counts.ack ?? 0), 0);
 
   const common = useMemo(() => {
     const by = new Map<string, { id: string; title: string; dags: number; fails: number }>();
@@ -111,6 +112,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
             <Stat value={(Math.floor(avg * 10) / 10).toFixed(1)} label="average score" />
             <Stat value={needsCare} label="need care" tone={needsCare ? "fail" : undefined} />
             <Stat value={healthy} label="healthy (A–B)" tone={healthy ? "pass" : undefined} />
+            {acknowledged > 0 && <Stat value={acknowledged} label="acknowledged" />}
           </div>
         </div>
         <div className="dagwick-hero-side">
@@ -205,6 +207,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                             ? "All checks passing"
                             : `${d.counts.fail} failing · ${d.counts.warn} to improve`}
                         </span>
+                        {d.counts.ack > 0 && <span>{d.counts.ack} acknowledged</span>}
                       </div>
                       {d.issues.length > 0 && (
                         <div className="dagwick-row-issues">

@@ -7,9 +7,9 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 
 - [ ] **Validate on real Airflow deployments.** Review grades with DAG owners,
       fix false alarms, and tune the weights.
-- [ ] **Acknowledge a check on purpose.** Let a DAG mark a check as intentional
-      (for example `catchup=True` for a backfill DAG) instead of losing points
-      forever.
+- [x] **Acknowledge a check on purpose** (0.2.0). A `# dagwick: ack <check> -- <reason>`
+      comment marks a check a DAG breaks on purpose (for example `catchup=True`
+      for a backfill DAG). Only checks where that can be legitimate allow it.
 - [ ] **Optional settings without code.** A `[dagwick]` section in
       `airflow.cfg` to turn checks off, change weights and set grade thresholds.
       Still read-only, still no secrets.

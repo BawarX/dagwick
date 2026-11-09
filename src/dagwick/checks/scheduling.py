@@ -11,6 +11,7 @@ from dagwick.core import Category, Finding, Status, check
     title="Has a schedule",
     category=Category.SCHEDULING,
     weight=5,
+    acknowledgeable=True,
     example='DAG(..., schedule="0 3 * * *")',
     fix=(
         "Set schedule= (cron, timedelta or assets). "
@@ -29,6 +30,7 @@ def schedule(dag: Any) -> Finding:
     title="No surprise backfills",
     category=Category.SCHEDULING,
     weight=5,
+    acknowledgeable=True,
     example="DAG(..., catchup=False)",
     fix="Set catchup=False unless you really want every missed interval to run.",
 )
@@ -45,6 +47,7 @@ def catchup(dag: Any) -> Finding:
     title="Stops after repeated failures",
     category=Category.SCHEDULING,
     weight=3,
+    ack_hint="what stops this DAG when it keeps failing (e.g. on-call pausing it by hand)",
     example="DAG(..., max_consecutive_failed_dag_runs=3)",
     fix=(
         "Set max_consecutive_failed_dag_runs (e.g. 3) "
@@ -65,6 +68,7 @@ def auto_pause(dag: Any) -> Finding:
     title="Bounded parallel runs",
     category=Category.SCHEDULING,
     weight=5,
+    acknowledgeable=True,
     example="DAG(..., max_active_runs=1)",
     fix="Set max_active_runs (1 for most ETL) so backfills cannot flood the warehouse.",
 )

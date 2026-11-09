@@ -78,6 +78,7 @@ html.dark .dagwick {
 .dagwick-chip--pass { color: var(--dagwick-pass); background: var(--dagwick-pass-bg); }
 .dagwick-chip--warn { color: var(--dagwick-warn); background: var(--dagwick-warn-bg); }
 .dagwick-chip--fail { color: var(--dagwick-fail); background: var(--dagwick-fail-bg); }
+.dagwick-chip--ack { color: var(--dagwick-muted); background: var(--dagwick-surface); }
 .dagwick-hero-side { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 
 .dagwick-ring { position: relative; width: 132px; height: 132px; }
@@ -117,6 +118,11 @@ html.dark .dagwick {
 .dagwick-check--fail .dagwick-icon { color: var(--dagwick-fail); background: var(--dagwick-fail-bg); }
 .dagwick-check--skip .dagwick-icon { color: var(--dagwick-muted); background: var(--dagwick-surface); }
 .dagwick-check--skip { opacity: .7; }
+.dagwick-check--ack .dagwick-icon { color: var(--dagwick-muted); background: var(--dagwick-surface); }
+.dagwick-check--ack { opacity: .8; }
+.dagwick-ack { margin-top: 6px; font-size: 13px; }
+.dagwick-ack-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-muted); margin-right: 6px; }
+.dagwick-ack-note { margin-top: 6px; font-size: 12px; color: var(--dagwick-warn); }
 .dagwick-check-body { flex: 1; min-width: 0; }
 .dagwick-check-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dagwick-check-title { font-weight: 600; }

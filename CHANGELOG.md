@@ -30,6 +30,13 @@ All notable changes to this project are documented here. The format follows
   parse time Airflow records for each file.
 - New category, **Performance**.
 - `Context` gains `source` and `parse_seconds`.
+- **Acknowledge a check on purpose.** A `# dagwick: ack <check> -- <reason>`
+  comment in the DAG file marks a check the DAG breaks on purpose. It shows
+  greyed out with the reason, is left out of the score and of "Most common
+  issues", and is counted on the fleet page. Only 8 checks allow it
+  (see `docs/checks.md`); a reason is required.
+- New status `ack` in the API; check results gain `ack_reason` and `ack_note`.
+  `@check` gains `acknowledgeable` and `ack_hint`.
 
 ## [0.1.0] - 2026-11-08
 
