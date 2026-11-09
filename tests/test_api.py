@@ -39,6 +39,24 @@ def test_fleet_entry_lists_issues_worst_first(average):
     assert entry["is_paused"] is True and entry["owners"] == "data-team"
 
 
+def test_fleet_entry_lists_tags_sorted(shining):
+    entry = fleet_entry("d", False, "", score_dag(shining), tags=["ingest", "daily"])
+    assert entry["tags"] == ["daily", "ingest"]
+    assert fleet_entry("d", False, "", score_dag(shining))["tags"] == []
+
+
+def test_fleet_tags_degrade_to_none_when_the_database_fails(monkeypatch):
+    from airflow.utils import session as airflow_session
+
+    from dagwick import api
+
+    def broken():
+        raise RuntimeError("database is down")
+
+    monkeypatch.setattr(airflow_session, "create_session", broken)
+    assert api._fleet_tags(["demo"]) == {}
+
+
 def test_fleet_entry_for_perfect_dag_has_no_issues(shining):
     assert fleet_entry("demo_shining_pipeline", False, "", score_dag(shining))["issues"] == []
 
@@ -182,11 +200,11 @@ def test_file_facts_and_source_degrade_to_unknown_when_the_database_fails(monkey
 
 def test_fleet_entry_carries_tags(average):
     entry = fleet_entry("demo_average_pipeline", False, "", score_dag(average), tags=["b", "a"])
-    assert entry["tags"] == ["b", "a"]
+    assert entry["tags"] == ["a", "b"]  # sorted, so the CSV and filters are stable
     assert fleet_entry("x", False, "", score_dag(average))["tags"] == []
 
 
-def test_dag_tags_groups_by_dag(monkeypatch):
+def test_fleet_tags_groups_by_dag(monkeypatch):
     from contextlib import contextmanager
 
     from airflow.utils import session as airflow_session
@@ -205,17 +223,4 @@ def test_dag_tags_groups_by_dag(monkeypatch):
         yield FakeSession()
 
     monkeypatch.setattr(airflow_session, "create_session", fake_session)
-    assert api._dag_tags(["a", "b", "c"]) == {"a": ["finance", "team:data"], "b": ["x"]}
-
-
-def test_dag_tags_degrade_to_nothing_when_the_database_fails(monkeypatch, caplog):
-    from airflow.utils import session as airflow_session
-
-    from dagwick import api
-
-    def boom():
-        raise RuntimeError("database is down")
-
-    monkeypatch.setattr(airflow_session, "create_session", boom)
-    assert api._dag_tags(["a"]) == {}
-    assert "could not read DAG tags" in caplog.text
+    assert api._fleet_tags(["a", "b", "c"]) == {"a": ["finance", "team:data"], "b": ["x"]}
