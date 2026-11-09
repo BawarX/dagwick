@@ -229,3 +229,90 @@ def test_package_level_shims_are_still_found(shining):
     result = check(shining, "current_imports", source="from airflow.decorators import task\n")
     assert result["status"] == "warn"
     assert "airflow.sdk" in result["items"][0]
+
+
+def test_dag_function_bodies_run_at_parse_time():
+    assert lines(
+        """
+        from airflow.sdk import Variable, dag, task
+        @dag(schedule=None)
+        def pipeline():
+            bucket = Variable.get("bucket")
+            @task
+            def load():
+                return Variable.get("inside_task")
+            load()
+        pipeline()
+        """
+    ) == [5]
+
+
+def test_bare_dag_decorator_and_aliases_are_recognised():
+    assert lines(
+        """
+        from airflow.sdk import Variable
+        from airflow.sdk import dag as make_dag
+        from airflow import decorators
+        import airflow.sdk
+        @make_dag
+        def first():
+            Variable.get("a")
+        @decorators.dag(schedule=None)
+        def second():
+            Variable.get("b")
+        @airflow.sdk.dag()
+        def third():
+            Variable.get("c")
+        """
+    ) == [8, 11, 14]
+
+
+def test_other_decorators_and_unrelated_dag_names_stay_deferred():
+    assert (
+        lines(
+            """
+        from airflow.sdk import Variable, task
+        from mylib import dag
+        @task
+        def load():
+            Variable.get("a")
+        @dag
+        def not_airflow():
+            Variable.get("b")
+        def helper():
+            Variable.get("c")
+        """
+        )
+        == []
+    )
+
+
+def test_dag_functions_inside_deferred_code_stay_deferred():
+    assert (
+        lines(
+            """
+        from airflow.sdk import Variable, dag
+        def factory():
+            @dag(schedule=None)
+            def inner():
+                Variable.get("a")
+            return inner()
+        """
+        )
+        == []
+    )
+
+
+def test_taskflow_dag_reading_a_variable_fails_the_check(shining):
+    source = dedent(
+        """
+        from airflow.sdk import Variable, dag
+        @dag(schedule=None)
+        def pipeline():
+            Variable.get("bucket")
+        pipeline()
+        """
+    )
+    result = check(shining, "parse_time_variables", source=source)
+    assert result["status"] == "fail"
+    assert result["items"] == ["line 5"]

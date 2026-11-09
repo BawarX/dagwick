@@ -24,7 +24,7 @@ not apply to a DAG is left out of the score.
 | Structure | File named after the DAG (`<dag_id>.py`; skipped for files that define several DAGs) | 3 | no |
 | Structure | Uses current Airflow imports (no path Airflow itself marks as deprecated) | 3 | no |
 | Performance | Fast to parse (warn from 5 s, fail from 20 s) | 5 | no |
-| Performance | No `Variable.get` at parse time (top level, default args, decorator arguments) | 5 | no |
+| Performance | No `Variable.get` at parse time (top level, default args, decorator arguments, `@dag` function bodies) | 5 | no |
 
 ## Acknowledge a check on purpose
 
