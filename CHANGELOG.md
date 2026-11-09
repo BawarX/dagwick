@@ -46,6 +46,15 @@ All notable changes to this project are documented here. The format follows
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
 
+- New check, **Sensors free their worker slot**: warns when a sensor that
+  runs in poke mode typically waits a minute or more per run, holding a
+  worker slot the whole time. Which tasks are sensors comes from the
+  serialized DAG, how each one waits from the DAG source (`mode`,
+  `deferrable`, `*Async` classes, `default_args`, `@task.sensor`), and how
+  long it waits from the last 30 days of runs. Rescheduled sensors are proven
+  by their `task_reschedule` rows. When the evidence is unclear the check
+  skips instead of guessing. It can be acknowledged with a reason.
+- `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
 - **Score history** on the DAG tab: the score of each of the last 20 DAG
   versions, re-scored from the serialized DAG and source code Airflow keeps
   for every version, with which checks started or stopped passing at each

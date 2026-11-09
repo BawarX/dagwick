@@ -3,6 +3,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchScore, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
+import { RunHealth } from "./RunHealth";
 import { ScoreHistory } from "./ScoreHistory";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
 import { useSeason } from "./useSeason";
@@ -169,6 +170,8 @@ function Report({ report }: { report: ScoreReport }) {
           </div>
         ))}
       </section>
+
+      <RunHealth dagId={report.dag_id} />
 
       <ScoreHistory dagId={report.dag_id} />
 
