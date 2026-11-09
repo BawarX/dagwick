@@ -254,6 +254,25 @@ def health(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, 
         raise _server_error(f"failed to read run health for DAG {dag_id}", exc) from None
 
 
+def _fleet_tags(dag_ids: list[str]) -> dict[str, list[str]]:
+    """Every DAG's tags in one query; empty when they cannot be read."""
+    from airflow.models.dag import DagTag
+    from airflow.utils.session import create_session
+    from sqlalchemy import select
+
+    tags: dict[str, list[str]] = {}
+    try:
+        with create_session() as session:
+            for dag_id, name in session.execute(
+                select(DagTag.dag_id, DagTag.name).where(DagTag.dag_id.in_(dag_ids))
+            ).all():
+                tags.setdefault(dag_id, []).append(name)
+    except Exception:
+        log.exception("dagwick: could not read DAG tags for the fleet")
+        return {}
+    return tags
+
+
 def _fleet_health(dag_ids: list[str]) -> dict[str, dict[str, Any]]:
     from dagwick.health import fleet_success
 
@@ -291,6 +310,7 @@ def fleet_entry(
     owners: str,
     report: dict[str, Any],
     health: dict[str, Any] | None = None,
+    tags: list[str] | None = None,
 ) -> dict[str, Any]:
     """Compact per-DAG summary for the fleet page; issues sorted worst first."""
     issues = [
@@ -311,6 +331,7 @@ def fleet_entry(
         "counts": report["counts"],
         "is_paused": bool(is_paused),
         "owners": owners or "",
+        "tags": sorted(tags or []),
         "issues": issues,
         "health": health or {"runs": 0, "success_rate": None},
     }
@@ -337,11 +358,16 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
         dag_ids = [row[0] for row in rows]
         facts = _file_facts(dag_ids)
         health = _fleet_health(dag_ids)
+        tags = _fleet_tags(dag_ids)
         dags = []
         for dag_id, is_paused, owners, fileloc in rows:
             report = _score_by_id(dag_id, per_file.get(fileloc), facts.get(dag_id, (None, None)))
             if report is not None:
-                dags.append(fleet_entry(dag_id, is_paused, owners, report, health.get(dag_id)))
+                dags.append(
+                    fleet_entry(
+                        dag_id, is_paused, owners, report, health.get(dag_id), tags.get(dag_id)
+                    )
+                )
     except Exception as exc:
         raise _server_error("failed to build fleet view", exc) from None
     return {"dags": dags, "truncated": len(rows) >= FLEET_LIMIT}
