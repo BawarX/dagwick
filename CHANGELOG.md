@@ -6,37 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.2.0] - unreleased
+### Fixed
 
-### Added
-
-- **Seasonal moods (experimental, off by default).** During holidays the lantern dresses up and the page
-  header gets an animated scene: falling snow at Christmas, bats at Halloween,
-  bonfires and govend dancers at Newroz, Kurdish letters on Kurdish Language
-  Day, lanterns at Ramadan, kulîçe at Eid, fireworks at New Year. Each mood
-  shows a short English greeting. Decoration only: scores never change.
-- One optional, non-secret setting: `[dagwick] seasonal_moods`
-  (`off` by default | `auto` | a list of moods). Viewers can also hide moods for themselves.
-- Preview any mood with `?dagwick_mood=<id>`.
-- New check, **File named after the DAG**: warns when a DAG's file is not
-  `<dag_id>.py`, so the code is easy to find from the DAG name. Files that
-  define several DAGs (DAG factories) are skipped.
-- Checks can take an optional second parameter, `context`, with facts that
-  are not on the DAG itself (for example how many DAGs share its file).
-- New checks that read the DAG file's source as Airflow stored it, without
-  running it: **No `Variable.get` at parse time** and **Uses current Airflow
-  imports** (paths Airflow itself marks as deprecated, with the new location).
-- New check, **Fast to parse**: warns from 5 s and fails from 20 s, using the
-  parse time Airflow records for each file.
-- New category, **Performance**.
-- `Context` gains `source` and `parse_seconds`.
-- **Acknowledge a check on purpose.** A `# dagwick: ack <check> -- <reason>`
-  comment in the DAG file marks a check the DAG breaks on purpose. It shows
-  greyed out with the reason, is left out of the score and of "Most common
-  issues", and is counted on the fleet page. Only 8 checks allow it
-  (see `docs/checks.md`); a reason is required.
-- New status `ack` in the API; check results gain `ack_reason` and `ack_note`.
-  `@check` gains `acknowledgeable` and `ack_hint`.
+- Fleet headline no longer contradicts the stats: it describes the average
+  grade and then states how many DAGs need care.
+- "need care" now counts grades C to F, so it and "healthy (A–B)" add up to
+  the number of DAGs.
+- Layout follows the width Dagwick actually has (container queries), so the
+  DAG tab inside Airflow's split panel gets the narrow layout.
+- Narrow screens: grade labels are no longer cut off, the lamp and score ring
+  sit side by side, and the fleet's "Most common issues" moves below the list.
+- Category cards no longer leave one card alone on the last row.
+- Every failing check opens with its fix by default.
 
 ## [0.1.0] - 2026-11-08
 
