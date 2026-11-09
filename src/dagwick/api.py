@@ -171,6 +171,26 @@ def static(name: str) -> FileResponse:
     )
 
 
+@app.get("/api/health", dependencies=[_require_dag_read()])
+def health(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, Any]:
+    from dagwick.health import dag_health
+
+    try:
+        return dag_health(dag_id)
+    except Exception as exc:
+        raise _server_error(f"failed to read run health for DAG {dag_id}", exc) from None
+
+
+def _fleet_health(dag_ids: list[str]) -> dict[str, dict[str, Any]]:
+    from dagwick.health import fleet_success
+
+    try:
+        return fleet_success(dag_ids)
+    except Exception:
+        log.exception("dagwick: could not read run health for the fleet")
+        return {}
+
+
 @app.get("/api/score", dependencies=[_require_dag_read()])
 def score(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, Any]:
     try:
@@ -183,7 +203,11 @@ def score(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, A
 
 
 def fleet_entry(
-    dag_id: str, is_paused: bool, owners: str, report: dict[str, Any]
+    dag_id: str,
+    is_paused: bool,
+    owners: str,
+    report: dict[str, Any],
+    health: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compact per-DAG summary for the fleet page; issues sorted worst first."""
     issues = [
@@ -205,6 +229,7 @@ def fleet_entry(
         "is_paused": bool(is_paused),
         "owners": owners or "",
         "issues": issues,
+        "health": health or {"runs": 0, "success_rate": None},
     }
 
 
@@ -226,12 +251,14 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
                 .limit(FLEET_LIMIT)
             ).all()
         per_file = _dags_per_file()
-        facts = _file_facts([row[0] for row in rows])
+        dag_ids = [row[0] for row in rows]
+        facts = _file_facts(dag_ids)
+        health = _fleet_health(dag_ids)
         dags = []
         for dag_id, is_paused, owners, fileloc in rows:
             report = _score_by_id(dag_id, per_file.get(fileloc), facts.get(dag_id, (None, None)))
             if report is not None:
-                dags.append(fleet_entry(dag_id, is_paused, owners, report))
+                dags.append(fleet_entry(dag_id, is_paused, owners, report, health.get(dag_id)))
     except Exception as exc:
         raise _server_error("failed to build fleet view", exc) from None
     return {"dags": dags, "truncated": len(rows) >= FLEET_LIMIT}

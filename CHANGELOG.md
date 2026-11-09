@@ -46,6 +46,14 @@ All notable changes to this project are documented here. The format follows
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
 
+- **Run health** on the DAG tab, next to the score but not part of it: share
+  of runs that succeeded, share of tasks that needed a retry, the typical
+  run time with its trend (last 7 days against the rest of the window) and
+  the last run, all over the last 30 days. The fleet page shows each DAG's
+  success rate. Read from the runs Airflow already records; nothing is stored.
+- New endpoint `GET /dagwick/api/health?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
+
 ### Fixed
 
 - Fleet headline no longer contradicts the stats: it describes the average

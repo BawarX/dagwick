@@ -101,6 +101,17 @@ html.dark .dagwick {
 .dagwick-btn:disabled { opacity: .6; cursor: progress; }
 .dagwick-btn:focus-visible, .dagwick-tab:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
 
+.dagwick-health { margin: 16px 0; }
+.dagwick-health-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.dagwick-health-head .dagwick-muted { font-size: 12px; }
+.dagwick-health .dagwick-cats { margin: 8px 0 0; }
+.dagwick-health-empty { margin: 6px 0 0; font-size: 13px; }
+.dagwick-htile-value { font-size: 20px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.dagwick-htile-sub { font-size: 12px; margin-top: 2px; }
+.dagwick-htile--pass .dagwick-htile-value { color: var(--dagwick-pass); }
+.dagwick-htile--warn .dagwick-htile-value { color: var(--dagwick-warn); }
+.dagwick-htile--fail .dagwick-htile-value { color: var(--dagwick-fail); }
+.dagwick-health-low { color: var(--dagwick-fail); }
 .dagwick-cats { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
 .dagwick-cat { flex: 1 1 160px; padding: 12px 14px; border: 1px solid var(--dagwick-border); border-radius: 12px; background: var(--dagwick-bg); }
 .dagwick-cat-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }

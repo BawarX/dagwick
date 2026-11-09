@@ -213,6 +213,11 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                             : `${d.counts.fail} failing · ${d.counts.warn} to improve`}
                         </span>
                         {d.counts.ack > 0 && <span>{d.counts.ack} acknowledged</span>}
+                        {d.health && d.health.runs > 0 && d.health.success_rate !== null && (
+                          <span className={d.health.success_rate < 90 ? "dagwick-health-low" : undefined}>
+                            {d.health.success_rate}% of {d.health.runs} runs succeeded
+                          </span>
+                        )}
                       </div>
                       {d.issues.length > 0 && (
                         <div className="dagwick-row-issues">

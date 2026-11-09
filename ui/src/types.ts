@@ -35,6 +35,27 @@ export interface FleetIssue {
   gain: number;
 }
 
+export interface RunHealth {
+  window_days: number;
+  runs: number;
+  succeeded: number;
+  failed: number;
+  success_rate: number | null;
+  tasks_finished: number;
+  tasks_retried: number;
+  retry_rate: number | null;
+  median_seconds: number | null;
+  duration_trend_pct: number | null;
+  last_state: string | null;
+  last_end: string | null;
+  truncated: boolean;
+}
+
+export interface FleetHealth {
+  runs: number;
+  success_rate: number | null;
+}
+
 export interface FleetDag {
   dag_id: string;
   score: number;
@@ -43,6 +64,7 @@ export interface FleetDag {
   is_paused: boolean;
   owners: string;
   issues: FleetIssue[];
+  health?: FleetHealth;
 }
 
 export interface FleetReport {
