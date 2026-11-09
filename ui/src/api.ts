@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { API_BASE } from "./brand";
-import type { FleetReport, ScoreReport } from "./types";
+import type { FleetReport, RunHealth, ScoreReport } from "./types";
 
 async function get<T>(path: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, document.baseURI);
@@ -22,6 +22,9 @@ async function get<T>(path: string, params: Record<string, string>, signal?: Abo
 
 export const fetchScore = (dagId: string, signal?: AbortSignal) =>
   get<ScoreReport>("/score", { dag_id: dagId }, signal);
+
+export const fetchHealth = (dagId: string, signal?: AbortSignal) =>
+  get<RunHealth>("/health", { dag_id: dagId }, signal);
 
 export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {}, signal);
 
