@@ -20,7 +20,7 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 - [x] **`dagwick check dags/` command and pre-commit hook.** Grade DAGs before
       they are merged, and fail a pull request when a DAG scores below a chosen
       grade.
-- [ ] **Score history.** Airflow 3 keeps every DAG version, so Dagwick can score
+- [x] **Score history.** Airflow 3 keeps every DAG version, so Dagwick can score
       past versions and show a trend, without storing anything itself.
 - [ ] **Real-world health next to code quality.** Recent success rate, retry
       frequency and duration trends, read from the runs Airflow already records.

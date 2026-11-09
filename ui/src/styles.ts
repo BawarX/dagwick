@@ -213,7 +213,24 @@ html.dark .dagwick {
 
 @container dagwick (max-width: 720px) {
   .dagwick-goal-picks { margin-left: 0; }
+  .dagwick-history { grid-template-columns: 1fr; }
 }
+
+/* Score history */
+.dagwick-section { margin: 16px 0; }
+.dagwick-section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.dagwick-section-head .dagwick-muted { font-size: 12px; }
+.dagwick-section-empty { margin: 6px 0 0; font-size: 13px; }
+.dagwick-history { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; margin-top: 8px; padding: 12px 14px; border: 1px solid var(--dagwick-border); border-radius: 12px; background: var(--dagwick-bg); }
+.dagwick-spark { width: 100%; height: 64px; display: block; }
+.dagwick-spark-dot { fill: var(--dagwick-accent); }
+.dagwick-spark-dot--A, .dagwick-spark-dot--B { fill: var(--dagwick-pass); }
+.dagwick-spark-dot--D, .dagwick-spark-dot--F { fill: var(--dagwick-fail); }
+.dagwick-changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.dagwick-changes li { display: flex; flex-direction: column; gap: 2px; }
+.dagwick-change-head { display: flex; gap: 8px; align-items: baseline; }
+.dagwick-up { color: var(--dagwick-pass); }
+.dagwick-down { color: var(--dagwick-fail); }
 
 /* Fleet */
 .dagwick-badge--sm { min-width: 20px; height: 20px; font-size: 11px; border-radius: 6px; }

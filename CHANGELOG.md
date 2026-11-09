@@ -55,6 +55,14 @@ All notable changes to this project are documented here. The format follows
   by their `task_reschedule` rows. When the evidence is unclear the check
   skips instead of guessing. It can be acknowledged with a reason.
 - `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
+- **Score history** on the DAG tab: the score of each of the last 20 DAG
+  versions, re-scored from the serialized DAG and source code Airflow keeps
+  for every version, with which checks started or stopped passing at each
+  step. Nothing is stored by Dagwick; each version's score is cached in
+  memory since a version never changes. Only code checks count (parse time
+  and other run-time facts describe the present, not past versions).
+- New endpoint `GET /dagwick/api/history?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
 
 - **`dagwick check` command** and a **pre-commit hook**: grade DAG files
   before they are merged, with the same checks as the UI (acknowledgements,

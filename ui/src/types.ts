@@ -56,6 +56,20 @@ export interface FleetHealth {
   success_rate: number | null;
 }
 
+export interface HistoryPoint {
+  version: number;
+  created_at: string | null;
+  score: number;
+  grade: Grade;
+  better: string[];
+  worse: string[];
+}
+
+export interface ScoreHistory {
+  versions: HistoryPoint[];
+  truncated: boolean;
+}
+
 export interface FleetDag {
   dag_id: string;
   score: number;

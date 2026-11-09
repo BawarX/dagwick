@@ -4,6 +4,7 @@ import { fetchScore, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
 import { RunHealth } from "./RunHealth";
+import { ScoreHistory } from "./ScoreHistory";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
 import { useSeason } from "./useSeason";
 import type { CheckResult, Grade, ScoreReport, Status } from "./types";
@@ -171,6 +172,8 @@ function Report({ report }: { report: ScoreReport }) {
       </section>
 
       <RunHealth dagId={report.dag_id} />
+
+      <ScoreHistory dagId={report.dag_id} />
 
       <section className="dagwick-list">
         <div className="dagwick-tabs" role="tablist">
