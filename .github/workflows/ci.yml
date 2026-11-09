@@ -46,9 +46,10 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
-      - name: UI bundle matches its source
+      - name: UI tests pass and the bundle matches its source
         run: |
           npm ci --prefix ui --no-audit --no-fund
+          npm test --prefix ui
           npm run build --prefix ui
           git diff --exit-code -- src/dagwick/static/
 

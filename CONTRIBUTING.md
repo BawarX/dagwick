@@ -10,6 +10,7 @@ You need [uv](https://docs.astral.sh/uv/) and Node.js 20+.
 uv sync                 # dev environment (Airflow is installed here for tests only)
 uv run pytest           # tests with a 70 % coverage gate
 uv run ruff check       # lint
+npm test --prefix ui    # UI tests (seasonal mood dates)
 ./dev/run.sh            # build the UI and start a sandbox Airflow on http://localhost:8080
 ```
 
@@ -32,6 +33,7 @@ in a browser at 1280 × 640 and take a screenshot (or use headless Chrome with
    `src/dagwick/static/dagwick.js`.
 6. **Document user-facing changes** in `CHANGELOG.md` under *Unreleased*.
 7. **Report security issues privately** (see `SECURITY.md`).
+8. **Releases** are done by maintainers; the steps are in `RELEASING.md`.
 
 ## Writing a check
 

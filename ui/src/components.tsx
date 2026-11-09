@@ -2,6 +2,7 @@ import { type ComponentType, type ReactNode, useEffect, useRef, useState } from 
 
 import { BRAND, DAG_TAB_ROUTE } from "./brand";
 import { Lamp, moodFor } from "./Lamp";
+import type { SeasonId } from "./season";
 import type { Grade } from "./types";
 
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -94,11 +95,11 @@ const LAMP_SAYS: Record<Grade, string> = {
   F: "It's dark in here.",
 };
 
-export function Mascot({ grade, size = 150 }: { grade: Grade; size?: number }) {
+export function Mascot({ grade, size = 150, season }: { grade: Grade; size?: number; season?: SeasonId }) {
   return (
     <div className="dagwick-mascot">
       <div className="dagwick-bubble">{LAMP_SAYS[grade]}</div>
-      <Lamp mood={moodFor(grade)} size={size} />
+      <Lamp mood={moodFor(grade)} size={size} season={season} />
     </div>
   );
 }

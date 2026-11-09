@@ -26,6 +26,8 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match version $version in src/dagwick/__init__.py"
             exit 1
           }
+      - name: The changelog has dated notes for this version
+        run: python3 scripts/release_notes.py "$GITHUB_REF_NAME"
       - name: PyPI accepts every classifier
         run: |
           uvx --with trove-classifiers==2026.9.21.13 python -c '

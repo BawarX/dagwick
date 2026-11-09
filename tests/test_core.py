@@ -77,3 +77,23 @@ def test_reregistering_overrides(isolated_registry):
 def test_rejects_non_positive_weight():
     with pytest.raises(ValueError):
         check(id="w", title="w", category=Category.STRUCTURE, weight=0, fix="")
+
+
+def test_checks_may_ask_for_context(isolated_registry):
+    from dagwick.core import Context
+
+    seen = {}
+
+    @check(id="ctx", title="Ctx", category=Category.STRUCTURE, weight=1, fix="")
+    def ctx(dag, context):
+        seen["n"] = context.dags_in_file
+        return Finding(Status.PASS, "")
+
+    @check(id="plain", title="Plain", category=Category.STRUCTURE, weight=1, fix="")
+    def plain(dag):  # old-style checks keep working
+        return Finding(Status.PASS, "")
+
+    score_dag(FakeDag(), Context(dags_in_file=3))
+    assert seen["n"] == 3
+    score_dag(FakeDag())
+    assert seen["n"] is None

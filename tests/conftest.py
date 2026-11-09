@@ -29,12 +29,12 @@ def _serialized(filename: str):
 
 @pytest.fixture(scope="session")
 def shining():
-    return _serialized("shining_dag.py")
+    return _serialized("demo_shining_pipeline.py")
 
 
 @pytest.fixture(scope="session")
 def average():
-    return _serialized("average_dag.py")
+    return _serialized("demo_average_pipeline.py")
 
 
 @pytest.fixture(scope="session")

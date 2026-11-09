@@ -12,7 +12,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
 from dagwick import __version__
-from dagwick.core import registered_checks, score_dag
+from dagwick.checks.performance import parse_status
+from dagwick.core import Context, registered_checks, score_dag
 
 log = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"
@@ -62,17 +63,89 @@ class _ScoreCache:
 _cache = _ScoreCache()
 
 
-def _score_by_id(dag_id: str) -> dict[str, Any] | None:
+def _dags_per_file(filelocs: list[str] | None = None) -> dict[str, int]:
+    """How many active DAGs each file defines (one grouped query)."""
+    from airflow.models.dag import DagModel
+    from airflow.utils.session import create_session
+    from sqlalchemy import func, select
+
+    query = select(DagModel.fileloc, func.count()).where(DagModel.is_stale.is_(False))
+    if filelocs is not None:
+        query = query.where(DagModel.fileloc.in_(filelocs))
+    with create_session() as session:
+        return dict(session.execute(query.group_by(DagModel.fileloc)).all())
+
+
+FileFacts = tuple[str | None, float | None]
+
+
+def _file_facts(dag_ids: list[str]) -> dict[str, FileFacts]:
+    from airflow.models.dag import DagModel
+    from airflow.models.dagcode import DagCode
+    from airflow.utils.session import create_session
+    from sqlalchemy import select
+
+    facts: dict[str, FileFacts] = {}
+    try:
+        with create_session() as session:
+            parse_seconds = dict(
+                session.execute(
+                    select(DagModel.dag_id, DagModel.last_parse_duration).where(
+                        DagModel.dag_id.in_(dag_ids)
+                    )
+                ).all()
+            )
+            hashes: dict[str, str] = {}
+            for dag_id, code_hash in session.execute(
+                select(DagCode.dag_id, DagCode.source_code_hash)
+                .where(DagCode.dag_id.in_(dag_ids))
+                .order_by(DagCode.last_updated)
+            ).all():
+                hashes[dag_id] = code_hash
+    except Exception:
+        log.exception("dagwick: could not read source hashes and parse times")
+        return {}
+    for dag_id in dag_ids:
+        facts[dag_id] = (hashes.get(dag_id), parse_seconds.get(dag_id))
+    return facts
+
+
+def _source(dag_id: str) -> str | None:
+    from airflow.models.dagcode import DagCode
+
+    try:
+        return DagCode.code(dag_id)
+    except Exception:
+        log.exception("dagwick: could not read the source of DAG %s", dag_id)
+        return None
+
+
+def _score_by_id(
+    dag_id: str, dags_in_file: int | None = None, facts: FileFacts | None = None
+) -> dict[str, Any] | None:
     from airflow.models.serialized_dag import SerializedDagModel
 
     sdm = SerializedDagModel.get(dag_id)
     if sdm is None:
         return None
-    cached = _cache.get(dag_id, sdm.dag_hash)
+    dag = sdm.dag
+    if dags_in_file is None and getattr(dag, "fileloc", None):
+        dags_in_file = _dags_per_file([dag.fileloc]).get(dag.fileloc)
+    if facts is None:
+        facts = _file_facts([dag_id]).get(dag_id, (None, None))
+    source_hash, parse_seconds = facts
+    parse_band = parse_status(parse_seconds).value
+    key = f"{sdm.dag_hash}:{dags_in_file}:{source_hash}:{parse_band}"
+    cached = _cache.get(dag_id, key)
     if cached is not None:
         return cached
-    report = score_dag(sdm.dag)
-    _cache.put(dag_id, sdm.dag_hash, report)
+    context = Context(
+        dags_in_file=dags_in_file,
+        source=_source(dag_id) if source_hash else None,
+        parse_seconds=parse_seconds,
+    )
+    report = score_dag(dag, context)
+    _cache.put(dag_id, key, report)
     return report
 
 
@@ -147,19 +220,29 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
         allowed = get_auth_manager().get_authorized_dag_ids(user=user, method="GET")
         with create_session() as session:
             rows = session.execute(
-                select(DagModel.dag_id, DagModel.is_paused, DagModel.owners)
+                select(DagModel.dag_id, DagModel.is_paused, DagModel.owners, DagModel.fileloc)
                 .where(DagModel.is_stale.is_(False), DagModel.dag_id.in_(allowed))
                 .order_by(DagModel.dag_id)
                 .limit(FLEET_LIMIT)
             ).all()
+        per_file = _dags_per_file()
+        facts = _file_facts([row[0] for row in rows])
         dags = []
-        for dag_id, is_paused, owners in rows:
-            report = _score_by_id(dag_id)
+        for dag_id, is_paused, owners, fileloc in rows:
+            report = _score_by_id(dag_id, per_file.get(fileloc), facts.get(dag_id, (None, None)))
             if report is not None:
                 dags.append(fleet_entry(dag_id, is_paused, owners, report))
     except Exception as exc:
         raise _server_error("failed to build fleet view", exc) from None
     return {"dags": dags, "truncated": len(rows) >= FLEET_LIMIT}
+
+
+@app.get("/api/config", dependencies=[_require_login()])
+def config() -> dict[str, Any]:
+    """Non-secret UI settings."""
+    from dagwick.settings import seasonal_moods
+
+    return {"seasonal_moods": seasonal_moods()}
 
 
 @app.get("/api/checks", dependencies=[_require_login()])

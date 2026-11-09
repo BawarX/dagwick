@@ -3,6 +3,8 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchScore, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
+import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
+import { useSeason } from "./useSeason";
 import type { CheckResult, Grade, ScoreReport, Status } from "./types";
 
 export const CATEGORY_LABEL: Record<string, string> = {
@@ -11,6 +13,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   scheduling: "Scheduling",
   ownership: "Ownership",
   structure: "Structure",
+  performance: "Performance",
 };
 const STATUS_ORDER: Record<Status, number> = { fail: 0, warn: 1, pass: 2, skip: 3 };
 const HEADLINE: Record<Grade, string> = {
@@ -68,6 +71,8 @@ function nextGoal(report: ScoreReport) {
 }
 
 function Report({ report }: { report: ScoreReport }) {
+  const seasonState = useSeason();
+  const season = seasonState.season;
   const attention = report.counts.fail + report.counts.warn;
   const [filter, setFilter] = useState<Filter>(attention ? "attention" : "all");
   const [openIds, setOpenIds] = useState<Set<string>>(() => {
@@ -103,9 +108,13 @@ function Report({ report }: { report: ScoreReport }) {
 
   return (
     <>
-      <section className={`dagwick-hero dagwick-grade-${report.grade}`}>
-        <Mascot grade={report.grade} />
+      <section
+        className={`dagwick-hero dagwick-grade-${report.grade}${season ? ` dagwick-season dagwick-season-${season.id}` : ""}`}
+      >
+        <SeasonEffects season={season} />
+        <Mascot grade={report.grade} season={season?.id} />
         <div className="dagwick-hero-text">
+          <SeasonGreeting state={seasonState} />
           {brandEyebrow("DAG health")}
           <h2 className="dagwick-dag">{report.dag_id}</h2>
           <p className="dagwick-headline">{HEADLINE[report.grade]}</p>

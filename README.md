@@ -21,6 +21,9 @@ Using Docker? Add `dagwick` to your Airflow image's `requirements.txt`.
 
 That's it. There is nothing to configure.
 
+Experimental and off by default: the lantern can dress up for holidays like
+Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
+
 ![The Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
 
 ![The Dagwick fleet page](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/fleet.png)
@@ -44,7 +47,8 @@ Then restart the api-server.
 
 ## More
 
+- [Seasonal moods, and how to turn them off](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)
 - [What it checks, and how to add your own checks](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md)
 - [Roadmap](https://github.com/ardalan-jalal/dagwick/blob/main/ROADMAP.md)
-- [Security](https://github.com/ardalan-jalal/dagwick/blob/main/SECURITY.md) · [Contributing](https://github.com/ardalan-jalal/dagwick/blob/main/CONTRIBUTING.md) · [Changelog](https://github.com/ardalan-jalal/dagwick/blob/main/CHANGELOG.md)
+- [Security](https://github.com/ardalan-jalal/dagwick/blob/main/SECURITY.md) · [Contributing](https://github.com/ardalan-jalal/dagwick/blob/main/CONTRIBUTING.md) · [Changelog](https://github.com/ardalan-jalal/dagwick/blob/main/CHANGELOG.md) · [Releasing](https://github.com/ardalan-jalal/dagwick/blob/main/RELEASING.md)
 - License: [MIT](https://github.com/ardalan-jalal/dagwick/blob/main/LICENSE)

@@ -3,6 +3,8 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchFleet, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
+import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
+import { useSeason } from "./useSeason";
 import type { FleetDag, Grade } from "./types";
 
 const GRADES: Grade[] = ["A", "B", "C", "D", "F"];
@@ -48,6 +50,8 @@ export function FleetView() {
 }
 
 function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
+  const seasonState = useSeason();
+  const season = seasonState.season;
   const [query, setQuery] = useState("");
   const [grade, setGrade] = useState<Grade>();
   const [issue, setIssue] = useState<{ id: string; title: string }>();
@@ -92,9 +96,13 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
 
   return (
     <>
-      <section className={`dagwick-hero dagwick-grade-${avgGrade}`}>
-        <Mascot grade={avgGrade} />
+      <section
+        className={`dagwick-hero dagwick-grade-${avgGrade}${season ? ` dagwick-season dagwick-season-${season.id}` : ""}`}
+      >
+        <SeasonEffects season={season} />
+        <Mascot grade={avgGrade} season={season?.id} />
         <div className="dagwick-hero-text">
+          <SeasonGreeting state={seasonState} />
           {brandEyebrow("Fleet health")}
           <h2 className="dagwick-dag">All DAGs</h2>
           <p className="dagwick-headline">

@@ -25,12 +25,21 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 - [ ] **Real-world health next to code quality.** Recent success rate, retry
       frequency and duration trends, read from the runs Airflow already records.
 - [ ] **More checks:**
-  - [ ] `Variable.get` at the top level of a DAG file (slows every parse)
+  - [x] `Variable.get` at the top level of a DAG file (slows every parse)
   - [ ] sensors that hold a worker slot instead of using `reschedule` mode or a
-        deferrable operator
-  - [ ] deprecated operators
+        deferrable operator (needs run history: the serialized DAG does not keep
+        a sensor's `mode` or `deferrable`)
+  - [x] deprecated operators (any import path Airflow marks as deprecated)
   - [ ] hard-coded secrets in DAG code
-  - [ ] slow DAG parse times
+  - [x] slow DAG parse times
+
+- [x] **Seasonal moods, experimental and off by default** (0.2.0): Newroz, Eid, Kurdish Language Day, Christmas,
+      New Year, Halloween, Ramadan and Dagwick's birthday.
+- [ ] **Make seasonal moods production-ready** and turn them on by default.
+- [ ] **Airflow-wide seasonal themes** (config only, `themes/`): realistic snow,
+      then Halloween, Newroz and Kurdish Language Day.
+- [ ] **More moods:** the Lantern Festival, Diwali, Yazidi New Year
+      (Çarşema Sor).
 
 ## 3. Grow it (0.3+)
 
