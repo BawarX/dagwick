@@ -5,13 +5,14 @@ from __future__ import annotations
 import logging
 import threading
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-from dagwick import __version__, settings
+from dagwick import __version__, settings, themes
 from dagwick.checks._sensors import sensor_task_ids
 from dagwick.checks.performance import SLOW_POKE_SECONDS, parse_status
 from dagwick.core import Context, registered_checks, score_dag
@@ -380,6 +381,13 @@ def config() -> dict[str, Any]:
         "seasonal_moods": settings.seasonal_moods(),
         "grades": dict(settings.scoring().grades),
     }
+
+
+@app.get("/api/themes", dependencies=[_require_login()])
+def list_themes() -> list[dict[str, Any]]:
+    """Seasonal themes, their dates, and which are in season today (server date)."""
+    today = date.today()
+    return [t.info(today) for t in themes.THEMES]
 
 
 @app.get("/api/checks", dependencies=[_require_login()])

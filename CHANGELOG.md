@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Seasonal themes for all of Airflow, built in.** A new Themes tab next to
+  Fleet lists them. During a theme's dates Dagwick adds it to every Airflow page
+  and removes it afterwards, with nothing to set in Airflow's configuration. The
+  first theme is Christmas snow (18 December to 2 January): snowflakes drift
+  over Airflow, some carried sideways by the wind, with a snow drift along the
+  bottom. Clicks go through the snow, and viewers who prefer reduced motion get
+  still snow. Each viewer can turn a theme off or preview it; the choice is
+  saved in their browser, and Dagwick still writes nothing to Airflow's
+  database. Any theme the admin already set in Airflow is kept.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,
   tags, paused, score, grade, failing and warning checks, runs and success

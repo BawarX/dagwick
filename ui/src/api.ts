@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { API_BASE } from "./brand";
+import type { ThemeInfo } from "./themes";
 import type { FleetReport, RunHealth, ScoreHistory, ScoreReport } from "./types";
 
 async function get<T>(path: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
@@ -30,6 +31,8 @@ export const fetchHistory = (dagId: string, signal?: AbortSignal) =>
   get<ScoreHistory>("/history", { dag_id: dagId }, signal);
 
 export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {}, signal);
+
+export const fetchThemes = (signal?: AbortSignal) => get<ThemeInfo[]>("/themes", {}, signal);
 
 export interface UiConfig {
   /** "auto", "off", or the list of enabled mood ids. */

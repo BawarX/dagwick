@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 from airflow.plugins_manager import AirflowPlugin
 
 from dagwick.api import app
+from dagwick.themes import ThemeMiddleware
 
 BRAND = "Dagwick"
 PREFIX = "/dagwick"
@@ -16,6 +17,11 @@ class DagwickPlugin(AirflowPlugin):
 
     fastapi_apps: ClassVar[list[dict[str, Any]]] = [
         {"app": app, "url_prefix": PREFIX, "name": BRAND},
+    ]
+
+    # Adds the seasonal theme (for example Christmas snow) to Airflow's UI config reply.
+    fastapi_root_middlewares: ClassVar[list[dict[str, Any]]] = [
+        {"middleware": ThemeMiddleware, "name": "dagwick-themes"},
     ]
 
     react_apps: ClassVar[list[dict[str, Any]]] = [
