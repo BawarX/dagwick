@@ -15,7 +15,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   structure: "Structure",
   performance: "Performance",
 };
-const STATUS_ORDER: Record<Status, number> = { fail: 0, warn: 1, pass: 2, skip: 3 };
+const STATUS_ORDER: Record<Status, number> = { fail: 0, warn: 1, pass: 2, ack: 3, skip: 4 };
 const HEADLINE: Record<Grade, string> = {
   A: "Shining bright. This DAG is in great shape.",
   B: "A steady flame. A few small things to polish.",
@@ -122,6 +122,7 @@ function Report({ report }: { report: ScoreReport }) {
             <Chip status="pass" n={report.counts.pass} label="passing" />
             <Chip status="warn" n={report.counts.warn} label="to improve" />
             <Chip status="fail" n={report.counts.fail} label="failing" />
+            {report.counts.ack > 0 && <Chip status="ack" n={report.counts.ack} label="acknowledged" />}
           </div>
         </div>
         <div className="dagwick-hero-side">
@@ -196,7 +197,7 @@ function Report({ report }: { report: ScoreReport }) {
   );
 }
 
-const ICON: Record<Status, string> = { pass: "✓", warn: "!", fail: "✕", skip: "–" };
+const ICON: Record<Status, string> = { pass: "✓", warn: "!", fail: "✕", skip: "–", ack: "~" };
 const MAX_ITEMS = 8;
 
 function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean; onToggle: () => void }) {
@@ -221,11 +222,18 @@ function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean
           <span className="dagwick-check-title">{check.title}</span>
           <span className="dagwick-tag">{CATEGORY_LABEL[check.category] ?? check.category}</span>
           <span className="dagwick-pts">
-            {check.status === "skip" ? "n/a" : `${check.points} / ${check.weight}`}
+            {check.status === "skip" || check.status === "ack" ? "n/a" : `${check.points} / ${check.weight}`}
             {actionable && <span className="dagwick-caret">{open ? "▾" : "▸"}</span>}
           </span>
         </button>
         <div className="dagwick-check-msg">{check.message}</div>
+        {check.ack_reason && (
+          <div className="dagwick-ack">
+            <span className="dagwick-ack-label">Acknowledged</span>
+            {check.ack_reason}
+          </div>
+        )}
+        {check.ack_note && <div className="dagwick-ack-note">{check.ack_note}</div>}
         {open && actionable && (
           <div className="dagwick-detail">
             {check.items.length > 0 && (
@@ -274,7 +282,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 function summarise(checks: CheckResult[]) {
   const by = new Map<string, { earned: number; possible: number }>();
   for (const c of checks) {
-    if (c.status === "skip") continue;
+    if (c.status === "skip" || c.status === "ack") continue;
     const v = by.get(c.category) ?? { earned: 0, possible: 0 };
     v.earned += c.points;
     v.possible += c.weight;

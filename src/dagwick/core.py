@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import inspect
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from importlib.metadata import entry_points
@@ -26,6 +26,7 @@ class Status(str, Enum):  # str mixin: StrEnum needs Python 3.11
     WARN = "warn"  # half the points: works, but could be better
     FAIL = "fail"
     SKIP = "skip"  # check does not apply to this DAG; excluded from the score
+    ACK = "ack"  # broken on purpose, with a reason in the DAG file; excluded from the score
 
 
 class Category(str, Enum):
@@ -75,6 +76,8 @@ class CheckSpec:
     func: Callable[..., Finding] = field(compare=False, repr=False)
     example: str = ""
     wants_context: bool = False
+    acknowledgeable: bool = False
+    ack_hint: str = ""
 
 
 @dataclass(frozen=True)
@@ -89,6 +92,8 @@ class CheckResult:
     points: float
     items: list[str]
     example: str
+    ack_reason: str = ""  # why the DAG breaks this check on purpose (status "ack")
+    ack_note: str = ""  # why a "# dagwick: ack" comment for this check was ignored
 
 
 _REGISTRY: dict[str, CheckSpec] = {}
@@ -96,12 +101,24 @@ _plugins_loaded = False
 
 
 def check(
-    *, id: str, title: str, category: Category, weight: int, fix: str, example: str = ""
+    *,
+    id: str,
+    title: str,
+    category: Category,
+    weight: int,
+    fix: str,
+    example: str = "",
+    acknowledgeable: bool = False,
+    ack_hint: str = "",
 ) -> Callable[[Callable[[Any], Finding]], Callable[[Any], Finding]]:
     """Register a DAG check.
 
     ``fix`` is a short, actionable hint shown when the check does not pass;
     ``example`` is an optional code snippet showing the fix.
+    ``acknowledgeable`` lets a DAG mark the check as broken on purpose with a
+    ``# dagwick: ack <id> -- <reason>`` comment; only allow it where there is a
+    legitimate reason to break the check. ``ack_hint`` says what the reason must
+    explain (for example where failures are alerted instead).
     A check function takes the DAG, and optionally a :class:`Context` as a
     second parameter.
     Re-registering the same ``id`` replaces the previous check, which lets a
@@ -112,7 +129,18 @@ def check(
 
     def decorator(func: Callable[..., Finding]) -> Callable[..., Finding]:
         wants_context = len(inspect.signature(func).parameters) >= 2
-        _REGISTRY[id] = CheckSpec(id, title, category, weight, fix, func, example, wants_context)
+        _REGISTRY[id] = CheckSpec(
+            id,
+            title,
+            category,
+            weight,
+            fix,
+            func,
+            example,
+            wants_context,
+            acknowledgeable or bool(ack_hint),
+            ack_hint,
+        )
         return func
 
     return decorator
@@ -157,17 +185,45 @@ def _run_one(spec: CheckSpec, dag: Any, context: Context) -> Finding:
     return finding
 
 
+def _acknowledge(
+    spec: CheckSpec, status: Status, acks: Mapping[str, str]
+) -> tuple[Status, str, str]:
+    """Apply a ``# dagwick: ack`` comment: (status, ack_reason, ack_note)."""
+    if spec.id not in acks or status not in (Status.FAIL, Status.WARN):
+        return status, "", ""
+    if not spec.acknowledgeable:
+        return (
+            status,
+            "",
+            "This check can't be acknowledged, so the dagwick: ack comment is ignored.",
+        )
+    reason = acks[spec.id]
+    if not reason:
+        need = spec.ack_hint or "why this DAG breaks the check on purpose"
+        return (
+            status,
+            "",
+            f"The dagwick: ack comment is ignored: add a reason after -- that says {need}.",
+        )
+    return Status.ACK, reason, ""
+
+
 def score_dag(dag: Any, context: Context | None = None) -> dict[str, Any]:
+    from dagwick.acknowledge import acknowledgements
+
+    context = context or Context()
+    acks = acknowledgements(context.source) if context.source else {}
     results: list[CheckResult] = []
     earned = 0.0
     possible = 0
     for spec in registered_checks():
-        finding = _run_one(spec, dag, context or Context())
+        finding = _run_one(spec, dag, context)
+        status, ack_reason, ack_note = _acknowledge(spec, finding.status, acks)
         points = 0.0
-        needs_work = finding.status in (Status.FAIL, Status.WARN)
-        if finding.status != Status.SKIP:
+        needs_work = status in (Status.FAIL, Status.WARN)
+        if status not in (Status.SKIP, Status.ACK):
             possible += spec.weight
-            points = spec.weight * STATUS_CREDIT[finding.status]
+            points = spec.weight * STATUS_CREDIT[status]
             earned += points
         results.append(
             CheckResult(
@@ -175,12 +231,14 @@ def score_dag(dag: Any, context: Context | None = None) -> dict[str, Any]:
                 title=spec.title,
                 category=spec.category.value,
                 weight=spec.weight,
-                status=finding.status.value,
+                status=status.value,
                 message=finding.message,
                 fix=spec.fix if needs_work else "",
                 points=points,
                 items=list(finding.items) if needs_work else [],
                 example=spec.example if needs_work else "",
+                ack_reason=ack_reason,
+                ack_note=ack_note,
             )
         )
 

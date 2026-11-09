@@ -11,6 +11,7 @@ from dagwick.core import Category, Finding, Status, check
     title="Tasks retry on failure",
     category=Category.RELIABILITY,
     weight=15,
+    acknowledgeable=True,
     example='default_args={\n    "retries": 2,\n    "retry_delay": timedelta(minutes=5),\n}',
     fix="Set retries (for example 2) in default_args so transient errors recover on their own.",
 )

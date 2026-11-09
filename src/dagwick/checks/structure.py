@@ -15,6 +15,7 @@ SNAKE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)*$")  # dots come from task groups
     title="Split into steps",
     category=Category.STRUCTURE,
     weight=5,
+    acknowledgeable=True,
     fix="Split the work into smaller tasks so a failure retries only the broken step.",
 )
 def decomposition(dag: Any) -> Finding:

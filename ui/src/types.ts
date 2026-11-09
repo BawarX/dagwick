@@ -1,4 +1,4 @@
-export type Status = "pass" | "warn" | "fail" | "skip";
+export type Status = "pass" | "warn" | "fail" | "skip" | "ack";
 export type Grade = "A" | "B" | "C" | "D" | "F";
 
 export interface CheckResult {
@@ -12,6 +12,10 @@ export interface CheckResult {
   points: number;
   items: string[];
   example: string;
+  /** Why the DAG breaks this check on purpose (status "ack"). */
+  ack_reason: string;
+  /** Why a "# dagwick: ack" comment for this check was ignored. */
+  ack_note: string;
 }
 
 export interface ScoreReport {

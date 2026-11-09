@@ -116,6 +116,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
             <Stat value={(Math.floor(avg * 10) / 10).toFixed(1)} label="average score" />
             <Stat value={needsCare} label="need care (C–F)" tone={needsCare ? "fail" : undefined} />
             <Stat value={healthy} label="healthy (A–B)" tone={healthy ? "pass" : undefined} />
+            {acknowledged > 0 && <Stat value={acknowledged} label="acknowledged" />}
           </div>
         </div>
         <div className="dagwick-hero-side">
@@ -210,6 +211,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                             ? "All checks passing"
                             : `${d.counts.fail} failing · ${d.counts.warn} to improve`}
                         </span>
+                        {d.counts.ack > 0 && <span>{d.counts.ack} acknowledged</span>}
                       </div>
                       {d.issues.length > 0 && (
                         <div className="dagwick-row-issues">

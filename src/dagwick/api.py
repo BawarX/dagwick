@@ -254,6 +254,8 @@ def checks() -> list[dict[str, Any]]:
             "category": c.category.value,
             "weight": c.weight,
             "fix": c.fix,
+            "acknowledgeable": c.acknowledgeable,
+            "ack_hint": c.ack_hint,
         }
         for c in registered_checks()
     ]
