@@ -15,9 +15,39 @@ def parse(source: str) -> ast.Module | None:
         return None
 
 
+DAG_MODULES = ("airflow.sdk", "airflow.decorators")
+
+
+def _dag_decorator(tree: ast.Module):
+    names: set[str] = set()
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module in DAG_MODULES:
+            names.update(a.asname or a.name for a in node.names if a.name == "dag")
+        elif isinstance(node, ast.ImportFrom) and node.module == "airflow":
+            modules.update(
+                a.asname or a.name for a in node.names if f"airflow.{a.name}" in DAG_MODULES
+            )
+        elif isinstance(node, ast.Import):
+            modules.update(a.asname or a.name for a in node.names if a.name in DAG_MODULES)
+
+    def is_dag(expr: ast.expr) -> bool:
+        target = expr.func if isinstance(expr, ast.Call) else expr
+        if isinstance(target, ast.Name):
+            return target.id in names
+        return (
+            isinstance(target, ast.Attribute)
+            and target.attr == "dag"
+            and ast.unparse(target.value) in modules
+        )
+
+    return is_dag
+
+
 class _ParseTimeCalls(ast.NodeVisitor):
-    def __init__(self, match) -> None:
+    def __init__(self, match, runs_at_parse) -> None:
         self.match = match
+        self.runs_at_parse = runs_at_parse
         self.depth = 0
         self.lines: list[int] = []
 
@@ -33,7 +63,11 @@ class _ParseTimeCalls(ast.NodeVisitor):
         for expr in [*node.args.defaults, *node.args.kw_defaults]:
             if expr is not None:
                 self.visit(expr)
-        self._deferred(node.body)
+        if any(self.runs_at_parse(expr) for expr in node.decorator_list):
+            for stmt in node.body:
+                self.visit(stmt)
+        else:
+            self._deferred(node.body)
 
     visit_FunctionDef = _function
     visit_AsyncFunctionDef = _function
@@ -69,7 +103,7 @@ def variable_get_lines(tree: ast.Module) -> list[int]:
             isinstance(owner, ast.Attribute) and owner.attr == "Variable"
         )
 
-    visitor = _ParseTimeCalls(is_variable_get)
+    visitor = _ParseTimeCalls(is_variable_get, _dag_decorator(tree))
     visitor.visit(tree)
     return sorted(set(visitor.lines))
 

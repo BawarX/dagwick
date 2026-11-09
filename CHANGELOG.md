@@ -6,6 +6,40 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - unreleased
+
+### Added
+
+- **Seasonal moods (experimental, off by default).** During holidays the lantern dresses up and the page
+  header gets an animated scene: falling snow at Christmas, bats at Halloween,
+  bonfires and govend dancers at Newroz, Kurdish letters on Kurdish Language
+  Day, lanterns at Ramadan, kulîçe at Eid, fireworks at New Year. Each mood
+  shows a short English greeting. Decoration only: scores never change.
+- One optional, non-secret setting: `[dagwick] seasonal_moods`
+  (`off` by default | `auto` | a list of moods). Viewers can also hide moods for themselves.
+- Preview any mood with `?dagwick_mood=<id>`.
+- New check, **File named after the DAG**: warns when a DAG's file is not
+  `<dag_id>.py`, so the code is easy to find from the DAG name. Files that
+  define several DAGs (DAG factories) are skipped.
+- Checks can take an optional second parameter, `context`, with facts that
+  are not on the DAG itself (for example how many DAGs share its file).
+- New checks that read the DAG file's source as Airflow stored it, without
+  running it: **No `Variable.get` at parse time** and **Uses current Airflow
+  imports** (paths Airflow itself marks as deprecated, with the new location).
+- New check, **Fast to parse**: warns from 5 s and fails from 20 s, using the
+  parse time Airflow records for each file.
+- New category, **Performance**.
+- `Context` gains `source` and `parse_seconds`.
+- **Acknowledge a check on purpose.** A `# dagwick: ack <check> -- <reason>`
+  comment in the DAG file marks a check the DAG breaks on purpose. It shows
+  greyed out with the reason, is left out of the score and of "Most common
+  issues", and is counted on the fleet page. Only 8 checks allow it
+  (see `docs/checks.md`); a reason is required.
+- New status `ack` in the API; check results gain `ack_reason` and `ack_note`.
+  `@check` gains `acknowledgeable` and `ack_hint`.
+- **No `Variable.get` at parse time** also checks the body of `@dag`
+  functions, which runs on every parse; `@task` functions inside stay deferred.
+
 ### Fixed
 
 - Fleet headline no longer contradicts the stats: it describes the average
