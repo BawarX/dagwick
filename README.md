@@ -21,12 +21,82 @@ Using Docker? Add `dagwick` to your Airflow image's `requirements.txt`.
 
 That's it. There is nothing to configure.
 
+## What you get
+
+- **A score and a grade for every DAG.** 20 checks in 7 categories:
+  reliability, observability, ownership, scheduling, structure, performance
+  and security. Each check that doesn't pass tells you how to fix it. See
+  [what it checks](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md).
+- **Checks that read your DAG file without running it:** `Variable.get` at
+  parse time, deprecated Airflow imports, hard-coded secrets (the value is
+  never shown), and sensors that hold a worker slot while they wait.
+- **Run health** next to the score: success rate, retries, typical run time
+  and its trend over the last 30 days. It never changes the score.
+- **Score history:** the score of each of the last 20 versions of a DAG, and
+  which checks started or stopped passing at each step.
+- **A fleet page** that grades all the DAGs you can see and shows the most
+  common issues.
+- **`dagwick check` and a pre-commit hook** to grade DAG files before they are
+  merged. See [Check DAGs before they are merged](#check-dags-before-they-are-merged).
+- **Break a check on purpose, with a reason.** Some DAGs need `catchup=True`
+  or no retries. See [Acknowledge a check on purpose](#acknowledge-a-check-on-purpose).
+
 Experimental and off by default: the lantern can dress up for holidays like
 Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
 
 ![The Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
 
 ![The Dagwick fleet page](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/fleet.png)
+
+## Acknowledge a check on purpose
+
+Some DAGs break a check for a good reason: an ingest DAG uses `catchup=True` to
+backfill the days it missed during an outage, or a task that inserts without
+de-duplicating must never retry. Tell Dagwick with a comment in the DAG file:
+
+```python
+# dagwick: ack <check> -- <reason>
+```
+
+For example:
+
+```python
+DAG(
+    "daily_ingest",
+    catchup=True,  # dagwick: ack catchup -- backfills one file per missed day
+    default_args={"retries": 0},  # dagwick: ack retries -- inserts are not idempotent
+)
+```
+
+After Airflow parses the file again, the check is shown greyed out with your
+reason, and it no longer counts toward the score. It is never hidden, and the
+fleet page counts it as "acknowledged". To score the check again, delete the
+comment.
+
+- Put the comment anywhere in the file. It applies to every DAG in that file.
+- One comment can name several checks: `# dagwick: ack retries, catchup -- <reason>`.
+- The reason after `--` is required. Without it the comment is ignored.
+- Dagwick reads the comment from the DAG's source code; it never runs the file.
+
+**Checks you can acknowledge** (use the id in the comment):
+
+| Check | Id | The reason must say |
+| --- | --- | --- |
+| Tasks retry on failure | `retries` | why the DAG breaks it on purpose |
+| Retries are visible | `retry_alerts` | why the DAG breaks it on purpose |
+| Has a schedule | `schedule` | why the DAG breaks it on purpose |
+| No surprise backfills | `catchup` | why the DAG breaks it on purpose |
+| Bounded parallel runs | `max_active_runs` | why the DAG breaks it on purpose |
+| Split into steps | `decomposition` | why the DAG breaks it on purpose |
+| Someone hears about failures | `failure_alerts` | where failures are alerted instead, e.g. a central listener or a Grafana rule |
+| Stops after repeated failures | `auto_pause` | what stops the DAG when it keeps failing, e.g. on-call pausing it by hand |
+| Sensors free their worker slot | `sensor_slots` | why the sensor must keep its worker slot, e.g. it needs sub-minute reaction |
+
+Every other check (owner, docs, tags, timeouts, naming, file name, imports,
+parse time, `Variable.get` and secrets) **can't be acknowledged**: each one
+protects something every DAG needs. A comment for one of them is ignored, and
+the Dagwick tab says so. Run `./dev/run.sh` from a clone of this repository to
+see a demo DAG (`demo_acknowledged_ingest`) with every case.
 
 ## Check DAGs before they are merged
 

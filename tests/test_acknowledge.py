@@ -134,3 +134,16 @@ def test_only_the_agreed_checks_can_be_acknowledged():
     assert allowed == ACKNOWLEDGEABLE
     hints = {c.id for c in registered_checks() if c.ack_hint}
     assert hints == {"failure_alerts", "auto_pause", "sensor_slots"}
+
+
+def test_the_acknowledgement_demo_dag_shows_every_case():
+    from conftest import DAGS, _serialized
+
+    path = DAGS / "demo_acknowledged_ingest.py"
+    report = score_dag(_serialized(path.name), Context(source=path.read_text()))
+    checks = by_id(report)
+    assert checks["catchup"]["status"] == checks["retries"]["status"] == "ack"
+    assert checks["catchup"]["ack_reason"].startswith("backfills one file")
+    assert "can't be acknowledged" in checks["docs"]["ack_note"]  # not allowed
+    assert "add a reason" in checks["retry_alerts"]["ack_note"]  # no reason
+    assert report["counts"]["ack"] == 2

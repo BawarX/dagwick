@@ -45,7 +45,6 @@ All notable changes to this project are documented here. The format follows
   private keys, GitHub and Slack tokens, Slack webhooks, Google API keys) and
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
-
 - New check, **Sensors free their worker slot**: warns when a sensor that
   runs in poke mode typically waits a minute or more per run, holding a
   worker slot the whole time. Which tasks are sensors comes from the
@@ -55,6 +54,13 @@ All notable changes to this project are documented here. The format follows
   by their `task_reschedule` rows. When the evidence is unclear the check
   skips instead of guessing. It can be acknowledged with a reason.
 - `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
+- **Run health** on the DAG tab, next to the score but not part of it: share
+  of runs that succeeded, share of tasks that needed a retry, the typical
+  run time with its trend (last 7 days against the rest of the window) and
+  the last run, all over the last 30 days. The fleet page shows each DAG's
+  success rate. Read from the runs Airflow already records; nothing is stored.
+- New endpoint `GET /dagwick/api/health?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
 - **Score history** on the DAG tab: the score of each of the last 20 DAG
   versions, re-scored from the serialized DAG and source code Airflow keeps
   for every version, with which checks started or stopped passing at each
@@ -63,7 +69,6 @@ All notable changes to this project are documented here. The format follows
   and other run-time facts describe the present, not past versions).
 - New endpoint `GET /dagwick/api/history?dag_id=...`, behind the same DAG
   permission as `/api/score`.
-
 - **`dagwick check` command** and a **pre-commit hook**: grade DAG files
   before they are merged, with the same checks as the UI (acknowledgements,
   source checks and parse time included), and exit with status 1 below
