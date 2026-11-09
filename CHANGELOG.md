@@ -56,6 +56,13 @@ All notable changes to this project are documented here. The format follows
   skips instead of guessing. It can be acknowledged with a reason.
 - `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
 
+- **`dagwick check` command** and a **pre-commit hook**: grade DAG files
+  before they are merged, with the same checks as the UI (acknowledgements,
+  source checks and parse time included), and exit with status 1 below
+  `--min-grade`, or 2 when a file fails to load. `--json` prints the reports.
+  It imports the DAG files, so it is meant for developer machines and CI; the
+  plugin itself still never runs DAG code.
+
 ### Fixed
 
 - Fleet headline no longer contradicts the stats: it describes the average

@@ -17,7 +17,7 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 
 ## 2. Make it more useful (0.2)
 
-- [ ] **`dagwick check dags/` command and pre-commit hook.** Grade DAGs before
+- [x] **`dagwick check dags/` command and pre-commit hook.** Grade DAGs before
       they are merged, and fail a pull request when a DAG scores below a chosen
       grade.
 - [ ] **Score history.** Airflow 3 keeps every DAG version, so Dagwick can score
