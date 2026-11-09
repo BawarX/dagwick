@@ -64,6 +64,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
     [dags],
   );
   const healthy = dist.A + dist.B;
+  const acknowledged = dags.reduce((s, d) => s + (d.counts.ack ?? 0), 0);
   const needsCare = dags.length - healthy;
 
   const common = useMemo(() => {
