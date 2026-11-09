@@ -12,7 +12,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
 from dagwick import __version__
-from dagwick.checks.performance import parse_status
+from dagwick.checks._sensors import sensor_task_ids
+from dagwick.checks.performance import SLOW_POKE_SECONDS, parse_status
 from dagwick.core import Context, registered_checks, score_dag
 
 log = logging.getLogger(__name__)
@@ -120,6 +121,68 @@ def _source(dag_id: str) -> str | None:
         return None
 
 
+SENSOR_WINDOW_DAYS = 30
+SensorRuns = dict[str, tuple[float | None, bool]]
+
+
+def _sensor_runs(dag_id: str, task_ids: tuple[str, ...]) -> SensorRuns:
+    import statistics
+    from datetime import datetime, timedelta, timezone
+
+    from airflow.models.taskinstance import TaskInstance
+    from airflow.models.taskreschedule import TaskReschedule
+    from airflow.utils.session import create_session
+    from sqlalchemy import select
+
+    if not task_ids:
+        return {}
+    since = datetime.now(timezone.utc) - timedelta(days=SENSOR_WINDOW_DAYS)
+    durations: dict[str, list[float]] = {}
+    try:
+        with create_session() as session:
+            for task_id, duration in session.execute(
+                select(TaskInstance.task_id, TaskInstance.duration).where(
+                    TaskInstance.dag_id == dag_id,
+                    TaskInstance.task_id.in_(task_ids),
+                    TaskInstance.state == "success",
+                    TaskInstance.end_date >= since,
+                )
+            ).all():
+                if duration is not None:
+                    durations.setdefault(task_id, []).append(float(duration))
+            rescheduled = set(
+                session.scalars(
+                    select(TaskInstance.task_id)
+                    .join(TaskReschedule, TaskReschedule.ti_id == TaskInstance.id)
+                    .where(TaskInstance.dag_id == dag_id, TaskInstance.task_id.in_(task_ids))
+                    .distinct()
+                ).all()
+            )
+    except Exception:
+        log.exception("dagwick: could not read sensor history for DAG %s", dag_id)
+        return {}
+    return {
+        t: (statistics.median(durations[t]) if t in durations else None, t in rescheduled)
+        for t in task_ids
+    }
+
+
+def _default_deferrable() -> bool:
+    from airflow.configuration import conf
+
+    try:
+        return conf.getboolean("operators", "default_deferrable", fallback=False)
+    except Exception:
+        return False
+
+
+def _sensor_band(runs: SensorRuns) -> str:
+    return ",".join(
+        f"{t}:{int(r)}{'-' if w is None else int(w >= SLOW_POKE_SECONDS)}"
+        for t, (w, r) in sorted(runs.items())
+    )
+
+
 def _score_by_id(
     dag_id: str, dags_in_file: int | None = None, facts: FileFacts | None = None
 ) -> dict[str, Any] | None:
@@ -135,7 +198,13 @@ def _score_by_id(
         facts = _file_facts([dag_id]).get(dag_id, (None, None))
     source_hash, parse_seconds = facts
     parse_band = parse_status(parse_seconds).value
-    key = f"{sdm.dag_hash}:{dags_in_file}:{source_hash}:{parse_band}"
+    sensors = sensor_task_ids(getattr(sdm, "data", None))
+    sensor_runs = _sensor_runs(dag_id, sensors) if sensors else {}
+    default_deferrable = _default_deferrable()
+    key = (
+        f"{sdm.dag_hash}:{dags_in_file}:{source_hash}:{parse_band}:"
+        f"{_sensor_band(sensor_runs)}:{int(default_deferrable)}"
+    )
     cached = _cache.get(dag_id, key)
     if cached is not None:
         return cached
@@ -143,6 +212,9 @@ def _score_by_id(
         dags_in_file=dags_in_file,
         source=_source(dag_id) if source_hash else None,
         parse_seconds=parse_seconds,
+        sensor_tasks=sensors,
+        sensor_runs=sensor_runs,
+        default_deferrable=default_deferrable,
     )
     report = score_dag(dag, context)
     _cache.put(dag_id, key, report)

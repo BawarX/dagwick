@@ -25,6 +25,7 @@ not apply to a DAG is left out of the score.
 | Structure | Uses current Airflow imports (no path Airflow itself marks as deprecated) | 3 | no |
 | Performance | Fast to parse (warn from 5 s, fail from 20 s) | 5 | no |
 | Performance | No `Variable.get` at parse time (top level, default args, decorator arguments, `@dag` function bodies) | 5 | no |
+| Performance | Sensors free their worker slot (a poke-mode sensor that waits a minute or more per run; needs run history) | 5 | yes, see below |
 | Security | No secrets in the DAG file (values assigned to secret-looking names, known token formats, passwords in connection URIs; the value is never shown) | 10 | no |
 
 ## Acknowledge a check on purpose
@@ -53,13 +54,16 @@ An acknowledged check:
 
 Only the checks marked in the table above can be acknowledged. The others
 protect things no DAG should go without, and an acknowledgement for them is
-ignored with a note. A reason after `--` is required. For the two checks marked
-"see below", it must say where the problem is handled instead:
+ignored with a note. A reason after `--` is required. For the three checks marked
+"see below", it must say where the problem is handled instead, or why it
+cannot be:
 
 - **Someone hears about failures:** where failures are alerted instead (for
   example a central listener or a Grafana rule).
 - **Stops after repeated failures:** what stops the DAG when it keeps failing
   (for example on-call pausing it by hand).
+- **Sensors free their worker slot:** why the sensor must keep its slot (for
+  example it has to react within seconds, faster than a reschedule allows).
 
 Dagwick reads the comment from the DAG file's source as Airflow stored it, with
 Python's `tokenize` module. The file is never run.

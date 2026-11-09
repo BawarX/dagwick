@@ -46,13 +46,15 @@ All notable changes to this project are documented here. The format follows
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
 
-- **Run health** on the DAG tab, next to the score but not part of it: share
-  of runs that succeeded, share of tasks that needed a retry, the typical
-  run time with its trend (last 7 days against the rest of the window) and
-  the last run, all over the last 30 days. The fleet page shows each DAG's
-  success rate. Read from the runs Airflow already records; nothing is stored.
-- New endpoint `GET /dagwick/api/health?dag_id=...`, behind the same DAG
-  permission as `/api/score`.
+- New check, **Sensors free their worker slot**: warns when a sensor that
+  runs in poke mode typically waits a minute or more per run, holding a
+  worker slot the whole time. Which tasks are sensors comes from the
+  serialized DAG, how each one waits from the DAG source (`mode`,
+  `deferrable`, `*Async` classes, `default_args`, `@task.sensor`), and how
+  long it waits from the last 30 days of runs. Rescheduled sensors are proven
+  by their `task_reschedule` rows. When the evidence is unclear the check
+  skips instead of guessing. It can be acknowledged with a reason.
+- `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
 
 ### Fixed
 
