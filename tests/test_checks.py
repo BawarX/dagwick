@@ -63,11 +63,11 @@ def test_default_owner_is_not_an_owner(dim):
 def test_unscheduled_dag_skips_catchup_and_warns_on_schedule():
     from airflow.providers.standard.operators.empty import EmptyOperator
     from airflow.sdk import DAG
-    from airflow.serialization.serialized_objects import DagSerialization
+    from conftest import roundtrip
 
     with DAG("manual_only", schedule=None) as dag:
         EmptyOperator(task_id="a")
-    s = DagSerialization.from_dict(DagSerialization.to_dict(dag))
+    s = roundtrip(dag)
     checks = by_id(score_dag(s))
     assert checks["schedule"]["status"] == "warn"
     assert checks["catchup"]["status"] == "skip"
