@@ -28,6 +28,36 @@ Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardala
 
 ![The Dagwick fleet page](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/fleet.png)
 
+## Check DAGs before they are merged
+
+`dagwick check` grades DAG files with the same checks as the UI and can fail a
+pull request below a chosen grade:
+
+```bash
+dagwick check dags/ --min-grade C     # exit 1 if any DAG is below C
+dagwick check dags/my_dag.py --json   # machine-readable report
+```
+
+It needs Airflow installed next to it, and it **imports the DAG files**, so
+their top-level code runs, the same as in Airflow's DAG processor. Use it on a
+developer machine or in CI. The Airflow plugin itself never runs DAG code.
+
+Exit codes: `0` all good, `1` a DAG is below `--min-grade`, `2` a file failed
+to load.
+
+### pre-commit
+
+```yaml
+- repo: https://github.com/ardalan-jalal/dagwick
+  rev: v0.2.0
+  hooks:
+    - id: dagwick
+      args: [--min-grade, C]   # default: D
+```
+
+The hook uses `language: system`, so run pre-commit from an environment where
+Airflow and Dagwick are installed.
+
 ## Requirements
 
 - Apache Airflow 3.1 or newer

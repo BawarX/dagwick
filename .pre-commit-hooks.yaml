@@ -1,0 +1,8 @@
+- id: dagwick
+  name: dagwick
+  description: Grade changed Airflow DAG files and fail below a minimum grade.
+  entry: dagwick check
+  args: [--min-grade, D]
+  language: system
+  types: [python]
+  require_serial: true
