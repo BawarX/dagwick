@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 from typing import Any
 
+from dagwick import settings
 from dagwick.core import Context, score_dag
 
 MAX_VERSIONS = 20
@@ -72,7 +73,8 @@ def _score_version(
 
     # Airflow rewrites the newest version in place until the DAG runs again, so the
     # version id alone is not a stable key: include the DAG and source hashes.
-    key = f"{dag_id}:{version_id}:{fingerprint[0]}:{fingerprint[1]}"
+    scoring = settings.scoring()
+    key = f"{dag_id}:{version_id}:{fingerprint[0]}:{fingerprint[1]}:{scoring.key}"
     cached = _cache.get(key)
     if cached is not None:
         return cached
@@ -85,7 +87,7 @@ def _score_version(
         select(DagCode.source_code).where(DagCode.dag_version_id == version_id).limit(1)
     ).first()
     context = Context(source=source)
-    report = score_dag(row.dag, context)
+    report = score_dag(row.dag, context, scoring)
     _cache.put(key, report)
     return report
 

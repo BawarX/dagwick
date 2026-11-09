@@ -4,6 +4,7 @@ import { fetchFleet, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
+import { gradeFor, useThresholds } from "./grades";
 import { useSeason } from "./useSeason";
 import type { FleetDag, Grade } from "./types";
 
@@ -24,10 +25,6 @@ const SORTS = [
 type Sort = (typeof SORTS)[number]["id"];
 const MAX_CHIPS = 3;
 const MAX_COMMON = 6;
-
-function gradeFor(score: number): Grade {
-  return score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "F";
-}
 
 export function FleetView() {
   const { data, error, reload } = useLoad((s) => fetchFleet(s), []);
@@ -58,7 +55,8 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
   const [sort, setSort] = useState<Sort>("worst");
 
   const avg = dags.reduce((s, d) => s + d.score, 0) / dags.length;
-  const avgGrade = gradeFor(avg);
+  const thresholds = useThresholds();
+  const avgGrade = gradeFor(avg, thresholds);
   const dist = useMemo(
     () => Object.fromEntries(GRADES.map((g) => [g, dags.filter((d) => d.grade === g).length])) as Record<Grade, number>,
     [dags],

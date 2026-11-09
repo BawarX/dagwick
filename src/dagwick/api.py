@@ -11,7 +11,7 @@ from typing import Annotated, Any
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-from dagwick import __version__
+from dagwick import __version__, settings
 from dagwick.checks._sensors import sensor_task_ids
 from dagwick.checks.performance import SLOW_POKE_SECONDS, parse_status
 from dagwick.core import Context, registered_checks, score_dag
@@ -201,9 +201,10 @@ def _score_by_id(
     sensors = sensor_task_ids(getattr(sdm, "data", None))
     sensor_runs = _sensor_runs(dag_id, sensors) if sensors else {}
     default_deferrable = _default_deferrable()
+    scoring = settings.scoring()
     key = (
         f"{sdm.dag_hash}:{dags_in_file}:{source_hash}:{parse_band}:"
-        f"{_sensor_band(sensor_runs)}:{int(default_deferrable)}"
+        f"{_sensor_band(sensor_runs)}:{int(default_deferrable)}:{scoring.key}"
     )
     cached = _cache.get(dag_id, key)
     if cached is not None:
@@ -216,7 +217,7 @@ def _score_by_id(
         sensor_runs=sensor_runs,
         default_deferrable=default_deferrable,
     )
-    report = score_dag(dag, context)
+    report = score_dag(dag, context, scoring)
     _cache.put(dag_id, key, report)
     return report
 
@@ -349,19 +350,23 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
 @app.get("/api/config", dependencies=[_require_login()])
 def config() -> dict[str, Any]:
     """Non-secret UI settings."""
-    from dagwick.settings import seasonal_moods
-
-    return {"seasonal_moods": seasonal_moods()}
+    return {
+        "seasonal_moods": settings.seasonal_moods(),
+        "grades": dict(settings.scoring().grades),
+    }
 
 
 @app.get("/api/checks", dependencies=[_require_login()])
 def checks() -> list[dict[str, Any]]:
+    scoring = settings.scoring()
     return [
         {
             "id": c.id,
             "title": c.title,
             "category": c.category.value,
-            "weight": c.weight,
+            "weight": scoring.weights.get(c.id, c.weight),
+            "default_weight": c.weight,
+            "enabled": c.id not in scoring.disabled,
             "fix": c.fix,
             "acknowledgeable": c.acknowledgeable,
             "ack_hint": c.ack_hint,

@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Tune the scoring in `airflow.cfg`.** Three optional `[dagwick]` settings:
+  `disabled_checks` leaves checks out of every score, `weights` changes how
+  many points a check is worth, and `grades` sets the grade thresholds.
+  Invalid values are logged and ignored. The DAG tab, the fleet page and
+  `dagwick check` all follow them. See `docs/checks.md`.
+- `/api/checks` shows each check's `default_weight` and whether it is
+  `enabled`; `/api/config` includes the grade thresholds.
+
 ## [0.2.0] - 2026-11-09
 
 ### Added

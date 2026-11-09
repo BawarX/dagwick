@@ -28,6 +28,44 @@ not apply to a DAG is left out of the score.
 | Performance | Sensors free their worker slot (a poke-mode sensor that waits a minute or more per run; needs run history) | 5 | yes, see below |
 | Security | No secrets in the DAG file (values assigned to secret-looking names, known token formats, passwords in connection URIs; the value is never shown) | 10 | no |
 
+## Tune the scoring
+
+Every Dagwick setting is optional. Without them, scores are exactly as
+described above. Add a `[dagwick]` section to `airflow.cfg`:
+
+```ini
+[dagwick]
+# Leave these checks out of every score (check ids, comma-separated).
+disabled_checks = file_name, naming
+# Points for a check, as check_id:points (positive whole numbers).
+weights = retries:20, tags:2
+# The lowest score for each grade. Letters you leave out keep their default.
+grades = A:90, B:75, C:60, D:40
+```
+
+or set the same values as environment variables:
+`AIRFLOW__DAGWICK__DISABLED_CHECKS`, `AIRFLOW__DAGWICK__WEIGHTS` and
+`AIRFLOW__DAGWICK__GRADES`.
+
+- **Check ids** are listed by `GET /dagwick/api/checks`, which also shows each
+  check's current `weight`, its `default_weight` and whether it is `enabled`.
+  The ids of the built-in checks are `retries`, `execution_timeout`,
+  `dagrun_timeout`, `failure_alerts`, `retry_alerts`, `owner`, `docs`, `tags`,
+  `schedule`, `catchup`, `auto_pause`, `max_active_runs`, `decomposition`,
+  `naming`, `file_name`, `current_imports`, `parse_time`,
+  `parse_time_variables`, `sensor_slots` and `hardcoded_secrets`. Checks from
+  a check pack can be disabled or re-weighted the same way.
+- A disabled check is left out completely: it is not run, not shown, and earns
+  no points.
+- **Grades** must go A > B > C > D, each from 0 to 100. The DAG tab and the
+  fleet page follow the configured thresholds.
+- `dagwick check` reads the same settings from the `airflow.cfg` (or
+  environment) it runs with, so CI grades DAGs the same way the UI does.
+- An invalid value never breaks Dagwick: it is logged and ignored. A bad
+  weight entry is skipped, an unknown check id is logged, and grades that are
+  out of order or out of range fall back to the defaults.
+- Restart the api-server after changing `airflow.cfg`.
+
 ## Acknowledge a check on purpose
 
 Some DAGs break a check on purpose: an ingest DAG backfills missed days with
