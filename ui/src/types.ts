@@ -16,6 +16,8 @@ export interface CheckResult {
   ack_reason: string;
   /** Why a "# dagwick: ack" comment for this check was ignored. */
   ack_note: string;
+  /** The package that registered the check: "dagwick" for built-ins, else the check pack. */
+  pack?: string;
 }
 
 export interface ScoreReport {

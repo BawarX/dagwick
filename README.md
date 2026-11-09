@@ -42,6 +42,9 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
   merged. See [Check DAGs before they are merged](#check-dags-before-they-are-merged).
 - **Break a check on purpose, with a reason.** Some DAGs need `catchup=True`
   or no retries. See [Acknowledge a check on purpose](#acknowledge-a-check-on-purpose).
+- **Your own rules as a check pack:** a separate package that adds checks
+  through an entry point. See
+  [Write a check pack](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md#write-a-check-pack).
 
 Experimental and off by default: the lantern can dress up for holidays like
 Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).

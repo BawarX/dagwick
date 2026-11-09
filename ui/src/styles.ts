@@ -141,6 +141,7 @@ html.dark .dagwick {
 .dagwick-check-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dagwick-check-title { font-weight: 600; }
 .dagwick-tag { font-size: 11px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--dagwick-border); color: var(--dagwick-muted); }
+.dagwick-tag--pack { border-style: dashed; }
 .dagwick-pts { margin-left: auto; font-size: 12px; color: var(--dagwick-muted); font-variant-numeric: tabular-nums; }
 .dagwick-check-msg { font-size: 14px; color: var(--dagwick-muted); margin-top: 2px; }
 .dagwick-fix { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--dagwick-surface); border-left: 3px solid var(--dagwick-accent); }

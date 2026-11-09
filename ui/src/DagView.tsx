@@ -224,6 +224,11 @@ function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean
         >
           <span className="dagwick-check-title">{check.title}</span>
           <span className="dagwick-tag">{CATEGORY_LABEL[check.category] ?? check.category}</span>
+          {check.pack && check.pack !== "dagwick" && (
+            <span className="dagwick-tag dagwick-tag--pack" title={`From the check pack ${check.pack}`}>
+              {check.pack}
+            </span>
+          )}
           <span className="dagwick-pts">
             {check.status === "skip" || check.status === "ack" ? "n/a" : `${check.points} / ${check.weight}`}
             {actionable && <span className="dagwick-caret">{open ? "▾" : "▸"}</span>}

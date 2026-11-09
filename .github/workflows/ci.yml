@@ -34,6 +34,10 @@ jobs:
       - name: Test (coverage >= 70 %)
         run: uv run --locked pytest -q
 
+      - name: Example check pack tests pass
+        working-directory: examples/dagwick-pack-example
+        run: uv run --locked --project ../.. pytest -q -p no:cacheprovider
+
       - name: Code compiles on every supported Python (no Airflow install, seconds)
         run: |
           for v in 3.10 3.11 3.12 3.14 3.15; do

@@ -106,15 +106,23 @@ cannot be:
 Dagwick reads the comment from the DAG file's source as Airflow stored it, with
 Python's `tokenize` module. The file is never run.
 
-## Add your own check
+## Write a check pack
+
+A **check pack** is a small Python package with your own rules (team tags,
+naming conventions, required callbacks, ...). Dagwick stays generic, and the
+pack's checks show up next to the built-in ones in the DAG tab, on the fleet
+page and in `dagwick check`. A complete pack with a test is in
+[`examples/dagwick-pack-example`](../examples/dagwick-pack-example).
+
+### 1. Write the check
 
 ```python
-# my_checks/rules.py
+# src/acme_dagwick/checks.py
 from dagwick import Category, Finding, Status, check
 
 
 @check(
-    id="team_tag",
+    id="acme_team_tag",
     title="Has a team tag",
     category=Category.OWNERSHIP,
     weight=5,
@@ -127,25 +135,112 @@ def team_tag(dag):
     return Finding(Status.FAIL, "No team tag.")
 ```
 
-Register the module in your package's `pyproject.toml`, then install that
-package next to Dagwick:
+`@check` takes:
+
+| Parameter | Meaning |
+| --- | --- |
+| `id` | Unique id. Prefix it with your pack's name so it can't clash with a future built-in check. |
+| `title` | Short name shown in the UI. |
+| `category` | One of the `Category` members. |
+| `weight` | Points the check is worth (a positive whole number). Admins can change it with [`weights`](#tune-the-scoring). |
+| `fix` | One actionable sentence, shown when the check does not pass. |
+| `example` | Optional code snippet that shows the fix. |
+| `acknowledgeable` | `True` lets a DAG mark the check as broken on purpose with a [`# dagwick: ack`](#acknowledge-a-check-on-purpose) comment. Off by default: only allow it where there is a legitimate reason to break the rule. |
+| `ack_hint` | What the acknowledgement's reason must explain, for example "where failures are alerted instead". Setting it also makes the check acknowledgeable. |
+
+The function returns a `Finding(status, message, items=())`:
+
+- `Status.PASS`, `Status.FAIL`, or `Status.WARN` (half the points: it works,
+  but could be better).
+- `Status.SKIP` when the check does not apply to this DAG. It is left out of
+  the score.
+- `items` names what is affected, usually task ids, so the UI can point at it.
+
+A check that raises an exception, or returns something other than a `Finding`,
+is shown as skipped for that DAG and logged. It never breaks the page.
+
+### 2. Use the context, if you need it
+
+A check can take a second parameter, `context` (a `dagwick.Context`), with
+facts that are not on the DAG itself. Each is `None` when unknown:
+
+- `context.dags_in_file`: how many DAGs the DAG's file defines.
+- `context.source`: the DAG file's source code, as Airflow stored it. Read it
+  with `ast` or `tokenize`. Never run it.
+- `context.parse_seconds`: how long the file last took to parse.
+
+```python
+@check(
+    id="acme_no_print",
+    title="No print()",
+    category=Category.STRUCTURE,
+    weight=2,
+    fix="Use logging.",
+)
+def no_print(dag, context):
+    if context.source is None:
+        return Finding(Status.SKIP, "Source not available.")
+    ...
+```
+
+### 3. Test it against a serialized DAG
+
+The api-server never sees your DAG objects. It reads the **serialized** DAG
+from the database, and serialization fills in defaults and drops some
+attributes. Test your check on a DAG that went through serialization, or it may
+pass in tests and never fail in Airflow:
+
+```python
+from airflow.sdk import DAG
+from airflow.serialization.serialized_objects import DagSerialization
+
+
+def serialized(**kwargs):
+    with DAG("example", schedule=None, **kwargs) as dag:
+        pass
+    return DagSerialization.from_dict(DagSerialization.to_dict(dag))
+
+
+def test_team_tag():
+    assert team_tag(serialized(tags=["team:data"])).status == Status.PASS
+```
+
+### 4. Register the entry point
+
+In your package's `pyproject.toml`:
 
 ```toml
 [project.entry-points."dagwick.checks"]
-my_checks = "my_checks.rules"
+acme = "acme_dagwick.checks"
 ```
 
-A check with the same `id` as a built-in check replaces it.
+Install the package next to Dagwick in the Airflow environment and restart the
+api-server. Dagwick imports every `dagwick.checks` entry point at start-up.
 
-Pass `acknowledgeable=True` to `@check` to let DAGs acknowledge it, or
-`ack_hint="..."` to also say what the reason must explain. Checks cannot be
-acknowledged unless they opt in.
+- A pack that fails to import is logged and skipped. The built-in checks and
+  other packs keep working.
+- Each pack check is tagged with the pack's distribution name in the DAG tab.
+  `GET /dagwick/api/checks` lists every check with its `pack` (`dagwick` for
+  the built-in ones).
+- A check with the same `id` as a built-in check replaces it, so a pack can
+  tighten or relax a built-in rule.
+- Admins can turn a pack's checks off or re-weight them with
+  [`disabled_checks` and `weights`](#tune-the-scoring), like any other check.
 
-A check can also take a second parameter, `context` (a `dagwick.Context`), for
-facts that are not on the DAG itself: `context.dags_in_file`, `context.source`
-(the DAG file's source code, as Airflow stored it) and `context.parse_seconds`
-(how long the file last took to parse). Each is `None` when unknown.
+### Which parts of the interface are stable
 
-Checks that read the source never run it: they read it with Python's `ast`
-module. Deprecated import paths come from Airflow's own deprecation table, so
-the check follows whichever Airflow version is installed.
+Check packs can rely on these, imported from `dagwick`:
+
+- `check` and its keyword parameters listed above.
+- `Finding` (`status`, `message`, `items`).
+- `Status` (`PASS`, `WARN`, `FAIL`, `SKIP`; `ACK` is set by Dagwick, not
+  returned by checks).
+- `Category`. New categories may be added.
+- `Context` fields `dags_in_file`, `source` and `parse_seconds`. New fields
+  may be added, so read them by name.
+
+Everything else is internal and may change in any release before 1.0. That
+includes the other `Context` fields (`sensor_tasks`, `sensor_runs`,
+`default_deferrable`, which exist for the built-in sensor check), `CheckSpec`,
+the registry in `dagwick.core`, the modules under `dagwick.checks`, and the
+layout of `score_dag`'s report.
