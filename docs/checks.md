@@ -25,6 +25,7 @@ not apply to a DAG is left out of the score.
 | Structure | Uses current Airflow imports (no path Airflow itself marks as deprecated) | 3 | no |
 | Performance | Fast to parse (warn from 5 s, fail from 20 s) | 5 | no |
 | Performance | No `Variable.get` at parse time (top level, default args, decorator arguments, `@dag` function bodies) | 5 | no |
+| Security | No secrets in the DAG file (values assigned to secret-looking names, known token formats, passwords in connection URIs; the value is never shown) | 10 | no |
 
 ## Acknowledge a check on purpose
 

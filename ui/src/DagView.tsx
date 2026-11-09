@@ -14,6 +14,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   ownership: "Ownership",
   structure: "Structure",
   performance: "Performance",
+  security: "Security",
 };
 const STATUS_ORDER: Record<Status, number> = { fail: 0, warn: 1, pass: 2, ack: 3, skip: 4 };
 const HEADLINE: Record<Grade, string> = {

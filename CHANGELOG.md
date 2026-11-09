@@ -39,6 +39,12 @@ All notable changes to this project are documented here. The format follows
   `@check` gains `acknowledgeable` and `ack_hint`.
 - **No `Variable.get` at parse time** also checks the body of `@dag`
   functions, which runs on every parse; `@task` functions inside stay deferred.
+- New check, **No secrets in the DAG file**, in a new **Security** category:
+  flags string values assigned to secret-looking names (`password`, `token`,
+  `api_key`, `client_secret`, ...), known credential formats (AWS key ids,
+  private keys, GitHub and Slack tokens, Slack webhooks, Google API keys) and
+  passwords inside connection URIs. Only the line and the kind are shown,
+  never the value. It cannot be acknowledged.
 
 ### Fixed
 
