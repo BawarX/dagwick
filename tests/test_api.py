@@ -39,6 +39,24 @@ def test_fleet_entry_lists_issues_worst_first(average):
     assert entry["is_paused"] is True and entry["owners"] == "data-team"
 
 
+def test_fleet_entry_lists_tags_sorted(shining):
+    entry = fleet_entry("d", False, "", score_dag(shining), tags=["ingest", "daily"])
+    assert entry["tags"] == ["daily", "ingest"]
+    assert fleet_entry("d", False, "", score_dag(shining))["tags"] == []
+
+
+def test_fleet_tags_degrade_to_none_when_the_database_fails(monkeypatch):
+    from airflow.utils import session as airflow_session
+
+    from dagwick import api
+
+    def broken():
+        raise RuntimeError("database is down")
+
+    monkeypatch.setattr(airflow_session, "create_session", broken)
+    assert api._fleet_tags(["demo"]) == {}
+
+
 def test_fleet_entry_for_perfect_dag_has_no_issues(shining):
     assert fleet_entry("demo_shining_pipeline", False, "", score_dag(shining))["issues"] == []
 
