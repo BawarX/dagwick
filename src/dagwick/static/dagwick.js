@@ -30,6 +30,7 @@ var DagwickBundle=(function(a,k){"use strict";const z="Dagwick",P="0.2.0",fa="/d
   padding: 8px 4px 24px;
   width: 100%;
   max-width: 1440px;
+  margin-inline: auto;
   box-sizing: border-box;
   container: dagwick / inline-size;
 }

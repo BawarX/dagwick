@@ -58,6 +58,8 @@ All notable changes to this project are documented here. The format follows
   sit side by side, and the fleet's "Most common issues" moves below the list.
 - Category cards no longer leave one card alone on the last row.
 - Every failing check opens with its fix by default.
+- On screens wider than 1440 px the page is centered instead of sticking to
+  the left with empty space on the right.
 
 ## [0.1.0] - 2026-11-08
 
