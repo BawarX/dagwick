@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  COMBO_START,
-  type ComboAction,
-  combo,
-  comboText,
   inScope,
+  navIndex,
   options,
   readScope,
   scopeLabel,
   scopeOptions,
   splitOwners,
-  suggest,
+  typeAhead,
   writeScope,
 } from "./scope";
 
@@ -29,19 +26,6 @@ describe("options", () => {
       { name: "b", count: 1 },
       { name: "c", count: 1 },
     ]);
-  });
-});
-
-describe("suggest", () => {
-  const all = options([["payments-core"], ["payments-data"], ["billing"], ["data-team"], ["data-team"]]);
-
-  it("shows the owners with the most DAGs when nothing is typed", () => {
-    expect(suggest(all, "", 2)).toEqual({ shown: [{ name: "data-team", count: 2 }, all[1]], more: 2 });
-  });
-
-  it("matches anywhere in the name, ignoring case, and says how many more match", () => {
-    expect(suggest(all, "DATA", 1)).toEqual({ shown: [{ name: "data-team", count: 2 }], more: 1 });
-    expect(suggest(all, "nobody")).toEqual({ shown: [], more: 0 });
   });
 });
 
@@ -77,57 +61,6 @@ describe("scope label and URL", () => {
   });
 });
 
-const run = (...actions: ComboAction[]) => actions.reduce(combo, COMBO_START);
-
-describe("search field: pick, clear and filter again", () => {
-  it("shows the picked value once a suggestion is picked", () => {
-    const s = run({ type: "focus" }, { type: "type", query: "fin" }, { type: "picked" });
-    expect(s.open).toBe(false);
-    expect(comboText(s, "finance")).toBe("finance"); // the value, not a greyed-out hint
-  });
-
-  it("searches again when a filled field is clicked, and keeps the value until a new pick", () => {
-    const s = run({ type: "picked" }, { type: "focus" });
-    expect(s.open).toBe(true);
-    expect(comboText(s, "finance")).toBe(""); // empty field, "finance" as placeholder
-    expect(comboText(run({ type: "picked" }, { type: "focus" }, { type: "blur" }), "finance")).toBe("finance");
-  });
-
-  it("is ready for the next search right after clearing", () => {
-    // pick → clear (the component then focuses the field) → type → pick again
-    let s = run({ type: "focus" }, { type: "type", query: "fin" }, { type: "picked" });
-    s = combo(combo(s, { type: "cleared" }), { type: "focus" });
-    expect(s).toEqual({ query: "", open: true, editing: true, active: 0 });
-    expect(comboText(s, undefined)).toBe("");
-    s = combo(s, { type: "type", query: "ops" });
-    expect(s.open && s.query === "ops").toBe(true);
-    expect(combo(s, { type: "picked" })).toEqual(COMBO_START);
-  });
-
-  it("clears a half-typed search without touching the list position elsewhere", () => {
-    const s = run({ type: "focus" }, { type: "type", query: "xyz" }, { type: "move", by: 1, count: 3 }, { type: "cleared" });
-    expect(s.query).toBe("");
-    expect(s.active).toBe(0);
-  });
-
-  it("moves through suggestions with wrap-around, and hover follows the mouse", () => {
-    let s = run({ type: "focus" });
-    s = combo(s, { type: "move", by: -1, count: 3 });
-    expect(s.active).toBe(2);
-    s = combo(s, { type: "move", by: 1, count: 3 });
-    expect(s.active).toBe(0);
-    expect(combo(s, { type: "hover", index: 1 }).active).toBe(1);
-    expect(combo(s, { type: "move", by: 1, count: 0 }).active).toBe(0); // no suggestions
-  });
-
-  it("typing restarts at the first suggestion; Esc closes; blur resets", () => {
-    let s = run({ type: "focus" }, { type: "move", by: 1, count: 5 }, { type: "type", query: "a" });
-    expect(s.active).toBe(0);
-    s = combo(s, { type: "close" });
-    expect(s.open).toBe(false);
-    expect(combo(s, { type: "blur" })).toEqual(COMBO_START);
-  });
-});
 
 describe("scopeOptions", () => {
   const dags = [
@@ -148,5 +81,33 @@ describe("scopeOptions", () => {
       { name: "report", count: 1 },
     ]);
     expect(scopeOptions(dags, { tag: "backup" }).owners).toEqual([{ name: "ops", count: 1 }]);
+  });
+});
+
+describe("dropdown keyboard", () => {
+  it("moves with arrows, Home/End and Page keys, staying inside the list", () => {
+    expect(navIndex("ArrowDown", 0, 3)).toBe(1);
+    expect(navIndex("ArrowDown", 2, 3)).toBe(2);
+    expect(navIndex("ArrowUp", 0, 3)).toBe(0);
+    expect(navIndex("End", 0, 3)).toBe(2);
+    expect(navIndex("Home", 2, 3)).toBe(0);
+    expect(navIndex("PageDown", 0, 20)).toBe(8);
+    expect(navIndex("a", 0, 3)).toBeUndefined();
+    expect(navIndex("ArrowDown", 0, 0)).toBeUndefined();
+  });
+
+  const labels = ["All owners", "billing", "data-team", "dagwick", "finance", "fin-ops"];
+
+  it("jumps to the first row starting with the typed letters", () => {
+    expect(typeAhead(labels, "fi", 0)).toBe(4);
+    expect(typeAhead(labels, "dagw", 0)).toBe(3);
+    expect(typeAhead(labels, "z", 0)).toBeUndefined();
+    expect(typeAhead(labels, "", 0)).toBeUndefined();
+  });
+
+  it("cycles through matches when the same letter is typed again", () => {
+    expect(typeAhead(labels, "d", 0)).toBe(2);
+    expect(typeAhead(labels, "d", 2)).toBe(3);
+    expect(typeAhead(labels, "dd", 3)).toBe(2); // wraps around
   });
 });

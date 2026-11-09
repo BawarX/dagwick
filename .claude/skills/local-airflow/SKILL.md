@@ -45,7 +45,7 @@ Run each step as its own command, from the repo root.
 | Airflow home | http://localhost:8080 |
 | Dagwick fleet page | http://localhost:8080/plugin/dagwick-fleet |
 | Fleet filtered by owner/tag | http://localhost:8080/plugin/dagwick-fleet?owner=data-team&tag=ingest |
-| One DAG's Dagwick tab | open http://localhost:8080/dags/<dag_id>, then click the **Dagwick** tab |
+| One DAG's Dagwick tab | http://localhost:8080/dags/<dag_id>/plugin/dagwick (from `DagLink` in `ui/src/components.tsx`) |
 | Preview a seasonal mood | add `?dagwick_mood=halloween` (or newroz, christmas, …) to a Dagwick page |
 
 Demo DAGs in `dev/dags`: `demo_shining_pipeline` (A, 100), `demo_average_pipeline` (C),

@@ -26,13 +26,6 @@ export function options(names: string[][]): Option[] {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
-/** Suggestions for what the user typed: matches anywhere in the name, ignoring case. */
-export function suggest(all: Option[], query: string, max = 8): { shown: Option[]; more: number } {
-  const q = query.trim().toLowerCase();
-  const matches = q ? all.filter((o) => o.name.toLowerCase().includes(q)) : all;
-  return { shown: matches.slice(0, max), more: Math.max(0, matches.length - max) };
-}
-
 export function inScope(dag: { owners: string; tags?: string[] }, scope: Scope): boolean {
   return (
     (!scope.owner || splitOwners(dag.owners).includes(scope.owner)) &&
@@ -74,49 +67,33 @@ export function scopeOptions(
   };
 }
 
-// The search field's own state, kept pure so every pick/clear/re-filter sequence is testable.
-export interface ComboState {
-  query: string; // what the user is typing
-  open: boolean; // suggestions shown
-  editing: boolean; // typing a new search (the picked value shows as a hint)
-  active: number; // highlighted suggestion
+// ---- Dropdown keyboard behaviour (pure, so it can be tested) ----
+
+/** The highlighted row after a navigation key, or undefined if the key doesn't navigate. */
+export function navIndex(key: string, active: number, count: number): number | undefined {
+  if (count === 0) return undefined;
+  if (key === "ArrowDown") return Math.min(active + 1, count - 1);
+  if (key === "ArrowUp") return Math.max(active - 1, 0);
+  if (key === "Home") return 0;
+  if (key === "End") return count - 1;
+  if (key === "PageDown") return Math.min(active + 8, count - 1);
+  if (key === "PageUp") return Math.max(active - 8, 0);
+  return undefined;
 }
 
-export type ComboAction =
-  | { type: "focus" }
-  | { type: "blur" }
-  | { type: "type"; query: string }
-  | { type: "move"; by: 1 | -1; count: number }
-  | { type: "hover"; index: number }
-  | { type: "picked" }
-  | { type: "cleared" }
-  | { type: "close" };
-
-export const COMBO_START: ComboState = { query: "", open: false, editing: false, active: 0 };
-
-export function combo(state: ComboState, action: ComboAction): ComboState {
-  switch (action.type) {
-    case "focus":
-      return { ...state, open: true, editing: true, active: 0 };
-    case "blur":
-    case "picked": // the field shows the new value; the list closes
-      return COMBO_START;
-    case "type":
-      return { query: action.query, open: true, editing: true, active: 0 };
-    case "move":
-      return action.count
-        ? { ...state, open: true, active: (state.active + action.by + action.count) % action.count }
-        : { ...state, open: true };
-    case "hover":
-      return { ...state, active: action.index };
-    case "cleared": // the field then takes focus again, ready for the next search
-      return { ...state, query: "", active: 0 };
-    case "close":
-      return { ...state, open: false };
+/**
+ * Type-ahead: the first row (after the current one, wrapping) whose label starts with
+ * what was typed. Typing the same letter again moves to the next match, like a native select.
+ */
+export function typeAhead(labels: string[], typed: string, active: number): number | undefined {
+  const q = typed.toLowerCase();
+  if (!q) return undefined;
+  const repeated = q.length > 1 && [...q].every((ch) => ch === q[0]);
+  const prefix = repeated ? q[0] : q;
+  const start = q.length === 1 || repeated ? active + 1 : active;
+  for (let i = 0; i < labels.length; i++) {
+    const at = (start + i) % labels.length;
+    if (labels[at].toLowerCase().startsWith(prefix)) return at;
   }
-}
-
-/** The text in the field: the search while typing, otherwise the picked value. */
-export function comboText(state: ComboState, value?: string): string {
-  return state.editing ? state.query : (value ?? "");
+  return undefined;
 }

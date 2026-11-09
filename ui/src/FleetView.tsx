@@ -3,11 +3,11 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchFleet, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
+import { Dropdown } from "./Dropdown";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
-import { ScopeFilter } from "./ScopeFilter";
 import { gradeFor, useThresholds } from "./grades";
 import { csvFileName, download, fleetCsv } from "./csv";
-import { type Scope, inScope, readScope, scopeLabel, scopeOptions, splitOwners, writeScope } from "./scope";
+import { type Scope, inScope, readScope, scopeLabel, scopeOptions, writeScope } from "./scope";
 import { useSeason } from "./useSeason";
 import type { FleetDag, Grade } from "./types";
 
@@ -77,50 +77,9 @@ function Fleet({ dags: fleet, truncated }: { dags: FleetDag[]; truncated: boolea
   };
   // Each field only suggests what fits the other one, so a pick never leads to an empty page.
   const { owners: ownerOptions, tags: tagOptions } = useMemo(() => scopeOptions(fleet, scope), [fleet, scope]);
-  const allOwners = useMemo(() => new Set(fleet.flatMap((d) => splitOwners(d.owners))).size, [fleet]);
   const dags = useMemo(() => fleet.filter((d) => inScope(d, scope)), [fleet, scope]);
   const label = scopeLabel(scope);
 
-  const scopeBar = (
-    <section className="dagwick-scope" aria-label="Show DAGs for">
-      <ScopeFilter
-        label="Owner"
-        noun="owner"
-        placeholder="Type a team or owner"
-        options={ownerOptions}
-        value={scope.owner}
-        onPick={(owner) => setScope({ ...scope, owner })}
-        onClear={() => setScope({ ...scope, owner: undefined })}
-      />
-      {(tagOptions.length > 0 || scope.tag) && (
-        <ScopeFilter
-          label="Tag"
-          noun="tag"
-          placeholder="Type a tag"
-          options={tagOptions}
-          value={scope.tag}
-          onPick={(tag) => setScope({ ...scope, tag })}
-          onClear={() => setScope({ ...scope, tag: undefined })}
-        />
-      )}
-      <div className="dagwick-scope-now" aria-live="polite">
-        {label ? (
-          <>
-            <span>
-              Viewing <strong>{label}</strong> · {dags.length} of {fleet.length} DAGs
-            </span>
-            <button className="dagwick-btn dagwick-btn--quiet" onClick={() => setScope({})}>
-              Show all DAGs
-            </button>
-          </>
-        ) : (
-          <span className="dagwick-muted">
-            Viewing all {fleet.length} DAGs from {allOwners} {allOwners === 1 ? "owner" : "owners"}
-          </span>
-        )}
-      </div>
-    </section>
-  );
 
 
   const avg = dags.reduce((s, d) => s + d.score, 0) / dags.length;
@@ -165,7 +124,6 @@ function Fleet({ dags: fleet, truncated }: { dags: FleetDag[]; truncated: boolea
   if (dags.length === 0)
     return (
       <>
-        {scopeBar}
         <Empty
           title={`No DAGs for ${label}`}
           body="Nothing you can see matches this owner and tag. The link may be old, or the DAGs may have moved."
@@ -180,7 +138,6 @@ function Fleet({ dags: fleet, truncated }: { dags: FleetDag[]; truncated: boolea
 
   return (
     <>
-      {scopeBar}
       <section
         className={`dagwick-hero dagwick-grade-${avgGrade}${season ? ` dagwick-season dagwick-season-${season.id}` : ""}`}
       >
@@ -246,12 +203,28 @@ function Fleet({ dags: fleet, truncated }: { dags: FleetDag[]; truncated: boolea
               <input
                 className="dagwick-search"
                 type="search"
-                placeholder={label ? `Search ${label}'s DAGs` : "Search DAGs or owners"}
+                placeholder="Search DAGs"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 aria-label="Search DAGs"
               />
             </div>
+            <Dropdown
+              label="Filter by owner"
+              all="All owners"
+              empty="No owners"
+              options={ownerOptions}
+              value={scope.owner}
+              onChange={(owner) => setScope({ ...scope, owner })}
+            />
+            <Dropdown
+              label="Filter by tag"
+              all="All tags"
+              empty="No tags"
+              options={tagOptions}
+              value={scope.tag}
+              onChange={(tag) => setScope({ ...scope, tag })}
+            />
             <div className="dagwick-seg" role="radiogroup" aria-label="Sort">
               {SORTS.map((s) => (
                 <button
