@@ -8,6 +8,7 @@ any third-party package that exposes a ``dagwick.checks`` entry point.
 
 from __future__ import annotations
 
+import inspect
 import logging
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
@@ -51,14 +52,26 @@ class Finding:
 
 
 @dataclass(frozen=True)
+class Context:
+    """Facts about a DAG that are not on the DAG object itself.
+
+    A check receives it if its function takes a second parameter:
+    ``def my_check(dag, context): ...``. ``None`` means "unknown".
+    """
+
+    dags_in_file: int | None = None
+
+
+@dataclass(frozen=True)
 class CheckSpec:
     id: str
     title: str
     category: Category
     weight: int
     fix: str
-    func: Callable[[Any], Finding] = field(compare=False, repr=False)
+    func: Callable[..., Finding] = field(compare=False, repr=False)
     example: str = ""
+    wants_context: bool = False
 
 
 @dataclass(frozen=True)
@@ -86,14 +99,17 @@ def check(
 
     ``fix`` is a short, actionable hint shown when the check does not pass;
     ``example`` is an optional code snippet showing the fix.
+    A check function takes the DAG, and optionally a :class:`Context` as a
+    second parameter.
     Re-registering the same ``id`` replaces the previous check, which lets a
     deployment override a built-in rule.
     """
     if weight <= 0:
         raise ValueError(f"check {id!r}: weight must be positive")
 
-    def decorator(func: Callable[[Any], Finding]) -> Callable[[Any], Finding]:
-        _REGISTRY[id] = CheckSpec(id, title, category, weight, fix, func, example)
+    def decorator(func: Callable[..., Finding]) -> Callable[..., Finding]:
+        wants_context = len(inspect.signature(func).parameters) >= 2
+        _REGISTRY[id] = CheckSpec(id, title, category, weight, fix, func, example, wants_context)
         return func
 
     return decorator
@@ -126,9 +142,9 @@ def grade_for(score: float) -> str:
     return "F"
 
 
-def _run_one(spec: CheckSpec, dag: Any) -> Finding:
+def _run_one(spec: CheckSpec, dag: Any, context: Context) -> Finding:
     try:
-        finding = spec.func(dag)
+        finding = spec.func(dag, context) if spec.wants_context else spec.func(dag)
     except Exception:
         log.exception("dagwick check %s crashed on DAG %s", spec.id, getattr(dag, "dag_id", "?"))
         return Finding(Status.SKIP, "This check could not run on this DAG.")
@@ -138,12 +154,12 @@ def _run_one(spec: CheckSpec, dag: Any) -> Finding:
     return finding
 
 
-def score_dag(dag: Any) -> dict[str, Any]:
+def score_dag(dag: Any, context: Context | None = None) -> dict[str, Any]:
     results: list[CheckResult] = []
     earned = 0.0
     possible = 0
     for spec in registered_checks():
-        finding = _run_one(spec, dag)
+        finding = _run_one(spec, dag, context or Context())
         points = 0.0
         needs_work = finding.status in (Status.FAIL, Status.WARN)
         if finding.status != Status.SKIP:

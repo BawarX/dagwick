@@ -72,3 +72,5 @@ dev/                       Local sandbox: run.sh and demo DAGs. Not packaged.
 - **Branches:** feature branches go into `dev`; `main` holds released code.
 - **Releases** are GitHub Releases tagged `vX.Y.Z` matching `__version__`; the
   release workflow publishes to PyPI with Trusted Publishing (no stored token).
+  The full checklist is in `RELEASING.md`. Release notes come from the
+  version's dated section in `CHANGELOG.md` (`scripts/release_notes.py`).

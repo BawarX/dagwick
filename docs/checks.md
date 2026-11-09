@@ -21,6 +21,7 @@ not apply to a DAG is left out of the score.
 | Scheduling | Bounded parallel runs (`max_active_runs`) | 5 |
 | Structure | Split into steps | 5 |
 | Structure | Consistent names (snake_case) | 3 |
+| Structure | File named after the DAG (`<dag_id>.py`; skipped for files that define several DAGs) | 3 |
 
 ## Add your own check
 
@@ -52,3 +53,6 @@ my_checks = "my_checks.rules"
 ```
 
 A check with the same `id` as a built-in check replaces it.
+
+A check can also take a second parameter, `context` (a `dagwick.Context`), for
+facts that are not on the DAG itself, such as `context.dags_in_file`.

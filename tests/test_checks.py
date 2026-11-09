@@ -84,3 +84,32 @@ def test_partial_checks_name_the_affected_tasks(average):
 def test_passing_checks_carry_no_fix_items_or_example(shining):
     for c in score_dag(shining)["checks"]:
         assert c["items"] == [] and c["example"] == "" and c["fix"] == ""
+
+
+def test_file_named_after_dag_passes(shining):
+    check = by_id(score_dag(shining))["file_name"]
+    assert check["status"] == "pass"
+    assert "demo_shining_pipeline.py" in check["message"]
+
+
+def test_mismatched_file_name_warns_with_the_expected_name(dim):
+    check = by_id(score_dag(dim))["file_name"]
+    assert check["status"] == "warn"
+    assert check["items"] == ["dim_dag.py"]
+    assert "expected DemoLegacyJob.py" in check["message"]
+    assert check["fix"]
+
+
+def test_dag_factory_files_are_skipped(dim):
+    from dagwick import Context
+
+    check = by_id(score_dag(dim, Context(dags_in_file=5)))["file_name"]
+    assert check["status"] == "skip"
+    assert check["points"] == 0
+    assert "5 DAGs" in check["message"]
+
+
+def test_one_dag_in_the_file_is_still_checked(dim):
+    from dagwick import Context
+
+    assert by_id(score_dag(dim, Context(dags_in_file=1)))["file_name"]["status"] == "warn"

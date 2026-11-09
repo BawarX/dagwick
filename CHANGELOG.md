@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 - One optional, non-secret setting: `[dagwick] seasonal_moods`
   (`off` by default | `auto` | a list of moods). Viewers can also hide moods for themselves.
 - Preview any mood with `?dagwick_mood=<id>`.
+- New check, **File named after the DAG**: warns when a DAG's file is not
+  `<dag_id>.py`, so the code is easy to find from the DAG name. Files that
+  define several DAGs (DAG factories) are skipped.
+- Checks can take an optional second parameter, `context`, with facts that
+  are not on the DAG itself (for example how many DAGs share its file).
 
 ## [0.1.0] - 2026-11-08
 

@@ -33,6 +33,7 @@ in a browser at 1280 × 640 and take a screenshot (or use headless Chrome with
    `src/dagwick/static/dagwick.js`.
 6. **Document user-facing changes** in `CHANGELOG.md` under *Unreleased*.
 7. **Report security issues privately** (see `SECURITY.md`).
+8. **Releases** are done by maintainers; the steps are in `RELEASING.md`.
 
 ## Writing a check
 

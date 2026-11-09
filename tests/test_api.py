@@ -98,8 +98,25 @@ def test_score_by_id_uses_cache(monkeypatch, shining):
         serialized_dag.SerializedDagModel, "get", lambda dag_id: calls.append(1) or fake
     )
     monkeypatch.setattr(api, "_cache", api._ScoreCache())
+    monkeypatch.setattr(api, "_dags_per_file", lambda filelocs=None: {shining.fileloc: 1})
     first = api._score_by_id("demo_shining_pipeline")
     second = api._score_by_id("demo_shining_pipeline")
     assert first is second and first["grade"] == "A"
     monkeypatch.setattr(serialized_dag.SerializedDagModel, "get", lambda dag_id: None)
     assert api._score_by_id("gone") is None
+
+
+def test_score_by_id_rescores_when_the_files_dag_count_changes(monkeypatch, shining):
+    from types import SimpleNamespace
+
+    from airflow.models import serialized_dag
+
+    from dagwick import api
+
+    fake = SimpleNamespace(dag_hash="h1", dag=shining)
+    monkeypatch.setattr(serialized_dag.SerializedDagModel, "get", lambda dag_id: fake)
+    monkeypatch.setattr(api, "_cache", api._ScoreCache())
+    single = api._score_by_id("demo_shining_pipeline", dags_in_file=1)
+    factory = api._score_by_id("demo_shining_pipeline", dags_in_file=4)
+    status = {c["id"]: c["status"] for c in factory["checks"]}
+    assert single is not factory and status["file_name"] == "skip"

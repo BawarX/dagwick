@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
 from dagwick import __version__
-from dagwick.core import registered_checks, score_dag
+from dagwick.core import Context, registered_checks, score_dag
 
 log = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"
@@ -62,17 +62,34 @@ class _ScoreCache:
 _cache = _ScoreCache()
 
 
-def _score_by_id(dag_id: str) -> dict[str, Any] | None:
+def _dags_per_file(filelocs: list[str] | None = None) -> dict[str, int]:
+    """How many active DAGs each file defines (one grouped query)."""
+    from airflow.models.dag import DagModel
+    from airflow.utils.session import create_session
+    from sqlalchemy import func, select
+
+    query = select(DagModel.fileloc, func.count()).where(DagModel.is_stale.is_(False))
+    if filelocs is not None:
+        query = query.where(DagModel.fileloc.in_(filelocs))
+    with create_session() as session:
+        return dict(session.execute(query.group_by(DagModel.fileloc)).all())
+
+
+def _score_by_id(dag_id: str, dags_in_file: int | None = None) -> dict[str, Any] | None:
     from airflow.models.serialized_dag import SerializedDagModel
 
     sdm = SerializedDagModel.get(dag_id)
     if sdm is None:
         return None
-    cached = _cache.get(dag_id, sdm.dag_hash)
+    dag = sdm.dag
+    if dags_in_file is None and getattr(dag, "fileloc", None):
+        dags_in_file = _dags_per_file([dag.fileloc]).get(dag.fileloc)
+    key = f"{sdm.dag_hash}:{dags_in_file}"  # re-score if the code or its file's DAG count changes
+    cached = _cache.get(dag_id, key)
     if cached is not None:
         return cached
-    report = score_dag(sdm.dag)
-    _cache.put(dag_id, sdm.dag_hash, report)
+    report = score_dag(dag, Context(dags_in_file=dags_in_file))
+    _cache.put(dag_id, key, report)
     return report
 
 
@@ -147,14 +164,15 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
         allowed = get_auth_manager().get_authorized_dag_ids(user=user, method="GET")
         with create_session() as session:
             rows = session.execute(
-                select(DagModel.dag_id, DagModel.is_paused, DagModel.owners)
+                select(DagModel.dag_id, DagModel.is_paused, DagModel.owners, DagModel.fileloc)
                 .where(DagModel.is_stale.is_(False), DagModel.dag_id.in_(allowed))
                 .order_by(DagModel.dag_id)
                 .limit(FLEET_LIMIT)
             ).all()
+        per_file = _dags_per_file()
         dags = []
-        for dag_id, is_paused, owners in rows:
-            report = _score_by_id(dag_id)
+        for dag_id, is_paused, owners, fileloc in rows:
+            report = _score_by_id(dag_id, per_file.get(fileloc))
             if report is not None:
                 dags.append(fleet_entry(dag_id, is_paused, owners, report))
     except Exception as exc:
