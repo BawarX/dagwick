@@ -19,6 +19,7 @@ ACKNOWLEDGEABLE = {
     "retry_alerts",
     "failure_alerts",  # with a reason saying where failures are alerted instead
     "auto_pause",  # with a reason saying what stops the DAG when it keeps failing
+    "sensor_slots",  # with a reason saying why the sensor must keep its slot
 }
 
 
@@ -132,4 +133,4 @@ def test_only_the_agreed_checks_can_be_acknowledged():
     allowed = {c.id for c in registered_checks() if c.acknowledgeable}
     assert allowed == ACKNOWLEDGEABLE
     hints = {c.id for c in registered_checks() if c.ack_hint}
-    assert hints == {"failure_alerts", "auto_pause"}
+    assert hints == {"failure_alerts", "auto_pause", "sensor_slots"}

@@ -65,6 +65,9 @@ class Context:
     dags_in_file: int | None = None
     source: str | None = field(default=None, repr=False)
     parse_seconds: float | None = None
+    sensor_tasks: tuple[str, ...] | None = None
+    sensor_runs: dict[str, tuple[float | None, bool]] | None = None
+    default_deferrable: bool = False
 
 
 @dataclass(frozen=True)
