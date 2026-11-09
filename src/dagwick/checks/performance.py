@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from dagwick.checks._sensors import DEFERRABLE, POKE, RESCHEDULE, sensor_modes
 from dagwick.checks._source import parse, variable_get_lines
 from dagwick.core import Category, Context, Finding, Status, check
 
@@ -75,4 +76,64 @@ def parse_time_variables(dag: Any, context: Context) -> Finding:
         Status.FAIL,
         f"{len(lines)} Variable.get {noun} on every parse, each one a metadata or secrets lookup.",
         tuple(f"line {n}" for n in lines),
+    )
+
+
+SLOW_POKE_SECONDS = 60
+
+
+def _minutes(seconds: float) -> str:
+    return f"{seconds / 60:.0f} min" if seconds >= 90 else f"{seconds:.0f} s"
+
+
+@check(
+    id="sensor_slots",
+    title="Sensors free their worker slot",
+    category=Category.PERFORMANCE,
+    weight=5,
+    acknowledgeable=True,
+    ack_hint="why the sensor must keep a worker slot (for example it needs sub-minute reaction)",
+    example=(
+        'S3KeySensor(task_id="wait_for_file", ..., deferrable=True)\n'
+        "# or, for a sensor without a deferrable version:\n"
+        'S3KeySensor(task_id="wait_for_file", ..., mode="reschedule", poke_interval=300)'
+    ),
+    fix=(
+        'Make long-waiting sensors deferrable, or set mode="reschedule", so they free their '
+        "worker slot between checks instead of holding it for the whole wait."
+    ),
+)
+def sensor_slots(dag: Any, context: Context) -> Finding:
+    sensors = context.sensor_tasks
+    if sensors is None:
+        return Finding(Status.SKIP, "Which tasks are sensors is not known.")
+    if not sensors:
+        return Finding(Status.SKIP, "The DAG has no sensors.")
+    tree = parse(context.source) if context.source else None
+    modes = sensor_modes(tree, context.default_deferrable) if tree else {}
+    runs = context.sensor_runs or {}
+    holding: list[str] = []
+    fine = 0
+    for task_id in sensors:
+        mode = modes.get(task_id)
+        wait, rescheduled = runs.get(task_id, (None, False))
+        if rescheduled or mode in (RESCHEDULE, DEFERRABLE):
+            fine += 1
+        elif mode == POKE and wait is not None:
+            if wait >= SLOW_POKE_SECONDS:
+                holding.append(f"{task_id}: holds a worker slot for about {_minutes(wait)} per run")
+            else:
+                fine += 1
+    if holding:
+        noun = "sensor holds" if len(holding) == 1 else "sensors hold"
+        return Finding(
+            Status.WARN,
+            f"{len(holding)} {noun} a worker slot while waiting.",
+            tuple(holding),
+        )
+    if fine:
+        return Finding(Status.PASS, "Sensors free their slot, or finish their wait quickly.")
+    return Finding(
+        Status.SKIP,
+        "Not enough to judge yet: no recent runs, or the source does not show the mode.",
     )
