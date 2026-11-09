@@ -5,6 +5,7 @@ import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
 import { gradeFor, useThresholds } from "./grades";
+import { csvFileName, download, fleetCsv } from "./csv";
 import { useSeason } from "./useSeason";
 import type { FleetDag, Grade } from "./types";
 
@@ -179,6 +180,14 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                 </button>
               ))}
             </div>
+            <button
+              className="dagwick-btn dagwick-csv"
+              onClick={() => download(csvFileName(), fleetCsv(rows))}
+              disabled={rows.length === 0}
+              title={filtered ? "Download the DAGs shown, as CSV" : "Download every DAG, as CSV"}
+            >
+              Download CSV
+            </button>
           </div>
           {filtered && (
             <div className="dagwick-filters">

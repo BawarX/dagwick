@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Download the fleet as CSV.** A button on the fleet page saves the DAGs
+  shown (with the current search and filters) as a CSV file: dag_id, owners,
+  tags, paused, score, grade, failing and warning checks, runs and success
+  rate over 30 days. It is built in the browser from `/api/fleet`, so it holds
+  only the DAGs the user may read. Cells that a spreadsheet would run as a
+  formula are written as text.
+- `/api/fleet` includes each DAG's `tags`.
 - **Tune the scoring in `airflow.cfg`.** Three optional `[dagwick]` settings:
   `disabled_checks` leaves checks out of every score, `weights` changes how
   many points a check is worth, and `grades` sets the grade thresholds.

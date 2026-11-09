@@ -79,6 +79,7 @@ export interface FleetDag {
   counts: Record<Status, number>;
   is_paused: boolean;
   owners: string;
+  tags?: string[];
   issues: FleetIssue[];
   health?: FleetHealth;
 }
