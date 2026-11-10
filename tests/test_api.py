@@ -12,6 +12,7 @@ client = TestClient(app)
 def test_static_serves_only_allowlisted_files():
     assert client.get("/static/dagwick.js").status_code == 200
     assert client.get("/static/icon.svg").headers["content-type"].startswith("image/svg")
+    assert client.get("/static/icon-dark.svg").headers["content-type"].startswith("image/svg")
     assert client.get("/static/..%2Fapi.py").status_code == 404
     assert client.get("/static/api.py").status_code == 404
     assert client.get("/static/..%2F__init__.py").status_code == 404

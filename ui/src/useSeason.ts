@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { loadConfig } from "./api";
+import { fetchThemes, loadConfig } from "./api";
+import { pickTheme, readChoice, themeSeason } from "./themes";
 import { SEASONS, type Season, isSeasonId, seasonFor } from "./season";
 
 const STORAGE_KEY = "dagwick.moods.hidden";
@@ -14,7 +15,7 @@ function readHidden(): boolean {
   }
 }
 
-function writeHidden(hidden: boolean) {
+export function writeHidden(hidden: boolean) {
   try {
     if (hidden) window.localStorage.setItem(STORAGE_KEY, "1");
     else window.localStorage.removeItem(STORAGE_KEY);
@@ -31,6 +32,17 @@ function previewFromUrl(): Season | null | undefined {
   const value = new URLSearchParams(window.location.search).get("dagwick_mood");
   if (value === "everyday") return null;
   return isSeasonId(value) ? SEASONS[value] : undefined;
+}
+
+let themesRequest: ReturnType<typeof fetchThemes> | undefined;
+
+/** The theme list, fetched once per page and shared (a failure lets a later caller retry). */
+function loadThemes() {
+  themesRequest ??= fetchThemes().catch((e: unknown) => {
+    themesRequest = undefined;
+    throw e;
+  });
+  return themesRequest;
 }
 
 export interface SeasonState {
@@ -51,9 +63,14 @@ export function useSeason(): SeasonState {
   useEffect(() => {
     if (preview !== undefined) return; // a preview ignores the admin setting
     const ctrl = new AbortController();
-    loadConfig()
-      .then((cfg) => {
+    // A theme showing on Airflow (by date, or applied by this viewer) sets the banner's
+    // look; otherwise the admin's seasonal_moods setting decides.
+    Promise.all([loadThemes().catch(() => []), loadConfig().catch(() => undefined)])
+      .then(([themes, cfg]) => {
         if (ctrl.signal.aborted) return;
+        const fromTheme = themeSeason(pickTheme(themes, readChoice(document.cookie)));
+        if (fromTheme) return setAvailable(SEASONS[fromTheme]);
+        if (!cfg) return; // setting unreadable: stay off
         const allowed =
           cfg.seasonal_moods === "auto" || cfg.seasonal_moods === "off"
             ? cfg.seasonal_moods
@@ -61,7 +78,7 @@ export function useSeason(): SeasonState {
         setAvailable(seasonFor(new Date(), allowed));
       })
       .catch(() => {
-        /* setting unreadable: stay off */
+        /* stay off */
       });
     return () => ctrl.abort();
   }, [preview]);

@@ -12,6 +12,38 @@ All notable changes to this project are documented here. The format follows
   snow, Halloween, Newroz and Kurdish Language Day as plain `[api] theme`
   files for Airflow 3.2+. The scenery is drawn behind the page, stops under
   reduced motion and loads nothing from the network. No plugin code.
+- **Seasonal themes for all of Airflow, built in.** A new Themes tab next to
+  Fleet lists them. By default each theme appears on its dates on every Airflow
+  page and goes away afterwards, with nothing to set in Airflow's
+  configuration. The first theme is Christmas snow (18 December to 2 January):
+  snowflakes drift over Airflow, some carried sideways by the wind, snow
+  settles on top of cards, and a drift lies along the bottom. The snow is moved
+  by the graphics card, so pages stay smooth; clicks go through it, and viewers
+  who prefer reduced motion get still snow. Each viewer can switch off "Show
+  themes on their dates", and apply or remove any theme whenever they like; the
+  change shows at once, without a reload. Choices are saved in their browser,
+  and Dagwick still writes nothing to Airflow's database. Any theme the admin
+  already set in Airflow is kept.
+- **Halloween theme** (24 October to 1 November): dark bats flit about on
+  their own random paths, beating their wings, ghosts drift across Airflow,
+  embers rise, a full moon with seas, craters and thin clouds peeks from the
+  corner, darkness closes in from the edges, glowing eyes blink in the fog along
+  the bottom, a small cobweb hangs in the corner, black gnarled branches lie on
+  top of the cards (like the snow at Christmas), and spiders dangle from them.
+  Airflow's sidebar, with the user menu, always stays clear of the decorations.
+  Switching between themes without a reload clears the old theme first.
+- **The banner follows the theme.** When a seasonal theme is showing, by date
+  or applied by the viewer, Dagwick's banner takes the matching seasonal look
+  (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
+  Halloween), whatever the `seasonal_moods` setting says.
+- **A theme for every banner.** Newroz, Eid, Ramadan, Kurdish Language Day,
+  New Year and Dagwick's birthday join Christmas and Halloween on the Themes
+  page. For now they change Dagwick's banner only (marked "Banner only");
+  their decorations for all of Airflow are still to come. Eid and Ramadan
+  follow the Islamic calendar, from a table of approximate dates for 2026-2031.
+- **Sidebar icon in Airflow's style:** a candle outline in the same line style
+  and colours as Airflow's own sidebar icons, with a version for dark mode, and
+  white while Dagwick's page is open, like Airflow's highlighted items.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,
   tags, paused, score, grade, failing and warning checks, runs and success

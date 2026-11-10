@@ -486,6 +486,68 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-greeting-show:hover { color: var(--dagwick-accent); }
 .dagwick-greeting-hide:focus-visible, .dagwick-greeting-show:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
 
+/* Page tabs (Fleet | Themes), like Airflow's own Dags | Dag Runs | Task Instances */
+.dagwick-pagetabs { display: flex; gap: 4px; border-bottom: 1px solid var(--dagwick-border); margin: 0 0 18px; }
+.dagwick-pagetab {
+  all: unset; cursor: pointer; padding: 8px 14px 10px; font-size: 17px; font-weight: 600;
+  color: var(--dagwick-muted); border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.dagwick-pagetab:hover { color: var(--dagwick-text); }
+.dagwick-pagetab.is-active { color: var(--dagwick-text); border-bottom-color: var(--dagwick-accent); }
+.dagwick-pagetab:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Themes page */
+.dagwick-themes { display: grid; gap: 18px; }
+.dagwick-themes-head h2 { margin: 0 0 4px; font-size: 20px; }
+.dagwick-themes-head p { margin: 0; max-width: 70ch; }
+.dagwick-theme-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
+.dagwick-theme {
+  display: grid; grid-template-columns: 200px 1fr; gap: 18px; padding: 16px;
+  border: 1px solid var(--dagwick-border); border-radius: 14px; background: var(--dagwick-surface);
+}
+.dagwick-theme-scene { width: 100%; height: auto; border-radius: 10px; display: block; }
+.dagwick-theme-body { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.dagwick-theme-body p { margin: 0; font-size: 13.5px; }
+.dagwick-theme-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dagwick-theme-title h3 { margin: 0; font-size: 16px; }
+.dagwick-theme-dates { font-weight: 600; font-variant-numeric: tabular-nums; }
+.dagwick-theme-status { font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.dagwick-theme-status.is-on { color: var(--dagwick-pass); background: var(--dagwick-pass-bg); }
+.dagwick-theme-status.is-off { color: var(--dagwick-fail); background: var(--dagwick-fail-bg); }
+.dagwick-theme-status.is-idle { color: var(--dagwick-muted); background: var(--dagwick-bg); border: 1px solid var(--dagwick-border); }
+.dagwick-theme-tag { font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--dagwick-muted); border: 1px dashed var(--dagwick-border); }
+.dagwick-theme-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+.dagwick-theme { transition: border-color .25s ease, box-shadow .25s ease; }
+.dagwick-theme.is-on { border-color: color-mix(in srgb, var(--dagwick-accent) 55%, var(--dagwick-border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--dagwick-accent) 25%, transparent); }
+.dagwick-theme-status { transition: color .25s ease, background-color .25s ease; }
+.dagwick-theme-settings {
+  display: flex; align-items: center; padding: 14px 16px; max-width: 760px;
+  border: 1px solid var(--dagwick-border); border-radius: 14px; background: var(--dagwick-surface);
+}
+.dagwick-switch-text { display: grid; gap: 2px; }
+.dagwick-switch-text strong { font-size: 14px; }
+.dagwick-switch-text small { font-size: 12.5px; }
+.dagwick-switch input:disabled + .dagwick-switch-track { opacity: .6; }
+.dagwick-btn-primary { background: var(--dagwick-accent); border-color: var(--dagwick-accent); color: #1d1405; font-weight: 600; }
+.dagwick-btn-primary:hover:not(:disabled) { filter: brightness(1.06); }
+.dagwick-btn { transition: background-color .2s ease, border-color .2s ease, opacity .2s ease, filter .2s ease; }
+.dagwick-btn:disabled { opacity: .65; cursor: progress; }
+.dagwick-theme-problem { margin: 0; color: var(--dagwick-fail); font-size: 13.5px; }
+.dagwick-theme-notice { margin: 0; min-height: 1.4em; font-size: 13.5px; color: var(--dagwick-muted); }
+.dagwick-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+.dagwick-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dagwick-switch-track {
+  flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--dagwick-border); position: relative; transition: background .15s;
+}
+.dagwick-switch-track::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.dagwick-switch input:checked + .dagwick-switch-track { background: var(--dagwick-accent); }
+.dagwick-switch input:checked + .dagwick-switch-track::after { transform: translateX(14px); }
+.dagwick-switch input:focus-visible + .dagwick-switch-track { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
+@container dagwick (max-width: 560px) { .dagwick-theme { grid-template-columns: 1fr; } }
+
 /* The mascot: Wick, a little flame (keyframes are prefixed dagwick-m-) */
 .dagwick-wick { flex: none; overflow: visible; }
 .dagwick-spirit { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-ignite .7s cubic-bezier(.2, 1.5, .4, 1) both; }
@@ -542,6 +604,14 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
   .dagwick-hero-text { grid-column: 1 / -1; order: 1; }
   .dagwick-chips, .dagwick-stats { justify-content: center; }
 }
+
+/* Dagwick's sidebar icon: when Dagwick's own page is open, Airflow highlights its item and
+   turns that item's icon white, so ours turns white too. (Not on a DAG's Dagwick tab: there
+   the highlighted item is "Dags".) */
+body:has(.dagwick-navpage) [data-testid="nav-sidebar"] img[src*="/dagwick/static/icon"] {
+  filter: brightness(0) invert(1);
+}
+
 /* Phones and a narrow DAG panel: shrink Wick and the ring so both fit side by side. */
 @container dagwick (max-width: 440px) {
   .dagwick-hero { gap: 12px 16px; padding: 16px 12px; }

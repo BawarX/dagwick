@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 from airflow.plugins_manager import AirflowPlugin
 
 from dagwick.api import app
+from dagwick.themes import ThemeMiddleware
 
 BRAND = "Dagwick"
 PREFIX = "/dagwick"
@@ -18,6 +19,11 @@ class DagwickPlugin(AirflowPlugin):
         {"app": app, "url_prefix": PREFIX, "name": BRAND},
     ]
 
+    # Adds the seasonal theme (for example Christmas snow) to Airflow's UI config reply.
+    fastapi_root_middlewares: ClassVar[list[dict[str, Any]]] = [
+        {"middleware": ThemeMiddleware, "name": "dagwick-themes"},
+    ]
+
     react_apps: ClassVar[list[dict[str, Any]]] = [
         # Tab on every DAG page.
         {"name": BRAND, "bundle_url": BUNDLE, "destination": "dag", "url_route": "dagwick"},
@@ -28,6 +34,8 @@ class DagwickPlugin(AirflowPlugin):
             "destination": "nav",
             "url_route": "dagwick-fleet",
             "nav_top_level": True,
+            # Outline icons in Airflow's own sidebar style and colours, one per mode.
             "icon": f"{PREFIX}/static/icon.svg",
+            "icon_dark_mode": f"{PREFIX}/static/icon-dark.svg",
         },
     ]
