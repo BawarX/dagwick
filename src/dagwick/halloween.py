@@ -85,7 +85,7 @@ def small_bats_svg(rng: random.Random, width: int, height: int, count: int) -> s
         f"<defs><path id='b' d='{BAT}'/></defs>",
     ]
     for _ in range(count):
-        span = rng.uniform(15, 25) / 36  # wingspan of 15-25 px
+        span = rng.uniform(24, 36) / 36  # wingspan of 24-36 px
         x, y = rng.uniform(0, width), rng.uniform(height * 0.05, height * 0.5)
         tilt, flap = rng.uniform(-22, 22), rng.uniform(0.55, 1.05)
         for dx in (-width, 0, width):
@@ -103,23 +103,67 @@ def small_bats_svg(rng: random.Random, width: int, height: int, count: int) -> s
 
 
 def moon_svg(size: int) -> str:
-    """A pale full moon with a soft glow and a few darker seas."""
-    c = size / 2
-    r = size * 0.26
+    """A full moon: shaded like a sphere, with dark seas, small craters, a soft halo and
+    thin clouds drifting across it."""
+    rng = random.Random(SEED + 11)
+    c, r = size / 2, size * 0.3
+
+    def blob(cx: float, cy: float, rad: float, points: int = 9) -> str:
+        pts = []
+        for i in range(points):
+            a = math.tau * i / points
+            d = rad * rng.uniform(0.7, 1.15)
+            pts.append((cx + d * math.cos(a), cy + d * math.sin(a)))
+        out = f"M{(pts[0][0] + pts[-1][0]) / 2:.1f} {(pts[0][1] + pts[-1][1]) / 2:.1f}"
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1], strict=True):
+            out += f" Q{x0:.1f} {y0:.1f} {(x0 + x1) / 2:.1f} {(y0 + y1) / 2:.1f}"
+        return out + "Z"
+
+    seas = "".join(
+        f"<path d='{blob(c + dx * r, c + dy * r, rad * r)}'/>"
+        for dx, dy, rad in (
+            (-0.3, -0.25, 0.3),
+            (0.15, -0.35, 0.22),
+            (0.3, 0.1, 0.26),
+            (-0.1, 0.3, 0.2),
+            (-0.45, 0.15, 0.16),
+        )
+    )
+    craters = []
+    for _ in range(9):
+        a, d = rng.uniform(0, math.tau), rng.uniform(0, 0.82) * r
+        x, y, cr = c + d * math.cos(a), c + d * math.sin(a), rng.uniform(0.03, 0.07) * r
+        craters.append(
+            f"<circle cx='{x:.1f}' cy='{y:.1f}' r='{cr:.1f}' fill='#b3a57c' opacity='.55'/>"
+            f"<path d='M{x - cr:.1f} {y:.1f} A{cr:.1f} {cr:.1f} 0 0 0 {x + cr:.1f} {y:.1f}' "
+            "fill='none' stroke='#fffaf0' stroke-opacity='.55' stroke-width='.8'/>"
+        )
+    clouds = "".join(
+        f"<ellipse cx='{c + dx * r:.1f}' cy='{c + dy * r:.1f}' rx='{w * r:.1f}' ry='{h * r:.1f}'/>"
+        for dx, dy, w, h in (
+            (-0.2, 0.55, 1.1, 0.09),
+            (0.35, 0.72, 0.9, 0.07),
+            (-0.5, 0.82, 0.7, 0.06),
+        )
+    )
     return (
         f"<svg xmlns='http://www.w3.org/2000/svg' width='{size}' height='{size}'>"
-        "<defs><radialGradient id='h'><stop offset='.3' stop-color='#fef3c7' stop-opacity='.16'/>"
-        "<stop offset='1' stop-color='#fde68a' stop-opacity='0'/></radialGradient>"
-        "<radialGradient id='m' cx='40%' cy='38%'><stop offset='0' stop-color='#fffbeb'/>"
-        "<stop offset='1' stop-color='#e9dcb0'/></radialGradient></defs>"
+        "<defs>"
+        "<radialGradient id='h'><stop offset='.35' stop-color='#fef3c7' stop-opacity='.22'/>"
+        "<stop offset='.6' stop-color='#c4b5fd' stop-opacity='.07'/>"
+        "<stop offset='1' stop-color='#c4b5fd' stop-opacity='0'/></radialGradient>"
+        "<radialGradient id='m' cx='42%' cy='38%' r='62%'>"
+        "<stop offset='0' stop-color='#fffbeb'/><stop offset='.65' stop-color='#ece2c0'/>"
+        "<stop offset='1' stop-color='#bfae84'/></radialGradient>"
+        f"<clipPath id='d'><circle cx='{c}' cy='{c}' r='{r:.1f}'/></clipPath>"
+        "<filter id='s'><feGaussianBlur stdDeviation='1.6'/></filter>"
+        "<filter id='w'><feGaussianBlur stdDeviation='2.4'/></filter>"
+        "</defs>"
         f"<circle cx='{c}' cy='{c}' r='{c}' fill='url(#h)'/>"
-        f"<circle cx='{c}' cy='{c}' r='{r:.0f}' fill='url(#m)' opacity='.62'/>"
-        f"<circle cx='{c - r * 0.3:.0f}' cy='{c - r * 0.2:.0f}' r='{r * 0.22:.0f}' "
-        "fill='#d6a43a' opacity='.35'/>"
-        f"<circle cx='{c + r * 0.35:.0f}' cy='{c + r * 0.25:.0f}' r='{r * 0.15:.0f}' "
-        "fill='#d6a43a' opacity='.3'/>"
-        f"<circle cx='{c + r * 0.1:.0f}' cy='{c - r * 0.45:.0f}' r='{r * 0.1:.0f}' "
-        "fill='#d6a43a' opacity='.3'/>"
+        f"<g opacity='.85'><circle cx='{c}' cy='{c}' r='{r:.1f}' fill='url(#m)'/>"
+        f"<g clip-path='url(#d)'><g fill='#a8996f' opacity='.38' filter='url(#s)'>{seas}</g>"
+        f"{''.join(craters)}</g></g>"
+        f"<g fill='#1c1428' opacity='.7' filter='url(#w)'>{clouds}</g>"
         "</svg>"
     )
 
@@ -502,8 +546,8 @@ def global_css() -> dict[str, Any]:
             "linear-gradient(to top, rgba(76, 29, 149, 0.2), transparent 90px), "
             "radial-gradient(ellipse at center, transparent 55%, rgba(8, 3, 16, 0.55) 100%)",
             "backgroundRepeat": "no-repeat",
-            "backgroundPosition": "right -64px top -64px, 0 0, 0 0",
-            "backgroundSize": "200px 200px, 100% 100%, 100% 100%",
+            "backgroundPosition": "right -62px top -74px, 0 0, 0 0",
+            "backgroundSize": "230px 230px, 100% 100%, 100% 100%",
         },
         # Glowing eyes in the fog that fade in, blink and vanish again.
         '[data-testid="main-content"]::after': {

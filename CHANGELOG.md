@@ -22,7 +22,7 @@ All notable changes to this project are documented here. The format follows
   already set in Airflow is kept.
 - **Halloween theme** (24 October to 1 November): small dark bats flutter
   across the top, ghosts drift across Airflow,
-  embers rise, a pale moon peeks from the corner, darkness closes in from the
+  embers rise, a full moon with seas, craters and thin clouds peeks from the corner, darkness closes in from the
   edges, glowing eyes blink in the fog along the bottom, a small cobweb hangs in
   the corner, black gnarled branches lie on top of the cards (like the snow at
   Christmas), and spiders dangle from them. Airflow's sidebar, with the user
