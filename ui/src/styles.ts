@@ -300,7 +300,7 @@ html.dark .dagwick {
 .dagwick-select:disabled { cursor: default; opacity: .55; }
 .dagwick-toolbar .dagwick-csv { margin-left: auto; }
 @container dagwick (max-width: 720px) {
-  .dagwick-search-wrap, .dagwick-dd { flex: 1 1 100%; width: 100%; }
+  .dagwick-dd { flex: 1 1 100%; width: 100%; }
   .dagwick-toolbar .dagwick-csv { margin-left: 0; }
 }
 .dagwick-dd > .dagwick-select { width: 100%; text-align: left; }
@@ -337,6 +337,8 @@ html.dark .dagwick {
   color: var(--dagwick-text); background: var(--dagwick-bg); border: 1px solid var(--dagwick-border); outline: none;
 }
 .dagwick-search:focus { border-color: var(--dagwick-accent); }
+/* After the base rule above, so it wins at narrow widths. */
+@container dagwick (max-width: 720px) { .dagwick-search-wrap { flex: 1 1 100%; width: 100%; } }
 .dagwick-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--dagwick-bg); border: 1px solid var(--dagwick-border); }
 .dagwick-seg button { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px; border: 0; cursor: pointer; background: transparent; color: var(--dagwick-muted); }
 .dagwick-seg button.is-active { background: var(--dagwick-surface); color: var(--dagwick-text); box-shadow: 0 1px 2px var(--dagwick-shadow); }
@@ -391,7 +393,7 @@ html.dark .dagwick {
 .dagwick-common-head .dagwick-muted { font-variant-numeric: tabular-nums; }
 
 @container dagwick (max-width: 1100px) {
-  .dagwick-fleet-grid { grid-template-columns: 1fr; }
+  .dagwick-fleet-grid { grid-template-columns: minmax(0, 1fr); }
   .dagwick-side { position: static; order: -1; }
 }
 @container dagwick (max-width: 720px) {
@@ -539,5 +541,13 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
   .dagwick-hero { grid-template-columns: auto auto; justify-content: center; justify-items: center; text-align: center; gap: 16px 32px; }
   .dagwick-hero-text { grid-column: 1 / -1; order: 1; }
   .dagwick-chips, .dagwick-stats { justify-content: center; }
+}
+/* Phones and a narrow DAG panel: shrink Wick and the ring so both fit side by side. */
+@container dagwick (max-width: 440px) {
+  .dagwick-hero { gap: 12px 16px; padding: 16px 12px; }
+  .dagwick-hero .dagwick-wick { width: 104px; height: 104px; }
+  .dagwick-hero .dagwick-bubble { white-space: normal; max-width: 120px; }
+  .dagwick-hero .dagwick-ring, .dagwick-hero .dagwick-ring svg { width: 104px; height: 104px; }
+  .dagwick-hero .dagwick-grade { font-size: 32px; }
 }
 `;
