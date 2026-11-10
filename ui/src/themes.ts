@@ -14,7 +14,7 @@ export interface ThemeInfo {
   active: boolean;
   /** The dates in words, for example "18 Dec – 2 Jan · every year". */
   when?: string;
-  /** False while a theme only changes Dagwick's banner (no decorations for Airflow yet). */
+  /** False while a theme's decorations for Airflow aren't made yet: it is "coming soon". */
   decorated?: boolean;
 }
 
@@ -70,11 +70,15 @@ export function choiceCookies(choice: Choice): string[] {
   return [keep(OFF_COOKIE, off.join(",")), keep(APPLIED_COOKIE, choice.applied ?? "")];
 }
 
-/** The theme this viewer sees now. Must match pick_theme in themes.py. */
+/** A theme that is listed but can't show yet. */
+export const comingSoon = (theme: ThemeInfo) => theme.decorated === false;
+
+/** The theme this viewer sees now (never one coming soon). Must match pick_theme in themes.py. */
 export function pickTheme(themes: ThemeInfo[], choice: Choice): string | undefined {
-  if (choice.applied && themes.some((t) => t.id === choice.applied)) return choice.applied;
+  const ready = themes.filter((t) => !comingSoon(t));
+  if (choice.applied && ready.some((t) => t.id === choice.applied)) return choice.applied;
   if (!choice.auto) return undefined;
-  return themes.find((t) => t.active && !choice.removed.includes(t.id))?.id;
+  return ready.find((t) => t.active && !choice.removed.includes(t.id))?.id;
 }
 
 /** Apply a theme by hand: it replaces any other and shows whatever the date. */
@@ -101,9 +105,10 @@ export function setAuto(choice: Choice, auto: boolean): Choice {
   return { ...choice, auto, removed: auto ? [] : choice.removed };
 }
 
-export type ThemeStatus = "applied" | "showing" | "removed" | "waiting";
+export type ThemeStatus = "applied" | "showing" | "removed" | "waiting" | "soon";
 
 export function themeStatus(theme: ThemeInfo, themes: ThemeInfo[], choice: Choice): ThemeStatus {
+  if (comingSoon(theme)) return "soon";
   if (pickTheme(themes, choice) === theme.id) return choice.applied === theme.id ? "applied" : "showing";
   return theme.active && choice.auto ? "removed" : "waiting";
 }

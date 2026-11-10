@@ -36,11 +36,13 @@ All notable changes to this project are documented here. The format follows
   or applied by the viewer, Dagwick's banner takes the matching seasonal look
   (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
   Halloween), whatever the `seasonal_moods` setting says.
-- **A theme for every banner.** Newroz, Eid, Ramadan, Kurdish Language Day,
-  New Year and Dagwick's birthday join Christmas and Halloween on the Themes
-  page. For now they change Dagwick's banner only (marked "Banner only");
-  their decorations for all of Airflow are still to come. Eid and Ramadan
-  follow the Islamic calendar, from a table of approximate dates for 2026-2031.
+- **Themes coming soon.** Newroz, Eid, Ramadan, Kurdish Language Day, New
+  Year, Dagwick's birthday, Çarşema Sor, Diwali and the Lantern Festival are
+  listed on the Themes page as "Coming soon", after Christmas and Halloween.
+  They can't be applied until their decorations for all of Airflow are made;
+  on their dates Dagwick's banner still dresses up (the seasonal mood). Eid
+  and Ramadan follow the Islamic calendar, from a table of approximate dates
+  for 2026-2031.
 - **Sidebar icon in Airflow's style:** a candle outline in the same line style
   and colours as Airflow's own sidebar icons, with a version for dark mode, and
   white while Dagwick's page is open, like Airflow's highlighted items.
@@ -91,7 +93,7 @@ All notable changes to this project are documented here. The format follows
   (a red-and-gold candle, red lanterns swinging, sky lanterns drifting up).
   Diwali and the Lantern Festival follow lunisolar calendars, so their dates
   are listed per year for 2026–2031. Each also appears on the Themes page
-  (banner only for now). A short festival wins over a longer one it falls in:
+  as "Coming soon". A short festival wins over a longer one it falls in:
   Dagwick's birthday over Diwali 2026, Diwali over Halloween 2027, the Lantern
   Festival over Ramadan 2026.
 - **Smoother mood scenes.** Falling snow and confetti, flying bats, rising
