@@ -32,6 +32,9 @@ All notable changes to this project are documented here. The format follows
   tests. The guide says which parts of the check interface are stable.
 - Each check now records which pack it came from: `pack` in `/api/checks` and
   in score reports, and a tag on pack checks in the DAG tab.
+- **Signed releases.** Each release now has a build provenance attestation,
+  and its GitHub release carries the wheel, the sdist and their Sigstore
+  bundles. See "Verify a release" in the README.
 
 ### Changed
 
@@ -40,6 +43,15 @@ All notable changes to this project are documented here. The format follows
   the flame is out and only smoke is left. The seasonal moods dress Wick up
   (a bonfire at Newroz, a pumpkin at Halloween, a fanous at Ramadan, a cupcake
   on its birthday, ...). The sidebar icon and the README banner match.
+- `SECURITY.md` links the private reporting form and published advisories,
+  and lists every `[dagwick]` setting.
+
+### Fixed
+
+- A DAG file with a bare carriage return (`\r`) before a non-ASCII character
+  could not be scored on Python 3.12: reading its `# dagwick: ack` comments
+  crashed. Such a file is now scored as if it had no ack comments. Found by
+  the new fuzz tests.
 
 ## [0.2.0] - 2026-11-09
 

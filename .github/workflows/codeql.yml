@@ -1,8 +1,9 @@
 name: CodeQL
 
+# Every pull request gets this check, docs-only ones included, so it can be a
+# required status check (OpenSSF Scorecard: CI-Tests and SAST).
 on:
   pull_request:
-    paths-ignore: ["**.md", "docs/**", "LICENSE"]
   push:
     branches: [main]
     paths-ignore: ["**.md", "docs/**", "LICENSE"]
