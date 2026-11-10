@@ -43,7 +43,7 @@ def _no_css() -> dict[str, Any]:
 @dataclass(frozen=True, kw_only=True)
 class Theme:
     """A seasonal theme. It runs either on the same dates every year (``start``/``end``)
-    or, for festivals on the Islamic calendar, in the listed ``windows``."""
+    or, for festivals on a lunar or other calendar, in the listed ``windows``."""
 
     id: str  # also the id of Dagwick's matching banner (seasonal mood)
     name: str
@@ -51,6 +51,7 @@ class Theme:
     start: tuple[int, int] | None = None  # (month, day), inclusive
     end: tuple[int, int] | None = None  # (month, day), inclusive; may wrap into next year
     windows: tuple[tuple[date, date], ...] = ()  # exact (first, last) days, inclusive
+    calendar: str = "Islamic calendar"  # the calendar the windows follow, for when()
     css: Callable[[], dict[str, Any]] = _no_css  # decorations; none means banner only
 
     def active_on(self, day: date) -> bool:
@@ -75,12 +76,12 @@ class Theme:
         if self.windows:
             window = self.next_window(today)
             if window is None:
-                return "Islamic calendar: no dates listed yet"
+                return f"{self.calendar}: no dates listed yet"
             a, b = window
             span = (
                 day(a.month, a.day) if a == b else f"{day(a.month, a.day)} – {day(b.month, b.day)}"
             )
-            return f"About {span} {b.year} · Islamic calendar, moves each year"
+            return f"About {span} {b.year} · {self.calendar}, moves each year"
         assert self.start and self.end
         span = (
             day(*self.start) if self.start == self.end else f"{day(*self.start)} – {day(*self.end)}"
@@ -138,12 +139,43 @@ EID = tuple(
     )
 )
 
+
+def _around(days: tuple[str, ...], before: int, after: int) -> tuple[tuple[date, date], ...]:
+    """Windows from `before` days before to `after` days after each listed day."""
+    return tuple(
+        (date.fromordinal(_d(d).toordinal() - before), date.fromordinal(_d(d).toordinal() + after))
+        for d in days
+    )
+
+
+# Diwali (Lakshmi Puja, the main day) on the Hindu lunisolar calendar, with the two days
+# before and after it: the five days of the festival. 2030 and 2031 have fewer sources.
+DIWALI = _around(
+    ("2026-11-08", "2027-10-29", "2028-10-17", "2029-11-05", "2030-10-26", "2031-11-14"), 2, 2
+)
+# The Lantern Festival: the 15th day of the first month of the Chinese calendar.
+LANTERN_FESTIVAL = _around(
+    ("2026-03-03", "2027-02-20", "2028-02-09", "2029-02-27", "2030-02-17", "2031-02-06"), 0, 0
+)
+
+
+def _carsema_sor(year: int) -> date:
+    """Çarşema Sor, the Yazidi New Year: the first Wednesday of April on the Julian
+    calendar, which is the first Wednesday on or after 14 April (1900–2099)."""
+    first = date(year, 4, 14)
+    return date.fromordinal(first.toordinal() + (2 - first.weekday()) % 7)
+
+
+CARSEMA_SOR = tuple((d, d) for d in (_carsema_sor(y) for y in range(2026, 2032)))
+
 BANNER_ONLY = (
     "For now this theme changes Dagwick's banner only; decorations for all of Airflow "
     "are still to come."
 )
 
-# When two themes overlap, the earlier one in this list shows.
+# When two themes overlap, the earlier one in this list shows: a short festival wins over
+# a longer one (Dagwick's birthday over Diwali, Diwali over Halloween, the Lantern
+# Festival over Ramadan).
 THEMES: tuple[Theme, ...] = (
     Theme(
         id="christmas",
@@ -153,6 +185,20 @@ THEMES: tuple[Theme, ...] = (
         start=(12, 18),
         end=(1, 2),
         css=snow.global_css,
+    ),
+    Theme(
+        id="birthday",
+        name="Dagwick's birthday",
+        description=BANNER_ONLY,
+        start=(11, 8),
+        end=(11, 8),
+    ),
+    Theme(
+        id="diwali",
+        name="Diwali",
+        description=BANNER_ONLY,
+        windows=DIWALI,
+        calendar="Hindu calendar",
     ),
     Theme(
         id="halloween",
@@ -165,6 +211,20 @@ THEMES: tuple[Theme, ...] = (
     ),
     Theme(id="newroz", name="Newroz", description=BANNER_ONLY, start=(3, 19), end=(3, 23)),
     Theme(id="eid", name="Eid", description=BANNER_ONLY, windows=EID),
+    Theme(
+        id="carsema-sor",
+        name="Çarşema Sor",
+        description=BANNER_ONLY,
+        windows=CARSEMA_SOR,
+        calendar="Yazidi New Year",
+    ),
+    Theme(
+        id="lantern-festival",
+        name="Lantern Festival",
+        description=BANNER_ONLY,
+        windows=LANTERN_FESTIVAL,
+        calendar="Chinese calendar",
+    ),
     Theme(id="ramadan", name="Ramadan", description=BANNER_ONLY, windows=RAMADAN),
     Theme(
         id="language-day",
@@ -174,13 +234,6 @@ THEMES: tuple[Theme, ...] = (
         end=(5, 15),
     ),
     Theme(id="new-year", name="New Year", description=BANNER_ONLY, start=(12, 31), end=(1, 2)),
-    Theme(
-        id="birthday",
-        name="Dagwick's birthday",
-        description=BANNER_ONLY,
-        start=(11, 8),
-        end=(11, 8),
-    ),
 )
 BY_ID = {t.id: t for t in THEMES}
 

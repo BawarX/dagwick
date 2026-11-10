@@ -81,9 +81,27 @@ All notable changes to this project are documented here. The format follows
   on its birthday, ...). The sidebar icon and the README banner match.
 - `SECURITY.md` links the private reporting form and published advisories,
   and lists every `[dagwick]` setting.
+- **Seasonal moods are on by default** (#35). `seasonal_moods` now defaults to
+  `auto`, so Wick dresses up on each holiday's dates with nothing to configure.
+  To keep the old behaviour, set `seasonal_moods = off`. Each viewer can still
+  hide them with **Hide** on the greeting.
+- **Three new moods** (#35): **Çarşema Sor**, the Yazidi New Year (red spring
+  flowers, painted eggs, a flower crown for Wick), **Diwali** (Wick in a clay
+  diya, marigold garlands, a row of lit diyas) and the **Lantern Festival**
+  (a red-and-gold candle, red lanterns swinging, sky lanterns drifting up).
+  Diwali and the Lantern Festival follow lunisolar calendars, so their dates
+  are listed per year for 2026–2031. Each also appears on the Themes page
+  (banner only for now). A short festival wins over a longer one it falls in:
+  Dagwick's birthday over Diwali 2026, Diwali over Halloween 2027, the Lantern
+  Festival over Ramadan 2026.
+- **Smoother mood scenes.** Falling snow and confetti, flying bats, rising
+  balloons, embers and letters now move with GPU transforms instead of
+  changing their position, so the page isn't laid out again on every frame.
 
 ### Fixed
 
+- Newroz's embers in the banner never rose: Wick's own ember style overrode
+  them. They now drift up again.
 - A DAG file with a bare carriage return (`\r`) before a non-ASCII character
   could not be scored on Python 3.12: reading its `# dagwick: ack` comments
   crashed. Such a file is now scored as if it had no ack comments. Found by

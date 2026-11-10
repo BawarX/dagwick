@@ -1,7 +1,7 @@
 """Optional, non-secret settings read from Airflow's own configuration.
 
     [dagwick]
-    seasonal_moods = off         # off (default, experimental) | auto | comma-separated mood ids
+    seasonal_moods = auto        # auto (default) | off | comma-separated mood ids
     disabled_checks = file_name, naming       # check ids left out of every score
     weights = retries:20, tags:2              # check id:points (positive whole numbers)
     grades = A:90, B:75, C:60, D:40           # lowest score for each grade
@@ -23,23 +23,26 @@ SEASONAL_MOODS = (
     "newroz",
     "eid",
     "language-day",
+    "carsema-sor",
+    "lantern-festival",
     "christmas",
     "new-year",
+    "birthday",
+    "diwali",
     "halloween",
     "ramadan",
-    "birthday",
 )
 
 
 def parse_seasonal_moods(raw: str | None) -> str | list[str]:
     """Return "auto", "off", or the list of known mood ids (unknown ids are ignored).
 
-    Seasonal moods are experimental, so anything unset or empty means "off".
+    Moods are on by default, so anything unset or empty means "auto".
     """
-    value = (raw or "off").strip().lower()
+    value = (raw or "").strip().lower() or "auto"
     if value in ("auto", "on", "true"):
         return "auto"
-    if value in ("", "off", "none", "false"):
+    if value in ("off", "none", "false"):
         return "off"
     wanted = [part.strip() for part in value.split(",") if part.strip()]
     unknown = [m for m in wanted if m not in SEASONAL_MOODS]
@@ -53,7 +56,7 @@ def seasonal_moods() -> str | list[str]:
     try:
         from airflow.configuration import conf
 
-        raw = conf.get("dagwick", "seasonal_moods", fallback="off")
+        raw = conf.get("dagwick", "seasonal_moods", fallback="auto")
     except Exception:  # never let a config problem break the page
         log.exception("dagwick: could not read [dagwick] seasonal_moods; using off")
         raw = "off"

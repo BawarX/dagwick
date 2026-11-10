@@ -411,7 +411,9 @@ html.dark .dagwick {
 /* Seasonal moods: decoration only, behind the hero content */
 .dagwick-hero { position: relative; overflow: hidden; isolation: isolate; }
 .dagwick-hero > :not(.dagwick-fx) { position: relative; z-index: 1; }
-.dagwick-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+/* container-type lets the scenes move in cqw/cqh (the scene's own size) with translate,
+   which the GPU animates without laying the page out again on every frame. */
+.dagwick-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; container-type: size; }
 .dagwick-season-halloween { --dagwick-flame: #22c55e; --dagwick-flame-deep: #15803d; --dagwick-flame-tip: #4ade80; --dagwick-flame-core: #d9f99d; --dagwick-flame-heart: #f7fee7; --dagwick-spark: #a3e635; }
 .dagwick-season-newroz { --dagwick-flame: #f97316; --dagwick-flame-deep: #dc2626; --dagwick-flame-tip: #fb923c; --dagwick-flame-core: #fde68a; }
 
@@ -422,39 +424,42 @@ html.dark .dagwick {
 .dagwick-fx--eid { background: radial-gradient(500px 200px at 50% 0%, rgba(233, 196, 106, .18), transparent 70%); }
 .dagwick-fx--new-year, .dagwick-fx--birthday { background: radial-gradient(500px 220px at 50% 0%, rgba(192, 132, 252, .16), transparent 70%); }
 .dagwick-fx--language-day { background: radial-gradient(500px 220px at 50% 100%, rgba(251, 191, 36, .12), transparent 70%); }
+.dagwick-fx--diwali { background: radial-gradient(600px 200px at 50% 100%, rgba(245, 158, 11, .22), transparent 70%), linear-gradient(180deg, rgba(76, 29, 149, .22), transparent 90%); }
+.dagwick-fx--lantern-festival { background: radial-gradient(500px 220px at 50% 0%, rgba(220, 38, 38, .2), transparent 70%), linear-gradient(180deg, rgba(30, 27, 75, .3), transparent 90%); }
+.dagwick-fx--carsema-sor { background: linear-gradient(180deg, rgba(254, 215, 170, .16), transparent 70%); }
 
-.dagwick-flake { position: absolute; top: -10px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(255, 255, 255, .7);
+.dagwick-flake { position: absolute; top: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(255, 255, 255, .7);
   animation-name: dagwick-fall, dagwick-sway; animation-timing-function: linear, ease-in-out;
   animation-iteration-count: infinite; animation-direction: normal, alternate; }
 html:not(.dark) .dagwick-flake { background: #a9c9ea; box-shadow: none; }
 .dagwick-snowbank { position: absolute; left: 0; bottom: 0; width: 100%; height: 16px; fill: #f8fbff; opacity: .9; }
 html:not(.dark) .dagwick-snowbank { fill: #dceaf8; }
-@keyframes dagwick-fall { from { top: -8%; } to { top: 108%; } }
+@keyframes dagwick-fall { from { translate: 0 -8cqh; } to { translate: 0 108cqh; } }
 @keyframes dagwick-sway { from { transform: translateX(-10px); } to { transform: translateX(10px); } }
 
 .dagwick-moon { position: absolute; right: 30%; top: 14px; width: 54px; height: 54px; border-radius: 50%;
   background: radial-gradient(circle at 38% 38%, #fffbea, #f5e6b8 60%, #e3cf8f); box-shadow: 0 0 40px rgba(245, 230, 184, .45); }
-.dagwick-bat { position: absolute; left: -8%; animation: dagwick-fly linear infinite; }
+.dagwick-bat { position: absolute; left: 0; animation: dagwick-fly linear infinite; }
 .dagwick-bat-bob { display: block; animation: dagwick-bob 1.6s ease-in-out infinite alternate; }
 .dagwick-bat svg { display: block; fill: #140b22; stroke: #140b22; filter: drop-shadow(0 0 2px rgba(190, 242, 100, .45)); }
 html:not(.dark) .dagwick-bat svg { filter: none; }
 .dagwick-wing-l, .dagwick-wing-r { transform-box: view-box; transform-origin: 20px 10px; animation: dagwick-flap .2s ease-in-out infinite alternate; }
-@keyframes dagwick-fly { from { left: -8%; } to { left: 108%; } }
+@keyframes dagwick-fly { from { translate: -8cqw 0; } to { translate: 108cqw 0; } }
 @keyframes dagwick-bob { from { transform: translateY(-9px); } to { transform: translateY(9px); } }
 @keyframes dagwick-flap { from { transform: scaleY(1); } to { transform: scaleY(.25); } }
 
-.dagwick-confetti { position: absolute; top: -10px; width: 7px; height: 4px; border-radius: 1px;
+.dagwick-confetti { position: absolute; top: 0; width: 7px; height: 4px; border-radius: 1px;
   animation-name: dagwick-fall, dagwick-spin; animation-timing-function: linear; animation-iteration-count: infinite; }
 @keyframes dagwick-spin { to { transform: rotate(360deg); } }
 .dagwick-firework { position: absolute; width: 0; height: 0; animation: dagwick-burst 3.3s ease-out infinite; }
 .dagwick-firework i { position: absolute; width: 4px; height: 4px; border-radius: 50%; }
 @keyframes dagwick-burst { 0% { transform: scale(.2); opacity: 0; } 15% { opacity: 1; } 60% { transform: scale(1.2); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
-.dagwick-balloon { position: absolute; bottom: -60px; width: 22px; height: 28px; border-radius: 50% 50% 46% 46%; opacity: .85; animation: dagwick-rise linear infinite; }
+.dagwick-balloon { position: absolute; bottom: 0; width: 22px; height: 28px; border-radius: 50% 50% 46% 46%; opacity: .85; animation: dagwick-rise linear infinite; }
 .dagwick-balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 24px; background: rgba(160, 160, 160, .6); }
-@keyframes dagwick-rise { from { bottom: -60px; } to { bottom: 110%; } }
+@keyframes dagwick-rise { from { translate: 0 60px; } to { translate: 0 -110cqh; } }
 
-.dagwick-ember { position: absolute; bottom: 10%; width: 4px; height: 4px; border-radius: 50%; background: #fdba74; box-shadow: 0 0 6px #fb923c; animation: dagwick-ember linear infinite; }
-@keyframes dagwick-ember { 0% { bottom: 12%; opacity: 0; transform: translateX(0); } 15% { opacity: 1; } 100% { bottom: 95%; opacity: 0; transform: translateX(16px); } }
+.dagwick-ember { position: absolute; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: #fdba74; box-shadow: 0 0 6px #fb923c; animation: dagwick-ember linear infinite; }
+@keyframes dagwick-ember { 0% { translate: 0 -12cqh; opacity: 0; transform: translateX(0); } 15% { opacity: 1; } 100% { translate: 0 -95cqh; opacity: 0; transform: translateX(16px); } }
 .dagwick-mountains { position: absolute; left: 0; bottom: 0; width: 100%; height: 55%; }
 .dagwick-mountains .far { fill: rgba(80, 44, 74, .55); }
 .dagwick-mountains .near { fill: rgba(36, 20, 40, .85); }
@@ -476,8 +481,29 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-hanging span::before { content: ""; width: 1px; flex: 1; background: #e9c46a; }
 @keyframes dagwick-swing { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
 .dagwick-bunting { position: absolute; top: 0; left: 0; width: 100%; height: 34px; }
-.dagwick-letter { position: absolute; bottom: -30px; color: var(--dagwick-accent); opacity: 0; font-weight: 700; animation: dagwick-letter linear infinite; }
-@keyframes dagwick-letter { 0% { bottom: -10%; opacity: 0; } 15% { opacity: .3; } 85% { opacity: .2; } 100% { bottom: 105%; opacity: 0; } }
+.dagwick-marigolds { position: absolute; top: 0; left: 0; width: 100%; height: 40px; }
+.dagwick-diya { position: absolute; bottom: 4px; display: flex; flex-direction: column; align-items: center; translate: -50% 0; }
+.dagwick-diya svg { display: block; }
+.dagwick-diya-flame { width: 7px; height: 11px; margin: 0 4px -2px 0; border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 50% 72%, #fff7d6 0 22%, #fbbf24 45%, #f97316 80%);
+  box-shadow: 0 0 10px 3px rgba(251, 191, 36, .5); transform-origin: 50% 100%; animation: dagwick-flicker .45s ease-in-out infinite alternate; }
+.dagwick-sky-lantern { position: absolute; bottom: 0; width: 14px; height: 17px; border-radius: 40% 40% 30% 30% / 30% 30% 50% 50%; opacity: 0;
+  background: linear-gradient(180deg, #fde68a, #f59e0b 60%, #c2410c); box-shadow: 0 0 14px 3px rgba(251, 191, 36, .45); animation: dagwick-sky linear infinite; }
+@keyframes dagwick-sky { 0% { translate: 0 30px; opacity: 0; } 12% { opacity: .9; } 80% { opacity: .7; } 100% { translate: 22px -110cqh; opacity: 0; } }
+.dagwick-hanging--red span::before { background: #facc15; }
+.dagwick-hanging--red svg { filter: drop-shadow(0 0 6px rgba(248, 113, 113, .5)); }
+.dagwick-sunrise { position: absolute; right: 18%; top: -50px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(253, 224, 71, .55), rgba(251, 146, 60, .18) 55%, transparent 70%); }
+.dagwick-meadow { position: absolute; left: 0; bottom: 0; width: 100%; height: 30px; }
+.dagwick-meadow .ground { fill: rgba(22, 101, 52, .35); }
+html:not(.dark) .dagwick-meadow .ground { fill: rgba(22, 163, 74, .18); }
+.dagwick-poppy { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%; animation: dagwick-poppy 3s ease-in-out infinite alternate; }
+.dagwick-poppy svg { order: -1; display: block; }
+.dagwick-poppy::after { content: ""; width: 1.6px; flex: 1; background: #15803d; }
+@keyframes dagwick-poppy { from { rotate: -6deg; } to { rotate: 6deg; } }
+.dagwick-eggs { position: absolute; bottom: 2px; }
+.dagwick-letter { position: absolute; bottom: 0; color: var(--dagwick-accent); opacity: 0; font-weight: 700; animation: dagwick-letter linear infinite; }
+@keyframes dagwick-letter { 0% { translate: 0 10cqh; opacity: 0; } 15% { opacity: .3; } 85% { opacity: .2; } 100% { translate: 0 -105cqh; opacity: 0; } }
 
 .dagwick-greeting {
   display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; padding: 4px 6px 4px 12px;
@@ -578,7 +604,7 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-puff { transform-box: fill-box; transform-origin: center; animation: dagwick-m-puff 3.4s ease-out infinite; }
 .dagwick-puff:nth-child(2) { animation-delay: 1.1s; }
 .dagwick-puff:nth-child(3) { animation-delay: 2.2s; }
-.dagwick-ember { transform-box: fill-box; transform-origin: center; animation: dagwick-m-ember 2s ease-in-out infinite; }
+.dagwick-wick .dagwick-ember { transform-box: fill-box; transform-origin: center; animation: dagwick-m-ember 2s ease-in-out infinite; }
 .dagwick-ember-halo { transform-box: fill-box; transform-origin: center; animation: dagwick-m-halo 2s ease-in-out infinite; }
 .dagwick-spider { transform-box: fill-box; transform-origin: 50% 0; animation: dagwick-m-dangle 3.2s ease-in-out infinite; }
 .dagwick-wick--out .dagwick-vessel { filter: brightness(.86) saturate(.85); }

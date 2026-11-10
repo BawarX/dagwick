@@ -340,6 +340,49 @@ function Books({ paint }: SkinProps) {
   );
 }
 
+/** Diwali: a clay diya, painted along its rim, with the wick at its spout. */
+function Diya() {
+  return (
+    <g>
+      <ellipse cx="80" cy="140" rx="36" ry="5" fill="#000" opacity="0.18" />
+      <path d="M46 116 Q80 108 110 114 L127 106 Q122 118 112 123 Q104 140 80 140 Q56 140 49 126 Q44 120 46 116Z" fill="#c2410c" />
+      <path d="M49 126 Q56 140 80 140 Q104 140 112 123 Q100 134 80 134 Q60 134 49 126Z" fill="#9a3412" />
+      <ellipse cx="79" cy="115.6" rx="31" ry="5.4" fill="#7c2d12" />
+      <ellipse cx="79" cy="116.2" rx="26" ry="3.6" fill="#a16207" opacity="0.7" />
+      <path d="M56 125.5 Q80 132 106 124.5" fill="none" stroke="#fde68a" strokeWidth="1.8" strokeDasharray="0.1 5.2" strokeLinecap="round" />
+      <path d="M62 129.6 l3 -2.6 3 2.6 -3 2.6z M77 131.6 l3 -2.6 3 2.6 -3 2.6z M92 130.4 l3 -2.6 3 2.6 -3 2.6z" fill="#fbbf24" />
+      {wick(105, 115)}
+    </g>
+  );
+}
+
+/** The Lantern Festival: a red candle with gold bands. */
+function LanternCandle({ paint }: SkinProps) {
+  return (
+    <g>
+      <Dish paint={paint} rx={32} />
+      <Pillar body="#b91c1c" top="#f87171" pool="#dc2626" w={17} />
+      {pillarShade("#450a0a", 0.35)}
+      <path d="M65.5 118 V138" stroke="#fecaca" strokeOpacity="0.45" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M63 121 A17 4.6 0 0 0 97 121 V124 A17 4.6 0 0 1 63 124Z M63 133 A17 4.6 0 0 0 97 133 V136 A17 4.6 0 0 1 63 136Z" fill="#facc15" />
+      <path d="M73 127.6 h14 M80 125 v6" stroke="#facc15" strokeWidth="1.4" strokeLinecap="round" />
+      {wick(105, 114)}
+    </g>
+  );
+}
+
+/** Çarşema Sor: a white candle with a red band, among painted eggs (drawn in front). */
+function EggCandle({ paint }: SkinProps) {
+  return (
+    <g>
+      <Dish paint={paint} rx={38} />
+      <Pillar body={paint("wax")} top="var(--dagwick-wax-top)" pool="var(--dagwick-wax-pool)" edge="var(--dagwick-wax-edge)" w={16} />
+      <path d="M64 125 A16 4.6 0 0 0 96 125 V130 A16 4.6 0 0 1 64 130Z" fill="#dc2626" />
+      {wick(105, 114)}
+    </g>
+  );
+}
+
 const VESSELS: Record<SeasonId, (p: SkinProps) => ReactNode> = {
   christmas: ChristmasCandle,
   "new-year": NewYearCandle,
@@ -349,6 +392,9 @@ const VESSELS: Record<SeasonId, (p: SkinProps) => ReactNode> = {
   ramadan: FanousBack,
   eid: EidCandle,
   "language-day": Books,
+  diwali: Diya,
+  "lantern-festival": LanternCandle,
+  "carsema-sor": EggCandle,
 };
 
 export function Vessel(props: SkinProps) {
@@ -460,6 +506,56 @@ export function VesselFront({ season, mood, paint }: SkinProps) {
               <circle cx={x} cy={y} r="6.5" fill="#c98b4a" stroke="#8a5a2b" strokeWidth="1" />
               <path d={`M${x - 3.5} ${y} a3.5 3.5 0 1 1 7 0`} fill="none" stroke="#8a5a2b" strokeWidth="1" />
               <circle cx={x} cy={y} r="1.2" fill="#8a5a2b" />
+            </g>
+          ))}
+        </g>
+      );
+    case "diwali":
+      // Marigolds heaped at the foot of the diya.
+      return (
+        <g className="dagwick-vessel">
+          {[
+            [44, 138, "#f59e0b"],
+            [52, 142, "#ea580c"],
+            [108, 142, "#f59e0b"],
+            [117, 138, "#ea580c"],
+          ].map(([x, y, c], i) => (
+            <g key={i}>
+              <circle cx={x} cy={y} r="5.6" fill={c as string} />
+              <circle cx={x} cy={y} r="2.6" fill="#fde68a" opacity="0.6" />
+            </g>
+          ))}
+        </g>
+      );
+    case "lantern-festival":
+      // A small round lantern standing beside the candle.
+      return (
+        <g className="dagwick-vessel">
+          <path d="M129 112 V118" stroke="#facc15" strokeWidth="1.2" />
+          <rect x="124.5" y="117" width="9" height="3" rx="1" fill="#facc15" />
+          <ellipse cx="129" cy="130" rx="13" ry="11.5" fill="#dc2626" />
+          {lit && <ellipse cx="129" cy="130" rx="7" ry="7" fill="#fde68a" opacity="0.35" />}
+          <path d="M129 118.6 Q120 130 129 141.4 M129 118.6 Q138 130 129 141.4" fill="none" stroke="#7f1d1d" strokeWidth="0.9" />
+          <rect x="124.5" y="140" width="9" height="3" rx="1" fill="#facc15" />
+          <path d="M127 143 V150 M129 143 V151 M131 143 V150" stroke="#facc15" strokeWidth="1" />
+        </g>
+      );
+    case "carsema-sor":
+      // Painted eggs around the candle.
+      return (
+        <g className="dagwick-vessel">
+          {(
+            [
+              [50, 140, "#dc2626", -14],
+              [61, 146, "#facc15", 8],
+              [99, 146, "#16a34a", -8],
+              [110, 140, "#2563eb", 14],
+            ] as const
+          ).map(([x, y, c, a], i) => (
+            <g key={i} transform={`rotate(${a} ${x} ${y})`}>
+              <ellipse cx={x} cy={y} rx="6.2" ry="8" fill={c} />
+              <path d={`M${x - 5.8} ${y - 1} q2.9 -3 5.8 0 t5.8 0`} fill="none" stroke="#fef3c7" strokeWidth="1.2" />
+              <circle cx={x} cy={y + 4} r="1.1" fill="#fef3c7" />
             </g>
           ))}
         </g>
@@ -582,6 +678,16 @@ export function Costume({ season, mood, part }: { season?: SeasonId; mood: Mood;
             <path d="M-13.5 0 C-11 -16 -5 -28 7 -40 C6 -33 9 -30 15.5 -31 C10 -23 12 -12 13.5 0Z" fill="#4c1d95" />
             <path d="M-12.6 -4.4 C-12 -7 -11.4 -9 -10.6 -11.4 L11.8 -11.4 C12.2 -9 12.6 -7 13 -4.4Z" fill="#f97316" />
             <rect x="-4.4" y="-12.2" width="8.8" height="8.6" rx="1.3" fill="none" stroke="#fde047" strokeWidth="1.9" />
+          </>
+        );
+      case "carsema-sor":
+        // A crown of red spring flowers.
+        return (
+          <>
+            <path d="M-17 2 Q0 -7 17 2" fill="none" stroke="#15803d" strokeWidth="2.2" strokeLinecap="round" />
+            <Flower x={-13} y={0} petal="#dc2626" centre="#1c1917" />
+            <Flower x={13} y={0} petal="#ef4444" centre="#1c1917" />
+            <Flower x={0} y={-4.6} petal="#b91c1c" centre="#1c1917" r={3.5} />
           </>
         );
       case "newroz":
