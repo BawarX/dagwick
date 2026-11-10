@@ -8,12 +8,14 @@ export const STYLES = `
   --dagwick-text: #1d2129;
   --dagwick-muted: #6b6f78;
   --dagwick-pass: #15803d;
-  --dagwick-pass-bg: #e8f5ec;
+  --dagwick-pass-bg: #edf7f0;
   --dagwick-warn: #b45309;
   --dagwick-warn-bg: #fdf3e2;
   --dagwick-fail: #c2410c;
   --dagwick-fail-bg: #fdece4;
   --dagwick-accent: #d97706;
+  /* Small amber text: #d97706 is 3.2:1 on white, below WCAG AA (4.5:1). */
+  --dagwick-accent-text: #b45309;
   --dagwick-flame: #f59e0b;
   --dagwick-flame-deep: #ea580c;
   --dagwick-flame-tip: #fbbf24;
@@ -61,6 +63,7 @@ html.dark .dagwick {
   --dagwick-fail: #fb7c4c;
   --dagwick-fail-bg: rgba(251, 124, 76, 0.12);
   --dagwick-accent: #fbbf24;
+  --dagwick-accent-text: #fbbf24;
   --dagwick-shadow: rgba(0, 0, 0, 0.35);
   --dagwick-spark: #fde68a;
   --dagwick-moon: #fde68a;
@@ -85,11 +88,11 @@ html.dark .dagwick {
 }
 .dagwick-hero.dagwick-grade-D, .dagwick-hero.dagwick-grade-F { background: var(--dagwick-bg); }
 .dagwick-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dagwick-muted); }
-.dagwick-brand { color: var(--dagwick-accent); font-weight: 700; }
+.dagwick-brand { color: var(--dagwick-accent-text); font-weight: 700; }
 .dagwick-dag { margin: 4px 0 6px; font-size: 22px; font-weight: 700; word-break: break-all; }
 .dagwick-headline { margin: 0 0 12px; font-size: 15px; }
 .dagwick-potential { margin: 10px 0 0; font-size: 13px; color: var(--dagwick-muted); }
-.dagwick-potential strong { color: var(--dagwick-accent); }
+.dagwick-potential strong { color: var(--dagwick-accent-text); }
 .dagwick-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .dagwick-chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; }
 .dagwick-chip--pass { color: var(--dagwick-pass); background: var(--dagwick-pass-bg); }
@@ -141,7 +144,7 @@ html.dark .dagwick {
 .dagwick-tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--dagwick-border); background: var(--dagwick-surface); flex-wrap: wrap; }
 .dagwick-tab { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 0; background: transparent; color: var(--dagwick-muted); cursor: pointer; }
 .dagwick-tab.is-active { background: var(--dagwick-bg); color: var(--dagwick-text); box-shadow: 0 1px 2px var(--dagwick-shadow); }
-.dagwick-count { margin-left: 4px; font-size: 11px; padding: 1px 6px; border-radius: 99px; background: var(--dagwick-border); }
+.dagwick-count { margin-left: 4px; font-size: 11px; padding: 1px 6px; border-radius: 99px; background: var(--dagwick-border); color: var(--dagwick-text); }
 .dagwick-checks { list-style: none; margin: 0; padding: 0; }
 .dagwick-check { display: flex; gap: 14px; padding: 14px 18px; border-top: 1px solid var(--dagwick-border); }
 .dagwick-check:first-child { border-top: 0; }
@@ -164,7 +167,7 @@ html.dark .dagwick {
 .dagwick-pts { margin-left: auto; font-size: 12px; color: var(--dagwick-muted); font-variant-numeric: tabular-nums; }
 .dagwick-check-msg { font-size: 14px; color: var(--dagwick-muted); margin-top: 2px; }
 .dagwick-fix { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--dagwick-surface); border-left: 3px solid var(--dagwick-accent); }
-.dagwick-fix-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-accent); margin-bottom: 2px; }
+.dagwick-fix-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-accent-text); margin-bottom: 2px; }
 .dagwick-clear { padding: 28px; text-align: center; color: var(--dagwick-muted); }
 .dagwick-foot { font-size: 12px; margin-top: 12px; text-align: right; }
 .dagwick-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 48px 16px; text-align: center; }
@@ -185,8 +188,9 @@ html.dark .dagwick {
 
 /* Grade badges */
 .dagwick-badge { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 8px; font-weight: 800; font-size: 14px; color: #fff; }
-.dagwick-badge--A { background: #16a34a; } .dagwick-badge--B { background: #65a30d; } .dagwick-badge--C { background: #d97706; }
-.dagwick-badge--D { background: #ea580c; } .dagwick-badge--F { background: #dc2626; }
+/* The 700 shades, so the white letter is at least 4.5:1 (WCAG AA) even on the small badges. */
+.dagwick-badge--A { background: #15803d; } .dagwick-badge--B { background: #4d7c0f; } .dagwick-badge--C { background: #b45309; }
+.dagwick-badge--D { background: #c2410c; } .dagwick-badge--F { background: #b91c1c; }
 .dagwick-ring.dagwick-grade-B .dagwick-ring-fill { stroke: #84cc16; }
 
 /* Next goal */
@@ -196,7 +200,7 @@ html.dark .dagwick {
   background: color-mix(in srgb, var(--dagwick-flame) 7%, var(--dagwick-bg));
 }
 .dagwick-goal-text { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
-.dagwick-goal-step { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-accent); }
+.dagwick-goal-step { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-accent-text); }
 .dagwick-goal-picks { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
 .dagwick-pick {
   font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 99px; cursor: pointer;
@@ -218,7 +222,7 @@ html.dark .dagwick {
 .dagwick-items-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-muted); margin-right: 2px; }
 .dagwick-item { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--dagwick-fail-bg); color: var(--dagwick-fail); }
 .dagwick-check--warn .dagwick-item { background: var(--dagwick-warn-bg); color: var(--dagwick-warn); }
-.dagwick-more { all: unset; font-size: 12px; color: var(--dagwick-accent); cursor: pointer; }
+.dagwick-more { all: unset; font-size: 12px; color: var(--dagwick-accent-text); cursor: pointer; }
 .dagwick-fix { margin-top: 0; }
 .dagwick-code { position: relative; margin-top: 8px; }
 .dagwick-code pre {
@@ -319,7 +323,7 @@ html.dark .dagwick {
 }
 .dagwick-dd-opt.is-active { background: color-mix(in srgb, var(--dagwick-accent) 13%, transparent); }
 .dagwick-dd-opt[aria-selected="true"] .dagwick-dd-name { font-weight: 700; }
-.dagwick-dd-check { color: var(--dagwick-accent); font-size: 12px; font-weight: 800; }
+.dagwick-dd-check { color: var(--dagwick-accent-text); font-size: 12px; font-weight: 800; }
 .dagwick-dd-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dagwick-dd-count {
   min-width: 26px; text-align: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600;

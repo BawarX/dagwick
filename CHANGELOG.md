@@ -116,6 +116,11 @@ All notable changes to this project are documented here. The format follows
   typo in a script or dashboard now fails loudly (#60).
 - The README now explains that Viewer and User roles need `can read on
   Plugins` (FAB) to see Dagwick's pages, and how to give it (#58).
+- **Text contrast now meets WCAG AA (4.5:1).** The A–D grade badges use darker
+  shades so their white letter is readable at small sizes, and small amber text
+  in the light theme ("Dagwick", "Next step", "How to fix") uses a darker amber.
+  Tab counts and "passed" chips are darker too. Bars and the score ring keep
+  their colours (#59).
 
 ## [0.2.0] - 2026-11-09
 
