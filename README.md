@@ -4,6 +4,8 @@
 
 ![Dagwick: grade your Airflow DAGs from A to F, right inside the Airflow UI](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/banner.png)
 
+![Dagwick in 15 seconds: a DAG's Dagwick tab with its score, run health and score history, then the fleet page filtered by a common issue](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/demo.gif)
+
 ## Setup
 
 **1. Install** it where Airflow runs:
@@ -147,6 +149,23 @@ Airflow and Dagwick are installed.
 Dagwick has no dependencies of its own, so installing it never changes your
 other packages. It is read-only and only shows each user the DAGs they can
 already see.
+
+### Permissions
+
+Airflow only shows plugin pages to users who may read the list of plugins.
+With the FAB auth manager (`apache-airflow-providers-fab`), the **Admin** and
+**Op** roles can do that, but **Viewer** and **User** cannot. For them the
+Dagwick tab and sidebar page are missing, and `/plugin/dagwick-fleet` shows
+Airflow's "page not found". Dagwick is not broken; give the role that
+permission:
+
+```bash
+airflow roles add-perms Viewer -a can_read -r Plugins
+airflow roles add-perms User -a can_read -r Plugins
+```
+
+Users still only see the DAGs they may read. With another auth manager, give
+the same users read access to plugins in that manager.
 
 ## Verify a release
 

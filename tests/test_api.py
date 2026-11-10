@@ -84,6 +84,31 @@ def test_score_unknown_dag_is_404(monkeypatch):
     assert err.value.status_code == 404
 
 
+def test_health_and_history_of_an_unknown_dag_are_404_like_score(monkeypatch):
+    import pytest
+    from fastapi import HTTPException
+
+    from dagwick import api, health, history
+
+    monkeypatch.setattr(api, "_dag_exists", lambda dag_id: False)
+    monkeypatch.setattr(health, "dag_health", lambda dag_id: pytest.fail("read an unknown DAG"))
+    monkeypatch.setattr(history, "dag_history", lambda dag_id: pytest.fail("read an unknown DAG"))
+    for endpoint in (api.health, api.history):
+        with pytest.raises(HTTPException) as err:
+            endpoint("missing_dag")
+        assert err.value.status_code == 404
+
+
+def test_health_and_history_of_a_known_dag_are_returned(monkeypatch):
+    from dagwick import api, health, history
+
+    monkeypatch.setattr(api, "_dag_exists", lambda dag_id: True)
+    monkeypatch.setattr(health, "dag_health", lambda dag_id: {"runs": 0, "success_rate": None})
+    monkeypatch.setattr(history, "dag_history", lambda dag_id: {"versions": []})
+    assert api.health("demo") == {"runs": 0, "success_rate": None}
+    assert api.history("demo") == {"versions": []}
+
+
 def test_score_errors_never_leak_internals(monkeypatch):
     import pytest
     from fastapi import HTTPException
@@ -235,3 +260,14 @@ def test_fleet_tags_groups_by_dag(monkeypatch):
 
     monkeypatch.setattr(airflow_session, "create_session", fake_session)
     assert api._fleet_tags(["a", "b", "c"]) == {"a": ["finance", "team:data"], "b": ["x"]}
+
+
+def test_dag_exists_asks_the_serialized_dag_table(monkeypatch):
+    from airflow.models.serialized_dag import SerializedDagModel
+
+    from dagwick import api
+
+    known = classmethod(lambda cls, dag_id: dag_id == "demo")
+    monkeypatch.setattr(SerializedDagModel, "has_dag", known)
+    assert api._dag_exists("demo") is True
+    assert api._dag_exists("missing_dag") is False

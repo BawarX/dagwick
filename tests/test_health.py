@@ -105,6 +105,7 @@ def test_health_endpoint_errors_never_leak_internals(monkeypatch):
         raise RuntimeError("postgresql://user:secret@db-host/airflow is unreachable")
 
     monkeypatch.setattr(health, "dag_health", boom)
+    monkeypatch.setattr(api, "_dag_exists", lambda dag_id: True)
     with pytest.raises(HTTPException) as err:
         api.health("any_dag")
     assert err.value.status_code == 500

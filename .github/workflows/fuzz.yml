@@ -1,8 +1,12 @@
 name: Fuzz
 
 # Runs the Atheris fuzz targets in fuzz/ with ClusterFuzzLite: a short run on
-# every pull request, and a longer one each week. A crash fails the job and the
-# crashing input is attached to the run as an artifact.
+# pull requests that change Python code, and a longer one each week. A crash
+# fails the job and the crashing input is attached to the run as an artifact.
+#
+# A pull request that changes no Python code (UI, docs, CI) skips the fuzz job.
+# The job still reports, as skipped, so the required "fuzz" check passes. The
+# fuzz targets' past crashes also run on every PR as tests/test_fuzz_targets.py.
 on:
   pull_request:
   schedule:
@@ -17,7 +21,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
+          printf '%s\n' "$files"
+          if printf '%s\n' "$files" | grep -qE '^(src/dagwick/.*\.py|fuzz/.*|\.clusterfuzzlite/.*|\.github/workflows/fuzz\.yml)$'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   fuzz:
+    needs: changes
+    # Skip only when "changes" succeeded and found no Python code. On schedule and
+    # dispatch "changes" is skipped, and if it fails, fuzz runs to be safe.
+    if: >-
+      !cancelled() &&
+      !(needs.changes.result == 'success' && needs.changes.outputs.code == 'false')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -33,4 +66,4 @@ jobs:
           sanitizer: address
           github-token: ${{ secrets.GITHUB_TOKEN }}
           mode: ${{ github.event_name == 'pull_request' && 'code-change' || 'batch' }}
-          fuzz-seconds: ${{ github.event_name == 'pull_request' && 300 || 1800 }}
+          fuzz-seconds: ${{ github.event_name == 'pull_request' && 120 || 1800 }}

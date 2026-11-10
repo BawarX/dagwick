@@ -57,6 +57,6 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 - [x] Signed releases to PyPI with Trusted Publishing
 - [x] Dependabot for Python, npm and GitHub Actions
 - [ ] CodeQL scanning and an OpenSSF Scorecard badge
-- [ ] A short demo GIF in the README
+- [x] A short demo GIF in the README
 - [ ] **1.0** once the check interface is stable, so check-pack authors can rely
       on it

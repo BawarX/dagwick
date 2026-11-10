@@ -69,6 +69,7 @@ def test_history_endpoint_errors_never_leak_internals(monkeypatch):
         raise RuntimeError("postgresql://user:secret@db-host/airflow is unreachable")
 
     monkeypatch.setattr(history, "dag_history", boom)
+    monkeypatch.setattr(api, "_dag_exists", lambda dag_id: True)
     with pytest.raises(HTTPException) as err:
         api.history("any_dag")
     assert err.value.status_code == 500
