@@ -33,11 +33,19 @@ All notable changes to this project are documented here. The format follows
 - Each check now records which pack it came from: `pack` in `/api/checks` and
   in score reports, and a tag on pack checks in the DAG tab.
 
+### Changed
+
+- **New mascot and icon.** Dagwick's mascot is now Wick, a little flame on a
+  candle stamped with a DAG: one more node lights up with every grade, and at F
+  the flame is out and only smoke is left. The seasonal moods dress Wick up
+  (a bonfire at Newroz, a pumpkin at Halloween, a fanous at Ramadan, a cupcake
+  on its birthday, ...). The sidebar icon and the README banner match.
+
 ## [0.2.0] - 2026-11-09
 
 ### Added
 
-- **Seasonal moods (experimental, off by default).** During holidays the lantern dresses up and the page
+- **Seasonal moods (experimental, off by default).** During holidays the mascot dresses up and the page
   header gets an animated scene: falling snow at Christmas, bats at Halloween,
   bonfires and govend dancers at Newroz, Kurdish letters on Kurdish Language
   Day, lanterns at Ramadan, kulîçe at Eid, fireworks at New Year. Each mood

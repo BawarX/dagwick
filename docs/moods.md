@@ -3,22 +3,22 @@
 > **Off by default.** Seasonal moods are still being polished. Turn them on
 > with `seasonal_moods = auto` (see Settings below) if you want to try them.
 
-During holidays the Dagwick lantern dresses up and the page header gets a small
-animated scene. Moods are **decoration only**: scores, grades and text never
+During holidays Wick, the Dagwick flame, dresses up and the page header gets a
+small animated scene. Moods are **decoration only**: scores, grades and text never
 change, and everything goes back to normal when the holiday ends.
 
 ![All seasonal moods](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/moods.png)
 
 | Mood | When | What you see |
 | --- | --- | --- |
-| 🔥 Newroz | Mar 19 – 23 | Flower crown, a bigger fire, bonfires on the mountains, govend dancers |
-| 🍪 Eid | Eid al-Fitr (3 days) and Eid al-Adha (4 days) | Bunting, a crescent, a plate of kulîçe |
-| ✍️ Kurdish Language Day | May 15 | Kurdish letters floating up, a scroll with the letter ک |
-| 🎄 Christmas | Dec 18 – 26 | Santa hat, holly, falling snow, a snow bank |
-| 🎉 New Year | Dec 31 – Jan 2 | Party hat, fireworks, confetti |
-| 🎃 Halloween | Oct 24 – Nov 1 | Green flame, a spider, bats flying under a full moon |
-| 🌙 Ramadan | the month of Ramadan | Crescent moon, stars, hanging lanterns |
-| 🎂 Dagwick's birthday | Nov 8 | Party hat, balloons, confetti |
+| 🔥 Newroz | Mar 19 – 23 | Wick becomes a bonfire and wears a flower crown; bonfires on the mountains, govend dancers |
+| 🍪 Eid | Eid al-Fitr (3 days) and Eid al-Adha (4 days) | An emerald candle with a gold band, a plate of kulîçe, a crescent, bunting |
+| ✍️ Kurdish Language Day | May 15 | Reading glasses, a candle on a stack of books, a quill and inkwell, Kurdish letters floating up |
+| 🎄 Christmas | Dec 18 – 26 | Santa hat, a candy-striped candle in a pine wreath, falling snow, a snow bank |
+| 🎉 New Year | Dec 31 – Jan 2 | Party hat, a midnight-blue candle with gold stars, fireworks, confetti |
+| 🎃 Halloween | Oct 24 – Nov 1 | Green flame, witch hat, a jack-o'-lantern with a spider, bats flying under a full moon |
+| 🌙 Ramadan | the month of Ramadan | Wick inside a fanous, crescent moon, stars, hanging lanterns |
+| 🎂 Dagwick's birthday | Nov 8 | Party hat, a candle on a cupcake, balloons, confetti |
 
 Each mood also shows a short English greeting (for example "Happy Newroz!").
 
@@ -52,4 +52,4 @@ or with the environment variable `AIRFLOW__DAGWICK__SEASONAL_MOODS`. Mood ids:
 
 Add `?dagwick_mood=<id>` to a Dagwick page URL, for example
 `.../plugin/dagwick?dagwick_mood=newroz`. Use `?dagwick_mood=everyday` to see
-the normal lantern.
+the everyday candle.
