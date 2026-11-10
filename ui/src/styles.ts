@@ -531,6 +531,7 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-btn { transition: background-color .2s ease, border-color .2s ease, opacity .2s ease, filter .2s ease; }
 .dagwick-btn:disabled { opacity: .65; cursor: progress; }
 .dagwick-theme-problem { margin: 0; color: var(--dagwick-fail); font-size: 13.5px; }
+.dagwick-theme-notice { margin: 0; min-height: 1.4em; font-size: 13.5px; color: var(--dagwick-muted); }
 .dagwick-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
 .dagwick-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .dagwick-switch-track {

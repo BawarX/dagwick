@@ -28,6 +28,13 @@ export interface Choice {
   removed: string[];
 }
 
+/**
+ * The viewer's choices when this page loaded, which is what Airflow drew its theme from.
+ * Captured once: the bundle loads once per page, and only Dagwick changes these cookies,
+ * so later changes (applied without a reload) never move what Airflow actually drew.
+ */
+export const COOKIES_AT_LOAD = typeof document === "undefined" ? "" : document.cookie;
+
 export const OFF_COOKIE = "dagwick_themes_off";
 export const APPLIED_COOKIE = "dagwick_theme";
 const ALL = "*"; // in OFF_COOKIE: no theme appears by date

@@ -3,10 +3,12 @@ import { useRef, useState } from "react";
 import { fetchThemeSheets, fetchThemes, useLoad } from "./api";
 import { Empty, Loading } from "./components";
 import { SEASONS, isSeasonId } from "./season";
+import { writeHidden } from "./useSeason";
 import {
   type Choice,
   type ThemeInfo,
   type ThemeStatus,
+  COOKIES_AT_LOAD,
   applyTheme,
   choiceCookies,
   dateRange,
@@ -60,14 +62,16 @@ export function ThemesView() {
 
 function Themes({ themes }: { themes: ThemeInfo[] }) {
   const [choice, setChoice] = useState<Choice>(() => readChoice(document.cookie));
-  // What Airflow drew when this page loaded; a change is applied on top of it.
-  const loaded = useRef(pickTheme(themes, readChoice(document.cookie)));
+  // What Airflow drew when this page loaded; every change is applied on top of that.
+  const loaded = useRef(pickTheme(themes, readChoice(COOKIES_AT_LOAD)));
   const [busy, setBusy] = useState<string>();
   const [problem, setProblem] = useState<string>();
+  const [notice, setNotice] = useState<string>();
 
   const change = async (next: Choice, label: string) => {
     setBusy(label);
     setProblem(undefined);
+    setNotice(undefined);
     try {
       const want = pickTheme(themes, next);
       const from = loaded.current;
@@ -79,6 +83,17 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
       for (const c of choiceCookies(next)) document.cookie = c;
       setLiveCss(css);
       setChoice(next);
+      // A theme shows everywhere at once: Airflow and Dagwick's banner (even if the
+      // viewer once hid the banner's seasonal look).
+      const shown = themes.find((t) => t.id === want);
+      if (shown) writeHidden(false);
+      setNotice(
+        !shown
+          ? "No theme is showing now."
+          : shown.decorated === false
+            ? `${shown.name} is on: open the Fleet tab to see Dagwick's banner.`
+            : `${shown.name} is on, across Airflow and on Dagwick's banner.`,
+      );
     } catch (e) {
       setProblem(e instanceof Error ? e.message : "Couldn't change the theme");
     } finally {
@@ -116,6 +131,10 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
           </span>
         </label>
       </div>
+
+      <p className="dagwick-theme-notice" role="status" aria-live="polite">
+        {notice}
+      </p>
 
       {problem && (
         <p className="dagwick-theme-problem" role="alert">

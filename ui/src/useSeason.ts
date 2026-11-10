@@ -15,7 +15,7 @@ function readHidden(): boolean {
   }
 }
 
-function writeHidden(hidden: boolean) {
+export function writeHidden(hidden: boolean) {
   try {
     if (hidden) window.localStorage.setItem(STORAGE_KEY, "1");
     else window.localStorage.removeItem(STORAGE_KEY);
