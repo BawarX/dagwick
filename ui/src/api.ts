@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { API_BASE } from "./brand";
+import type { ThemeInfo } from "./themes";
 import type { FleetReport, RunHealth, ScoreHistory, ScoreReport } from "./types";
 
 async function get<T>(path: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
@@ -30,6 +31,15 @@ export const fetchHistory = (dagId: string, signal?: AbortSignal) =>
   get<ScoreHistory>("/history", { dag_id: dagId }, signal);
 
 export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {}, signal);
+
+export const fetchThemes = (signal?: AbortSignal) => get<ThemeInfo[]>("/themes", {}, signal);
+
+/**
+ * A theme as stylesheets: `css` draws it, `hide` removes it where Airflow already drew it,
+ * and `reset` clears it so another theme can be drawn in its place.
+ */
+export const fetchThemeSheets = (id: string) =>
+  get<{ css: string; hide: string; reset: string }>(`/themes/${encodeURIComponent(id)}/css`, {});
 
 export interface UiConfig {
   /** "auto", "off", or the list of enabled mood ids. */

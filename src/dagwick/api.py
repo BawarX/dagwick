@@ -5,13 +5,14 @@ from __future__ import annotations
 import logging
 import threading
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
-from dagwick import __version__, settings
+from dagwick import __version__, settings, themes
 from dagwick.checks._sensors import sensor_task_ids
 from dagwick.checks.performance import SLOW_POKE_SECONDS, parse_status
 from dagwick.core import Context, registered_checks, score_dag
@@ -222,6 +223,15 @@ def _score_by_id(
     return report
 
 
+def _dag_exists(dag_id: str) -> bool:
+    from airflow.models.serialized_dag import SerializedDagModel
+
+    return SerializedDagModel.has_dag(dag_id)
+
+
+NOT_FOUND = "DAG not found or not parsed yet."
+
+
 def _server_error(what: str, exc: BaseException) -> HTTPException:
     ref = uuid.uuid4().hex[:12]
     log.error("dagwick: %s (ref %s)", what, ref, exc_info=exc)
@@ -236,6 +246,7 @@ app = FastAPI(title="Dagwick", version=__version__, docs_url=None, redoc_url=Non
 STATIC_FILES: dict[str, tuple[Path, str]] = {
     "dagwick.js": (STATIC_DIR / "dagwick.js", "application/javascript"),
     "icon.svg": (STATIC_DIR / "icon.svg", "image/svg+xml"),
+    "icon-dark.svg": (STATIC_DIR / "icon-dark.svg", "image/svg+xml"),
 }
 
 
@@ -253,9 +264,13 @@ def health(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, 
     from dagwick.health import dag_health
 
     try:
-        return dag_health(dag_id)
+        found = _dag_exists(dag_id)
+        result = dag_health(dag_id) if found else None
     except Exception as exc:
         raise _server_error(f"failed to read run health for DAG {dag_id}", exc) from None
+    if result is None:
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    return result
 
 
 def _fleet_tags(dag_ids: list[str]) -> dict[str, list[str]]:
@@ -292,9 +307,13 @@ def history(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str,
     from dagwick.history import dag_history
 
     try:
-        return dag_history(dag_id)
+        found = _dag_exists(dag_id)
+        result = dag_history(dag_id) if found else None
     except Exception as exc:
         raise _server_error(f"failed to read score history for DAG {dag_id}", exc) from None
+    if result is None:
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    return result
 
 
 @app.get("/api/score", dependencies=[_require_dag_read()])
@@ -304,7 +323,7 @@ def score(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, A
     except Exception as exc:
         raise _server_error(f"failed to score DAG {dag_id}", exc) from None
     if report is None:
-        raise HTTPException(status_code=404, detail="DAG not found or not parsed yet.")
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
     return report
 
 
@@ -384,6 +403,21 @@ def config() -> dict[str, Any]:
         "seasonal_moods": settings.seasonal_moods(),
         "grades": dict(settings.scoring().grades),
     }
+
+
+@app.get("/api/themes", dependencies=[_require_login()])
+def list_themes() -> list[dict[str, Any]]:
+    """Seasonal themes, their dates, and which are in season today (server date)."""
+    today = date.today()
+    return [t.info(today) for t in themes.THEMES]
+
+
+@app.get("/api/themes/{theme_id}/css", dependencies=[_require_login()])
+def theme_stylesheets(theme_id: str) -> dict[str, str]:
+    """A theme as stylesheets, so the Themes page can apply or remove it without a reload."""
+    if theme_id not in themes.BY_ID:
+        raise HTTPException(status_code=404, detail="Unknown theme")
+    return themes.theme_sheets(theme_id)
 
 
 @app.get("/api/checks", dependencies=[_require_login()])

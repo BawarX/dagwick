@@ -12,6 +12,40 @@ All notable changes to this project are documented here. The format follows
   snow, Halloween, Newroz and Kurdish Language Day as plain `[api] theme`
   files for Airflow 3.2+. The scenery is drawn behind the page, stops under
   reduced motion and loads nothing from the network. No plugin code.
+- **Seasonal themes for all of Airflow, built in.** A new Themes tab next to
+  Fleet lists them. By default each theme appears on its dates on every Airflow
+  page and goes away afterwards, with nothing to set in Airflow's
+  configuration. The first theme is Christmas snow (18 December to 2 January):
+  snowflakes drift over Airflow, some carried sideways by the wind, snow
+  settles on top of cards, and a drift lies along the bottom. The snow is moved
+  by the graphics card, so pages stay smooth; clicks go through it, and viewers
+  who prefer reduced motion get still snow. Each viewer can switch off "Show
+  themes on their dates", and apply or remove any theme whenever they like; the
+  change shows at once, without a reload. Choices are saved in their browser,
+  and Dagwick still writes nothing to Airflow's database. Any theme the admin
+  already set in Airflow is kept.
+- **Halloween theme** (24 October to 1 November): dark bats flit about on
+  their own random paths, beating their wings, ghosts drift across Airflow,
+  embers rise, a full moon with seas, craters and thin clouds peeks from the
+  corner, darkness closes in from the edges, glowing eyes blink in the fog along
+  the bottom, a small cobweb hangs in the corner, black gnarled branches lie on
+  top of the cards (like the snow at Christmas), and spiders dangle from them.
+  Airflow's sidebar, with the user menu, always stays clear of the decorations.
+  Switching between themes without a reload clears the old theme first.
+- **The banner follows the theme.** When a seasonal theme is showing, by date
+  or applied by the viewer, Dagwick's banner takes the matching seasonal look
+  (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
+  Halloween), whatever the `seasonal_moods` setting says.
+- **Themes coming soon.** Newroz, Eid, Ramadan, Kurdish Language Day, New
+  Year, Dagwick's birthday, Çarşema Sor, Diwali and the Lantern Festival are
+  listed on the Themes page as "Coming soon", after Christmas and Halloween.
+  They can't be applied until their decorations for all of Airflow are made;
+  on their dates Dagwick's banner still dresses up (the seasonal mood). Eid
+  and Ramadan follow the Islamic calendar, from a table of approximate dates
+  for 2026-2031.
+- **Sidebar icon in Airflow's style:** a candle outline in the same line style
+  and colours as Airflow's own sidebar icons, with a version for dark mode, and
+  white while Dagwick's page is open, like Airflow's highlighted items.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,
   tags, paused, score, grade, failing and warning checks, runs and success
@@ -49,9 +83,27 @@ All notable changes to this project are documented here. The format follows
   on its birthday, ...). The sidebar icon and the README banner match.
 - `SECURITY.md` links the private reporting form and published advisories,
   and lists every `[dagwick]` setting.
+- **Seasonal moods are on by default** (#35). `seasonal_moods` now defaults to
+  `auto`, so Wick dresses up on each holiday's dates with nothing to configure.
+  To keep the old behaviour, set `seasonal_moods = off`. Each viewer can still
+  hide them with **Hide** on the greeting.
+- **Three new moods** (#35): **Çarşema Sor**, the Yazidi New Year (red spring
+  flowers, painted eggs, a flower crown for Wick), **Diwali** (Wick in a clay
+  diya, marigold garlands, a row of lit diyas) and the **Lantern Festival**
+  (a red-and-gold candle, red lanterns swinging, sky lanterns drifting up).
+  Diwali and the Lantern Festival follow lunisolar calendars, so their dates
+  are listed per year for 2026–2031. Each also appears on the Themes page
+  as "Coming soon". A short festival wins over a longer one it falls in:
+  Dagwick's birthday over Diwali 2026, Diwali over Halloween 2027, the Lantern
+  Festival over Ramadan 2026.
+- **Smoother mood scenes.** Falling snow and confetti, flying bats, rising
+  balloons, embers and letters now move with GPU transforms instead of
+  changing their position, so the page isn't laid out again on every frame.
 
 ### Fixed
 
+- Newroz's embers in the banner never rose: Wick's own ember style overrode
+  them. They now drift up again.
 - A DAG file with a bare carriage return (`\r`) before a non-ASCII character
   could not be scored on Python 3.12: reading its `# dagwick: ack` comments
   crashed. Such a file is now scored as if it had no ack comments. Found by
@@ -61,6 +113,24 @@ All notable changes to this project are documented here. The format follows
   side. On the fleet page the search box now spans the row below 720 px, as
   intended, instead of staying 260 px wide and pushing the DAG list past the
   edge. Found in the 0.2.0 QA (#34).
+- `/dagwick/api/health` and `/dagwick/api/history` now return 404 for a DAG
+  that does not exist, like `/dagwick/api/score`, instead of an empty 200. A
+  typo in a script or dashboard now fails loudly (#60).
+- The README now explains that Viewer and User roles need `can read on
+  Plugins` (FAB) to see Dagwick's pages, and how to give it (#58).
+- **Text contrast now meets WCAG AA (4.5:1).** The A–D grade badges use darker
+  shades so their white letter is readable at small sizes, and small amber text
+  in the light theme ("Dagwick", "Next step", "How to fix") uses a darker amber.
+  Tab counts and "passed" chips are darker too. Bars and the score ring keep
+  their colours (#59).
+- **Themes apply without a hard refresh.** Airflow's `/ui/config` reply now
+  says `Cache-Control: no-store` and `Vary: Cookie`, because it depends on the
+  viewer's theme cookies: a browser or proxy can no longer keep showing the
+  theme from before an Apply or Remove.
+- **Halloween now decorates Airflow's sidebar too:** a dusk glow behind the
+  icons, a cobweb in the corner by the logo and a spider letting itself down
+  along the edge. Nothing covers the icons or the user menu, and clicks pass
+  through.
 
 ## [0.2.0] - 2026-11-09
 
