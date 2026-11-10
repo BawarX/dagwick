@@ -129,6 +129,15 @@ def test_middleware_follows_the_date_and_the_viewers_choice(day, cookies, themed
     assert (client.get("/ui/config").json()["theme"] is not None) == themed
 
 
+@pytest.mark.parametrize("day", [IN_SEASON, OUT_OF_SEASON])
+def test_config_reply_is_never_cached_because_it_follows_the_cookies(day):
+    # Otherwise the browser could keep the old theme after Apply or Remove.
+    res = _airflow()(day).get("/ui/config")
+    assert res.headers["cache-control"] == "no-store"
+    assert "Cookie" in res.headers.get_list("vary")
+    assert "cache-control" not in _airflow()(day).get("/ui/other").headers
+
+
 def test_middleware_leaves_everything_else_alone():
     assert _airflow()(IN_SEASON).get("/ui/other").text == "untouched"
     # Errors (for example not logged in) and compressed replies pass through unchanged.
@@ -211,6 +220,22 @@ def test_halloween_keeps_the_sidebar_clear():
     layer = int(css["html::before"]["zIndex"])
     assert int(css['[data-testid="nav-sidebar"]']["zIndex"].split()[0]) > layer
     assert layer < 1400  # Airflow's menus and dialogs stay on top
+
+
+def test_halloween_decorates_the_sidebar_without_covering_it():
+    from dagwick import halloween
+
+    css = halloween.global_css()
+    for host in (halloween.SIDEBAR_GLOW, halloween.SIDEBAR_WEB, halloween.SIDEBAR_SPIDER):
+        assert host not in halloween.BAT_HOSTS  # each pseudo-element has one job
+        assert css[host]["pointerEvents"] == "none"
+        assert int(css[host]["left"].rstrip("px")) < halloween.SIDEBAR_W
+    # The glow and the web sit behind the icons; the spider hangs at the edge.
+    assert css[halloween.SIDEBAR_GLOW]["zIndex"] == css[halloween.SIDEBAR_WEB]["zIndex"] == "-1"
+    assert halloween.SIDEBAR_SPIDER in css["@media (prefers-reduced-motion: reduce)"]
+    # Removing the theme without a reload hides them too.
+    hide = themes.theme_sheets("halloween")["hide"]
+    assert all(h in hide for h in (halloween.SIDEBAR_GLOW, halloween.SIDEBAR_SPIDER))
 
 
 def test_there_is_a_theme_for_every_banner():

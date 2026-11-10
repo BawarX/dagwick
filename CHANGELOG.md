@@ -103,6 +103,14 @@ All notable changes to this project are documented here. The format follows
   in the light theme ("Dagwick", "Next step", "How to fix") uses a darker amber.
   Tab counts and "passed" chips are darker too. Bars and the score ring keep
   their colours (#59).
+- **Themes apply without a hard refresh.** Airflow's `/ui/config` reply now
+  says `Cache-Control: no-store` and `Vary: Cookie`, because it depends on the
+  viewer's theme cookies: a browser or proxy can no longer keep showing the
+  theme from before an Apply or Remove.
+- **Halloween now decorates Airflow's sidebar too:** a dusk glow behind the
+  icons, a cobweb in the corner by the logo and a spider letting itself down
+  along the edge. Nothing covers the icons or the user menu, and clicks pass
+  through.
 
 ## [0.2.0] - 2026-11-09
 
