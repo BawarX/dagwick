@@ -36,7 +36,8 @@ in [issues](https://github.com/ardalan-jalal/dagwick/issues).
 
 ## 3. Grow it (0.3+)
 
-- [ ] **Make seasonal moods production-ready** and turn them on by default.
+- [x] **Make seasonal moods production-ready** and turn them on by default,
+      with three new moods: Çarşema Sor, Diwali and the Lantern Festival.
 - [x] **Airflow-wide seasonal themes** (config only, `themes/`): realistic snow,
       Halloween, Newroz and Kurdish Language Day.
 - [ ] **Airflow-wide seasonal themes**, built into Dagwick: they switch on by

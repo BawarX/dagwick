@@ -36,11 +36,13 @@ All notable changes to this project are documented here. The format follows
   or applied by the viewer, Dagwick's banner takes the matching seasonal look
   (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
   Halloween), whatever the `seasonal_moods` setting says.
-- **A theme for every banner.** Newroz, Eid, Ramadan, Kurdish Language Day,
-  New Year and Dagwick's birthday join Christmas and Halloween on the Themes
-  page. For now they change Dagwick's banner only (marked "Banner only");
-  their decorations for all of Airflow are still to come. Eid and Ramadan
-  follow the Islamic calendar, from a table of approximate dates for 2026-2031.
+- **Themes coming soon.** Newroz, Eid, Ramadan, Kurdish Language Day, New
+  Year, Dagwick's birthday, Çarşema Sor, Diwali and the Lantern Festival are
+  listed on the Themes page as "Coming soon", after Christmas and Halloween.
+  They can't be applied until their decorations for all of Airflow are made;
+  on their dates Dagwick's banner still dresses up (the seasonal mood). Eid
+  and Ramadan follow the Islamic calendar, from a table of approximate dates
+  for 2026-2031.
 - **Sidebar icon in Airflow's style:** a candle outline in the same line style
   and colours as Airflow's own sidebar icons, with a version for dark mode, and
   white while Dagwick's page is open, like Airflow's highlighted items.
@@ -81,9 +83,27 @@ All notable changes to this project are documented here. The format follows
   on its birthday, ...). The sidebar icon and the README banner match.
 - `SECURITY.md` links the private reporting form and published advisories,
   and lists every `[dagwick]` setting.
+- **Seasonal moods are on by default** (#35). `seasonal_moods` now defaults to
+  `auto`, so Wick dresses up on each holiday's dates with nothing to configure.
+  To keep the old behaviour, set `seasonal_moods = off`. Each viewer can still
+  hide them with **Hide** on the greeting.
+- **Three new moods** (#35): **Çarşema Sor**, the Yazidi New Year (red spring
+  flowers, painted eggs, a flower crown for Wick), **Diwali** (Wick in a clay
+  diya, marigold garlands, a row of lit diyas) and the **Lantern Festival**
+  (a red-and-gold candle, red lanterns swinging, sky lanterns drifting up).
+  Diwali and the Lantern Festival follow lunisolar calendars, so their dates
+  are listed per year for 2026–2031. Each also appears on the Themes page
+  as "Coming soon". A short festival wins over a longer one it falls in:
+  Dagwick's birthday over Diwali 2026, Diwali over Halloween 2027, the Lantern
+  Festival over Ramadan 2026.
+- **Smoother mood scenes.** Falling snow and confetti, flying bats, rising
+  balloons, embers and letters now move with GPU transforms instead of
+  changing their position, so the page isn't laid out again on every frame.
 
 ### Fixed
 
+- Newroz's embers in the banner never rose: Wick's own ember style overrode
+  them. They now drift up again.
 - A DAG file with a bare carriage return (`\r`) before a non-ASCII character
   could not be scored on Python 3.12: reading its `# dagwick: ack` comments
   crashed. Such a file is now scored as if it had no ack comments. Found by
@@ -103,6 +123,14 @@ All notable changes to this project are documented here. The format follows
   in the light theme ("Dagwick", "Next step", "How to fix") uses a darker amber.
   Tab counts and "passed" chips are darker too. Bars and the score ring keep
   their colours (#59).
+- **Themes apply without a hard refresh.** Airflow's `/ui/config` reply now
+  says `Cache-Control: no-store` and `Vary: Cookie`, because it depends on the
+  viewer's theme cookies: a browser or proxy can no longer keep showing the
+  theme from before an Apply or Remove.
+- **Halloween now decorates Airflow's sidebar too:** a dusk glow behind the
+  icons, a cobweb in the corner by the logo and a spider letting itself down
+  along the edge. Nothing covers the icons or the user menu, and clicks pass
+  through.
 
 ## [0.2.0] - 2026-11-09
 

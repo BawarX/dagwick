@@ -129,6 +129,15 @@ def test_middleware_follows_the_date_and_the_viewers_choice(day, cookies, themed
     assert (client.get("/ui/config").json()["theme"] is not None) == themed
 
 
+@pytest.mark.parametrize("day", [IN_SEASON, OUT_OF_SEASON])
+def test_config_reply_is_never_cached_because_it_follows_the_cookies(day):
+    # Otherwise the browser could keep the old theme after Apply or Remove.
+    res = _airflow()(day).get("/ui/config")
+    assert res.headers["cache-control"] == "no-store"
+    assert "Cookie" in res.headers.get_list("vary")
+    assert "cache-control" not in _airflow()(day).get("/ui/other").headers
+
+
 def test_middleware_leaves_everything_else_alone():
     assert _airflow()(IN_SEASON).get("/ui/other").text == "untouched"
     # Errors (for example not logged in) and compressed replies pass through unchanged.
@@ -213,6 +222,22 @@ def test_halloween_keeps_the_sidebar_clear():
     assert layer < 1400  # Airflow's menus and dialogs stay on top
 
 
+def test_halloween_decorates_the_sidebar_without_covering_it():
+    from dagwick import halloween
+
+    css = halloween.global_css()
+    for host in (halloween.SIDEBAR_GLOW, halloween.SIDEBAR_WEB, halloween.SIDEBAR_SPIDER):
+        assert host not in halloween.BAT_HOSTS  # each pseudo-element has one job
+        assert css[host]["pointerEvents"] == "none"
+        assert int(css[host]["left"].rstrip("px")) < halloween.SIDEBAR_W
+    # The glow and the web sit behind the icons; the spider hangs at the edge.
+    assert css[halloween.SIDEBAR_GLOW]["zIndex"] == css[halloween.SIDEBAR_WEB]["zIndex"] == "-1"
+    assert halloween.SIDEBAR_SPIDER in css["@media (prefers-reduced-motion: reduce)"]
+    # Removing the theme without a reload hides them too.
+    hide = themes.theme_sheets("halloween")["hide"]
+    assert all(h in hide for h in (halloween.SIDEBAR_GLOW, halloween.SIDEBAR_SPIDER))
+
+
 def test_there_is_a_theme_for_every_banner():
     from dagwick.settings import SEASONAL_MOODS
 
@@ -238,7 +263,6 @@ def test_fixed_dates_in_words():
 def test_overlapping_themes_show_the_earlier_one():
     # New Year (31 Dec - 2 Jan) falls inside Christmas (18 Dec - 2 Jan).
     assert pick_theme({}, date(2027, 1, 1)).id == "christmas"
-    assert pick_theme({}, date(2026, 5, 15)).id == "language-day"
 
 
 def test_banner_only_themes_leave_airflow_untouched():
@@ -247,3 +271,69 @@ def test_banner_only_themes_leave_airflow_untouched():
     assert themes.BY_ID["christmas"].info(date(2026, 3, 20))["decorated"] is True
     res = _airflow()(date(2026, 3, 20)).get("/ui/config")  # Newroz: banner only
     assert res.json()["theme"] is None
+
+
+@pytest.mark.parametrize(
+    ("theme_id", "day", "active"),
+    [
+        # Diwali: the five days around Lakshmi Puja.
+        ("diwali", date(2027, 10, 27), True),
+        ("diwali", date(2027, 10, 31), True),
+        ("diwali", date(2027, 11, 1), False),
+        ("diwali", date(2028, 10, 17), True),
+        ("diwali", date(2029, 11, 5), True),
+        ("diwali", date(2030, 10, 26), True),
+        ("diwali", date(2031, 11, 14), True),
+        # The Lantern Festival: the 15th day of the first Chinese month, one day.
+        ("lantern-festival", date(2026, 3, 3), True),
+        ("lantern-festival", date(2026, 3, 4), False),
+        ("lantern-festival", date(2027, 2, 20), True),
+        ("lantern-festival", date(2028, 2, 9), True),
+        ("lantern-festival", date(2029, 2, 27), True),
+        ("lantern-festival", date(2030, 2, 17), True),
+        ("lantern-festival", date(2031, 2, 6), True),
+        # Çarşema Sor: the first Wednesday on or after 14 April.
+        ("carsema-sor", date(2026, 4, 15), True),
+        ("carsema-sor", date(2026, 4, 14), False),
+        ("carsema-sor", date(2027, 4, 14), True),
+        ("carsema-sor", date(2028, 4, 19), True),
+        ("carsema-sor", date(2029, 4, 18), True),
+        ("carsema-sor", date(2030, 4, 17), True),
+        ("carsema-sor", date(2031, 4, 16), True),
+    ],
+)
+def test_new_festivals_follow_their_calendars(theme_id, day, active):
+    assert themes.BY_ID[theme_id].active_on(day) is active
+
+
+def test_every_carsema_sor_is_a_wednesday_in_mid_april():
+    for first, last in themes.CARSEMA_SOR:
+        assert first == last and first.weekday() == 2 and first.month == 4
+        assert 14 <= first.day <= 20
+
+
+@pytest.mark.parametrize("theme_id", [t.id for t in themes.THEMES if not t.ready])
+def test_coming_soon_themes_are_never_picked(theme_id):
+    theme = themes.BY_ID[theme_id]
+    assert theme.description == themes.COMING_SOON
+    first, _ = theme.next_window(date(2026, 1, 1)) if theme.windows else (None, None)
+    day = first or date(2027, *theme.start)
+    assert theme.active_on(day)
+    assert pick_theme({}, day) is None or pick_theme({}, day).ready  # by date
+    assert pick_theme({APPLIED_COOKIE: theme_id}, day) is None or (
+        pick_theme({APPLIED_COOKIE: theme_id}, day).id != theme_id
+    )  # nor applied by hand
+
+
+def test_a_theme_that_is_ready_shows_over_one_coming_soon():
+    # Diwali 2027 falls during Halloween; Diwali has no Airflow decorations yet.
+    assert pick_theme({}, date(2027, 10, 29)).id == "halloween"
+    assert pick_theme({}, date(2026, 5, 15)) is None  # Kurdish Language Day: coming soon
+
+
+def test_new_festivals_name_their_calendar():
+    today = date(2026, 11, 11)  # the day after Diwali 2026
+    assert themes.BY_ID["diwali"].when(today) == (
+        "About 27 Oct – 31 Oct 2027 · Hindu calendar, moves each year"
+    )
+    assert "Chinese calendar" in themes.BY_ID["lantern-festival"].when(today)

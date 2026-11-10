@@ -11,6 +11,7 @@ import {
   COOKIES_AT_LOAD,
   applyTheme,
   choiceCookies,
+  comingSoon,
   dateRange,
   pickTheme,
   readChoice,
@@ -24,6 +25,7 @@ const STATUS: Record<ThemeStatus, { label: string; tone: string }> = {
   showing: { label: "Showing now", tone: "on" },
   removed: { label: "Removed", tone: "off" },
   waiting: { label: "Not in season", tone: "idle" },
+  soon: { label: "Coming soon", tone: "idle" },
 };
 
 const LIVE_ID = "dagwick-live-theme";
@@ -87,13 +89,7 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
       // viewer once hid the banner's seasonal look).
       const shown = themes.find((t) => t.id === want);
       if (shown) writeHidden(false);
-      setNotice(
-        !shown
-          ? "No theme is showing now."
-          : shown.decorated === false
-            ? `${shown.name} is on: open the Fleet tab to see Dagwick's banner.`
-            : `${shown.name} is on, across Airflow and on Dagwick's banner.`,
-      );
+      setNotice(shown ? `${shown.name} is on, across Airflow and on Dagwick's banner.` : "No theme is showing now.");
     } catch (e) {
       setProblem(e instanceof Error ? e.message : "Couldn't change the theme");
     } finally {
@@ -143,44 +139,50 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
       )}
 
       <div className="dagwick-theme-list">
-        {themes.map((t) => {
-          const status = themeStatus(t, themes, choice);
-          const on = status === "applied" || status === "showing";
-          const s = STATUS[status];
-          return (
-            <article key={t.id} className={`dagwick-theme${on ? " is-on" : ""}`}>
-              <Scene id={t.id} />
-              <div className="dagwick-theme-body">
-                <div className="dagwick-theme-title">
-                  <h3>{t.name}</h3>
-                  <span className={`dagwick-theme-status is-${s.tone}`}>{s.label}</span>
-                  {t.decorated === false && <span className="dagwick-theme-tag">Banner only</span>}
+        {/* Ready to apply first, then those coming soon; each group keeps its order. */}
+        {[...themes]
+          .sort((a, b) => Number(comingSoon(a)) - Number(comingSoon(b)))
+          .map((t) => {
+            const status = themeStatus(t, themes, choice);
+            const on = status === "applied" || status === "showing";
+            const s = STATUS[status];
+            return (
+              <article key={t.id} className={`dagwick-theme${on ? " is-on" : ""}`}>
+                <Scene id={t.id} />
+                <div className="dagwick-theme-body">
+                  <div className="dagwick-theme-title">
+                    <h3>{t.name}</h3>
+                    <span className={`dagwick-theme-status is-${s.tone}`}>{s.label}</span>
+                  </div>
+                  <p className="dagwick-theme-dates">{t.when ?? `${dateRange(t.start, t.end)} · every year`}</p>
+                  <p className="dagwick-muted">{t.description}</p>
+                  <div className="dagwick-theme-actions">
+                    {status === "soon" ? (
+                      <button className="dagwick-btn" disabled>
+                        Coming soon
+                      </button>
+                    ) : on ? (
+                      <button
+                        className="dagwick-btn"
+                        disabled={!!busy}
+                        onClick={() => change(removeTheme(themes, choice, t.id), t.id)}
+                      >
+                        {busy === t.id ? "Removing…" : "Remove theme"}
+                      </button>
+                    ) : (
+                      <button
+                        className="dagwick-btn dagwick-btn-primary"
+                        disabled={!!busy}
+                        onClick={() => change(applyTheme(choice, t.id), t.id)}
+                      >
+                        {busy === t.id ? "Applying…" : "Apply theme"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <p className="dagwick-theme-dates">{t.when ?? `${dateRange(t.start, t.end)} · every year`}</p>
-                <p className="dagwick-muted">{t.description}</p>
-                <div className="dagwick-theme-actions">
-                  {on ? (
-                    <button
-                      className="dagwick-btn"
-                      disabled={!!busy}
-                      onClick={() => change(removeTheme(themes, choice, t.id), t.id)}
-                    >
-                      {busy === t.id ? "Removing…" : "Remove theme"}
-                    </button>
-                  ) : (
-                    <button
-                      className="dagwick-btn dagwick-btn-primary"
-                      disabled={!!busy}
-                      onClick={() => change(applyTheme(choice, t.id), t.id)}
-                    >
-                      {busy === t.id ? "Applying…" : "Apply theme"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </article>
-          );
-        })}
+              </article>
+            );
+          })}
       </div>
     </section>
   );
@@ -201,6 +203,9 @@ const BANNER_SCENES: Record<string, [string, string]> = {
   "language-day": ["#422006", "#b45309"],
   "new-year": ["#1e1b4b", "#6d28d9"],
   birthday: ["#500724", "#be185d"],
+  diwali: ["#431407", "#c2410c"],
+  "lantern-festival": ["#450a0a", "#b91c1c"],
+  "carsema-sor": ["#14532d", "#dc2626"],
 };
 
 /** A simple picture for a banner-only theme: its colours and its sign. */

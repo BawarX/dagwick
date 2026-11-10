@@ -43,7 +43,7 @@ def _no_css() -> dict[str, Any]:
 @dataclass(frozen=True, kw_only=True)
 class Theme:
     """A seasonal theme. It runs either on the same dates every year (``start``/``end``)
-    or, for festivals on the Islamic calendar, in the listed ``windows``."""
+    or, for festivals on a lunar or other calendar, in the listed ``windows``."""
 
     id: str  # also the id of Dagwick's matching banner (seasonal mood)
     name: str
@@ -51,7 +51,13 @@ class Theme:
     start: tuple[int, int] | None = None  # (month, day), inclusive
     end: tuple[int, int] | None = None  # (month, day), inclusive; may wrap into next year
     windows: tuple[tuple[date, date], ...] = ()  # exact (first, last) days, inclusive
+    calendar: str = "Islamic calendar"  # the calendar the windows follow, for when()
     css: Callable[[], dict[str, Any]] = _no_css  # decorations; none means banner only
+
+    @property
+    def ready(self) -> bool:
+        """Its decorations for Airflow are made; otherwise it is "coming soon"."""
+        return self.css is not _no_css
 
     def active_on(self, day: date) -> bool:
         if self.windows:
@@ -75,12 +81,12 @@ class Theme:
         if self.windows:
             window = self.next_window(today)
             if window is None:
-                return "Islamic calendar: no dates listed yet"
+                return f"{self.calendar}: no dates listed yet"
             a, b = window
             span = (
                 day(a.month, a.day) if a == b else f"{day(a.month, a.day)} – {day(b.month, b.day)}"
             )
-            return f"About {span} {b.year} · Islamic calendar, moves each year"
+            return f"About {span} {b.year} · {self.calendar}, moves each year"
         assert self.start and self.end
         span = (
             day(*self.start) if self.start == self.end else f"{day(*self.start)} – {day(*self.end)}"
@@ -99,7 +105,7 @@ class Theme:
             "end": list(end) if end else None,
             "when": self.when(today),
             "active": self.active_on(today),
-            "decorated": self.css is not _no_css,
+            "decorated": self.ready,
         }
 
 
@@ -138,12 +144,46 @@ EID = tuple(
     )
 )
 
-BANNER_ONLY = (
-    "For now this theme changes Dagwick's banner only; decorations for all of Airflow "
-    "are still to come."
+
+def _around(days: tuple[str, ...], before: int, after: int) -> tuple[tuple[date, date], ...]:
+    """Windows from `before` days before to `after` days after each listed day."""
+    return tuple(
+        (date.fromordinal(_d(d).toordinal() - before), date.fromordinal(_d(d).toordinal() + after))
+        for d in days
+    )
+
+
+# Diwali (Lakshmi Puja, the main day) on the Hindu lunisolar calendar, with the two days
+# before and after it: the five days of the festival. 2030 and 2031 have fewer sources.
+DIWALI = _around(
+    ("2026-11-08", "2027-10-29", "2028-10-17", "2029-11-05", "2030-10-26", "2031-11-14"), 2, 2
+)
+# The Lantern Festival: the 15th day of the first month of the Chinese calendar.
+LANTERN_FESTIVAL = _around(
+    ("2026-03-03", "2027-02-20", "2028-02-09", "2029-02-27", "2030-02-17", "2031-02-06"), 0, 0
 )
 
-# When two themes overlap, the earlier one in this list shows.
+
+def _carsema_sor(year: int) -> date:
+    """Çarşema Sor, the Yazidi New Year: the first Wednesday of April on the Julian
+    calendar, which is the first Wednesday on or after 14 April (1900–2099)."""
+    first = date(year, 4, 14)
+    return date.fromordinal(first.toordinal() + (2 - first.weekday()) % 7)
+
+
+CARSEMA_SOR = tuple((d, d) for d in (_carsema_sor(y) for y in range(2026, 2032)))
+
+# Themes whose decorations for all of Airflow aren't made yet. They are listed as
+# "Coming soon" and can't be applied; on their dates Dagwick's banner still dresses up
+# (that is the seasonal mood, which doesn't need a theme).
+COMING_SOON = (
+    "Decorations for all of Airflow are on the way. Until then, Dagwick's banner "
+    "dresses up on these dates."
+)
+
+# When two themes overlap, the earlier one in this list shows: a short festival wins over
+# a longer one (Dagwick's birthday over Diwali, Diwali over Halloween, the Lantern
+# Festival over Ramadan).
 THEMES: tuple[Theme, ...] = (
     Theme(
         id="christmas",
@@ -155,6 +195,20 @@ THEMES: tuple[Theme, ...] = (
         css=snow.global_css,
     ),
     Theme(
+        id="birthday",
+        name="Dagwick's birthday",
+        description=COMING_SOON,
+        start=(11, 8),
+        end=(11, 8),
+    ),
+    Theme(
+        id="diwali",
+        name="Diwali",
+        description=COMING_SOON,
+        windows=DIWALI,
+        calendar="Hindu calendar",
+    ),
+    Theme(
         id="halloween",
         name="Halloween",
         description="Bats flit across Airflow, ghosts and embers drift, fog rolls along "
@@ -163,24 +217,31 @@ THEMES: tuple[Theme, ...] = (
         end=(11, 1),
         css=halloween.global_css,
     ),
-    Theme(id="newroz", name="Newroz", description=BANNER_ONLY, start=(3, 19), end=(3, 23)),
-    Theme(id="eid", name="Eid", description=BANNER_ONLY, windows=EID),
-    Theme(id="ramadan", name="Ramadan", description=BANNER_ONLY, windows=RAMADAN),
+    Theme(id="newroz", name="Newroz", description=COMING_SOON, start=(3, 19), end=(3, 23)),
+    Theme(id="eid", name="Eid", description=COMING_SOON, windows=EID),
+    Theme(
+        id="carsema-sor",
+        name="Çarşema Sor",
+        description=COMING_SOON,
+        windows=CARSEMA_SOR,
+        calendar="Yazidi New Year",
+    ),
+    Theme(
+        id="lantern-festival",
+        name="Lantern Festival",
+        description=COMING_SOON,
+        windows=LANTERN_FESTIVAL,
+        calendar="Chinese calendar",
+    ),
+    Theme(id="ramadan", name="Ramadan", description=COMING_SOON, windows=RAMADAN),
     Theme(
         id="language-day",
         name="Kurdish Language Day",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         start=(5, 15),
         end=(5, 15),
     ),
-    Theme(id="new-year", name="New Year", description=BANNER_ONLY, start=(12, 31), end=(1, 2)),
-    Theme(
-        id="birthday",
-        name="Dagwick's birthday",
-        description=BANNER_ONLY,
-        start=(11, 8),
-        end=(11, 8),
-    ),
+    Theme(id="new-year", name="New Year", description=COMING_SOON, start=(12, 31), end=(1, 2)),
 )
 BY_ID = {t.id: t for t in THEMES}
 
@@ -202,16 +263,17 @@ def _cookies(header: str) -> dict[str, str]:
 
 def pick_theme(cookies: dict[str, str], today: date) -> Theme | None:
     """The theme this viewer sees today: the one they applied, else the first in season.
+    Themes that are coming soon are never picked.
 
     Must match pickTheme in ui/src/themes.ts.
     """
     applied = BY_ID.get(cookies.get(APPLIED_COOKIE, "").strip())
-    if applied:
+    if applied and applied.ready:
         return applied
     off = {part.strip() for part in cookies.get(OFF_COOKIE, "").split(",")}
     if ALL in off:
         return None
-    return next((t for t in THEMES if t.id not in off and t.active_on(today)), None)
+    return next((t for t in THEMES if t.ready and t.id not in off and t.active_on(today)), None)
 
 
 def _decls(style: dict[str, Any], important: bool = False) -> str:
@@ -278,6 +340,25 @@ def apply_theme(config: dict[str, Any], css: dict[str, Any]) -> dict[str, Any]:
     return {**config, "theme": theme}
 
 
+def _uncached(send: Callable) -> Callable:
+    """Marks the config reply as never to be stored: it depends on the theme cookies.
+
+    Without this a browser (or a proxy) could keep serving the theme from before an
+    Apply or Remove, until a hard refresh.
+    """
+
+    async def wrapped(message: dict) -> None:
+        if message["type"] == "http.response.start":
+            kept = [
+                (k, v) for k, v in message.get("headers") or [] if k.lower() != b"cache-control"
+            ]
+            kept += [(b"cache-control", b"no-store"), (b"vary", b"Cookie")]
+            message = {**message, "headers": kept}
+        await send(message)
+
+    return wrapped
+
+
 class ThemeMiddleware:
     """Adds the viewer's seasonal theme to Airflow's ``GET /ui/config`` reply.
 
@@ -300,6 +381,7 @@ class ThemeMiddleware:
             return
         headers = dict(scope.get("headers") or [])
         theme = pick_theme(_cookies(headers.get(b"cookie", b"").decode("latin-1")), self.today())
+        send = _uncached(send)
         if theme is None or not theme_css(theme.id):  # nothing to draw (banner-only theme)
             await self.app(scope, receive, send)
             return

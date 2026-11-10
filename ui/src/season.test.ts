@@ -24,7 +24,7 @@ describe("fixed-date moods", () => {
     ["2027-03-23", "newroz"],
     ["2026-05-15", "language-day"],
     ["2026-05-16", undefined],
-    ["2026-11-08", "birthday"],
+    ["2026-11-08", "birthday"], // during Diwali 2026: the one-day birthday wins
     ["2026-07-01", undefined],
   ])("%s -> %s", (iso, expected) => {
     expect(mood(iso)).toBe(expected);
@@ -63,5 +63,44 @@ describe("settings", () => {
     expect(SEASON_ORDER[0]).toBe("newroz");
     expect(mood("2026-03-21")).toBe("newroz");
     expect(mood("2026-03-21", ["eid"])).toBe("eid"); // Eid still shows when Newroz is turned off
+  });
+});
+
+describe("moods on other calendars, one test per listed year", () => {
+  it.each([
+    // Diwali: two days either side of Lakshmi Puja.
+    ["2026-11-06", "diwali"],
+    ["2026-11-10", "diwali"],
+    ["2026-11-11", undefined],
+    ["2027-10-29", "diwali"], // during Halloween: Diwali wins
+    ["2027-10-26", "halloween"],
+    ["2028-10-17", "diwali"],
+    ["2029-11-05", "diwali"],
+    ["2030-10-26", "diwali"],
+    ["2031-11-14", "diwali"],
+    // The Lantern Festival: one day.
+    ["2026-03-03", "lantern-festival"], // during Ramadan 2026: the festival wins
+    ["2026-03-04", "ramadan"],
+    ["2027-02-20", "lantern-festival"],
+    ["2028-02-09", "lantern-festival"],
+    ["2029-02-27", "lantern-festival"],
+    ["2030-02-17", "lantern-festival"],
+    ["2031-02-06", "lantern-festival"],
+    // Çarşema Sor: the first Wednesday from 14 April.
+    ["2026-04-15", "carsema-sor"],
+    ["2026-04-14", undefined],
+    ["2026-04-22", undefined],
+    ["2027-04-14", "carsema-sor"],
+    ["2028-04-19", "carsema-sor"],
+    ["2029-04-18", "carsema-sor"],
+    ["2030-04-17", "carsema-sor"],
+    ["2031-04-16", "carsema-sor"],
+  ])("%s -> %s", (iso, expected) => {
+    expect(mood(iso)).toBe(expected);
+  });
+
+  it("shows nothing for a year that isn't listed yet", () => {
+    expect(mood("2032-11-01", ["diwali"])).toBeUndefined();
+    expect(mood("2032-02-21", ["lantern-festival"])).toBeUndefined();
   });
 });

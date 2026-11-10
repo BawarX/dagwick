@@ -6,12 +6,12 @@ from dagwick import settings
 from dagwick.settings import SEASONAL_MOODS, parse_seasonal_moods
 
 
-@pytest.mark.parametrize("raw", ["auto", "AUTO", " on ", "true"])
+@pytest.mark.parametrize("raw", [None, "", "  ", "auto", "AUTO", " on ", "true"])
 def test_auto(raw):
     assert parse_seasonal_moods(raw) == "auto"
 
 
-@pytest.mark.parametrize("raw", [None, "", "  ", "off", "OFF", "none", "false"])
+@pytest.mark.parametrize("raw", ["off", "OFF", "none", "false"])
 def test_off(raw):
     assert parse_seasonal_moods(raw) == "off"
 
@@ -65,6 +65,6 @@ def test_config_endpoint_follows_configured_grades(monkeypatch):
     assert api.config()["grades"] == {"A": 95, "B": 75, "C": 60, "D": 30}
 
 
-def test_off_by_default_when_not_configured(monkeypatch):
+def test_on_by_default_when_not_configured(monkeypatch):
     monkeypatch.delenv("AIRFLOW__DAGWICK__SEASONAL_MOODS", raising=False)
-    assert settings.seasonal_moods() == "off"
+    assert settings.seasonal_moods() == "auto"

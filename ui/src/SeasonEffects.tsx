@@ -250,6 +250,120 @@ function Letters() {
   );
 }
 
+/** Diwali: a garland of marigolds along the top and a row of lit diyas along the bottom. */
+function Diwali() {
+  const n = 9;
+  return (
+    <>
+      <svg className="dagwick-marigolds" viewBox="0 0 800 46" preserveAspectRatio="none">
+        <path d="M0 4 Q200 36 400 4 Q600 36 800 4" fill="none" stroke="#65a30d" strokeWidth="2" />
+        {range(26).map((i) => {
+          const x = 8 + i * 31;
+          const t = (x % 400) / 400;
+          const y = 4 + 2 * (1 - t) * t * 32; // on the two swags of the string
+          return <circle key={i} cx={x} cy={y.toFixed(1)} r="6" fill={i % 3 ? "#f59e0b" : "#ea580c"} />;
+        })}
+        {[200, 600].map((x) => (
+          <g key={x}>
+            {range(3).map((k) => (
+              <circle key={k} cx={x} cy={26 + k * 6.5} r="3.6" fill={k % 2 ? "#ea580c" : "#fbbf24"} />
+            ))}
+          </g>
+        ))}
+      </svg>
+      <Stars n={10} />
+      {range(n).map((i) => (
+        <span key={i} className="dagwick-diya" style={{ left: pct(0.05 + (i / (n - 1)) * 0.9) }}>
+          <span className="dagwick-diya-flame" style={{ animationDelay: sec(-rand(i, 1)), animationDuration: sec(0.35 + rand(i, 2) * 0.3) }} />
+          <svg viewBox="0 0 30 14" width="30" height="14">
+            <path d="M2 3 Q15 0 26 3 L30 1.6 Q28 5 25 6.4 Q22 13 15 13 Q6 13 3 7 Q1 5 2 3Z" fill="#c2410c" />
+            <ellipse cx="14" cy="3.4" rx="11" ry="2" fill="#7c2d12" />
+            <path d="M6 8.6 h16" stroke="#fde68a" strokeWidth="1.2" strokeDasharray="1.4 2" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** The Lantern Festival: round red lanterns swinging from the top, sky lanterns drifting up. */
+function LanternFestival() {
+  return (
+    <>
+      {range(7).map((i) => (
+        <span
+          key={i}
+          className="dagwick-sky-lantern"
+          style={{
+            left: pct(0.06 + rand(i, 1) * 0.88),
+            transform: `scale(${(0.6 + rand(i, 2) * 0.6).toFixed(2)})`,
+            animationDuration: sec(14 + rand(i, 3) * 10),
+            animationDelay: sec(-rand(i, 4) * 22),
+          }}
+        />
+      ))}
+      <div className="dagwick-hanging dagwick-hanging--red">
+        {[0.14, 0.4, 0.66, 0.9].map((x, i) => (
+          <span key={i} style={{ left: pct(x), height: 30 + (i % 2) * 18, animationDelay: sec(i * 0.7) }}>
+            <svg viewBox="0 0 26 34" width="26" height="34">
+              <rect x="9" y="0" width="8" height="3" rx="1" fill="#facc15" />
+              <ellipse cx="13" cy="14" rx="12" ry="11" fill="#dc2626" />
+              <path d="M13 3 Q5 14 13 25 M13 3 Q21 14 13 25 M2 14 H24" fill="none" stroke="#7f1d1d" strokeWidth="0.9" />
+              <rect x="9" y="24" width="8" height="3" rx="1" fill="#facc15" />
+              <path d="M11 27 V33 M13 27 V34 M15 27 V33" stroke="#facc15" strokeWidth="1" />
+            </svg>
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Çarşema Sor: red spring flowers along the bottom, painted eggs, and the sunrise. */
+function CarsemaSor() {
+  const EGGS = ["#dc2626", "#facc15", "#16a34a", "#2563eb", "#c026d3"];
+  return (
+    <>
+      <span className="dagwick-sunrise" />
+      <svg className="dagwick-meadow" viewBox="0 0 800 60" preserveAspectRatio="none">
+        <path d="M0 60 V44 Q200 34 400 42 T800 40 V60Z" className="ground" />
+      </svg>
+      {range(14).map((i) => (
+        <span
+          key={i}
+          className="dagwick-poppy"
+          style={{
+            left: pct(0.03 + (i / 13) * 0.94 + (rand(i, 1) - 0.5) * 0.03),
+            height: 18 + rand(i, 2) * 16,
+            animationDelay: sec(-rand(i, 3) * 3),
+          }}
+        >
+          <svg viewBox="0 0 16 14" width="16" height="14">
+            <circle cx="5" cy="6" r="4.6" fill="#dc2626" />
+            <circle cx="11" cy="6" r="4.6" fill="#ef4444" />
+            <circle cx="8" cy="9" r="4.6" fill="#b91c1c" />
+            <circle cx="8" cy="7" r="2" fill="#1c1917" />
+          </svg>
+        </span>
+      ))}
+      {[0.22, 0.47, 0.71].map((x, g) => (
+        <svg key={g} className="dagwick-eggs" style={{ left: pct(x) }} viewBox="0 0 44 22" width="44" height="22">
+          {[0, 1, 2].map((k) => {
+            const c = EGGS[(g * 2 + k) % EGGS.length];
+            const cx = 8 + k * 14;
+            return (
+              <g key={k}>
+                <ellipse cx={cx} cy="13" rx="6.4" ry="8" fill={c} />
+                <path d={`M${cx - 6} 12 q3 -3 6 0 t6 0`} fill="none" stroke="#fef3c7" strokeWidth="1.2" />
+              </g>
+            );
+          })}
+        </svg>
+      ))}
+    </>
+  );
+}
+
 const SCENES: Record<SeasonId, () => ReactNode> = {
   christmas: () => <Snow />,
   halloween: () => <Bats />,
@@ -279,6 +393,9 @@ const SCENES: Record<SeasonId, () => ReactNode> = {
     </>
   ),
   "language-day": () => <Letters />,
+  diwali: () => <Diwali />,
+  "lantern-festival": () => <LanternFestival />,
+  "carsema-sor": () => <CarsemaSor />,
 };
 
 /** Decorative layer behind the hero content. Hidden from screen readers. */
