@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from dagwick import api
 from dagwick.api import _ScoreCache, app, fleet_entry
 from dagwick.core import score_dag
 
@@ -13,6 +14,15 @@ def test_static_serves_only_allowlisted_files():
     assert client.get("/static/icon.svg").headers["content-type"].startswith("image/svg")
     assert client.get("/static/..%2Fapi.py").status_code == 404
     assert client.get("/static/api.py").status_code == 404
+    assert client.get("/static/..%2F__init__.py").status_code == 404
+    assert client.get("/static/%2E%2E/plugin.py").status_code == 404
+    assert client.get("/static/DAGWICK.JS").status_code == 404
+
+
+def test_static_allowlist_points_at_files_in_the_package():
+    for path, _ in api.STATIC_FILES.values():
+        assert path.parent == api.STATIC_DIR
+        assert path.is_file()
 
 
 def test_cache_invalidates_when_dag_hash_changes():
