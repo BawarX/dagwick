@@ -1,3 +1,4 @@
-# Reviewers requested automatically on every pull request. An approval from
+# Reviewers requested automatically on every pull request. GitHub skips the
+# author, so each pull request gets two of these three. An approval from
 # someone other than the author is needed before merging (see CONTRIBUTING.md).
-* @ardalan-jalal @sako-ranj
+* @ardalan-jalal @sako-ranj @BawarX
