@@ -173,7 +173,7 @@ def test_halloween_dates_and_scene():
     assert not theme.active_on(date(2026, 11, 2))
     assert pick_theme({}, date(2026, 10, 31)) is theme
     css = halloween.global_css()
-    for host in ("html::before", "html::after", "#root::after"):
+    for host in ("html::before", "html::after", "body::after", "#root::after"):
         assert css[host]["willChange"] == "transform"  # moved by the graphics card
         assert css[host]["pointerEvents"] == "none"
         assert css["@media (prefers-reduced-motion: reduce)"][host] == {"animation": "none"}
@@ -193,3 +193,12 @@ def test_halloween_puts_branches_on_cards_but_not_on_grade_cards():
     assert '[data-testid="card-list"] > *::before' in css
     assert ".dagwick-gcard::before" not in css  # keeps its numbers clear
     assert ".dagwick-gcard" in css  # its spider still hangs from it
+
+
+def test_halloween_keeps_the_sidebar_clear():
+    from dagwick import halloween
+
+    css = halloween.global_css()
+    layer = int(css["html::before"]["zIndex"])
+    assert int(css['[data-testid="nav-sidebar"]']["zIndex"].split()[0]) > layer
+    assert layer < 1400  # Airflow's menus and dialogs stay on top

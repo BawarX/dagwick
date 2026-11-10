@@ -1,6 +1,7 @@
 """Halloween for the whole Airflow UI, drawn with CSS only (used by the Halloween theme).
 
-Ghosts drift through the screen, glowing embers rise slowly, purple fog drifts along the
+Small dark bats flutter across the top, ghosts drift through the screen, glowing embers
+rise slowly, purple fog drifts along the
 bottom with eyes peering out of it, a full moon hangs in the corner, darkness closes in
 from the edges, a cobweb hangs in the bottom-right corner, black gnarled branches lie on
 top of the cards, and small spiders dangle on silk from them. Every moving part is moved
@@ -18,7 +19,10 @@ from dagwick.snow import CAPPED, url
 
 SEED = 1031
 
-TOP = "2147483646"  # above Airflow's content, below its pop-ups' own top layer
+# Above Airflow's content but below its menus and dialogs (Chakra puts those at 1400+);
+# Airflow's sidebar is lifted just above the decorations so they never cover it.
+TOP = "1000"
+SIDEBAR = "1001"
 
 
 def _move(x: float, y: float) -> dict[str, str]:
@@ -55,6 +59,41 @@ def ghosts_svg(rng: random.Random, width: int, height: int, count: int) -> str:
                 out.append(
                     f"<use href='#ghost' transform='translate({x + dx:.0f} {y:.0f}) "
                     f"rotate({tilt:.0f}) scale({scale:.2f})' opacity='{op:.2f}'/>"
+                )
+    out.append("</svg>")
+    return "".join(out)
+
+
+# ---- small bats ----
+
+BAT = (
+    "M0 -2 C2 -6 6 -6 8 -3 C10 -6 14 -7 18 -4 C15 -3 14 0 15 3 C12 1 9 2 8 4 "
+    "C6 2 3 2 0 5 C-3 2 -6 2 -8 4 C-9 2 -12 1 -15 3 C-14 0 -15 -3 -18 -4 "
+    "C-14 -7 -10 -6 -8 -3 C-6 -6 -2 -6 0 -2Z M-2.2 -2.5 L-1.6 -6 L-0.4 -3.2Z "
+    "M2.2 -2.5 L1.6 -6 L0.4 -3.2Z"
+)
+
+
+def small_bats_svg(rng: random.Random, width: int, height: int, count: int) -> str:
+    """Small dark bats scattered over the top of one repeat.
+
+    Each is squashed a different amount, so they look caught at different points of
+    their wing beat.
+    """
+    out = [
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>",
+        f"<defs><path id='b' d='{BAT}'/></defs>",
+    ]
+    for _ in range(count):
+        span = rng.uniform(15, 25) / 36  # wingspan of 15-25 px
+        x, y = rng.uniform(0, width), rng.uniform(height * 0.05, height * 0.5)
+        tilt, flap = rng.uniform(-22, 22), rng.uniform(0.55, 1.05)
+        for dx in (-width, 0, width):
+            if abs(x + dx - width / 2) < width / 2 + 12:
+                out.append(
+                    f"<use href='#b' transform='translate({x + dx:.0f} {y:.0f}) "
+                    f"rotate({tilt:.0f}) scale({span:.2f} {span * flap:.2f})' fill='#07040b' "
+                    f"stroke='#ffffff' stroke-opacity='.16' stroke-width='{0.8 / span:.1f}'/>"
                 )
     out.append("</svg>")
     return "".join(out)
@@ -377,6 +416,7 @@ def global_css() -> dict[str, Any]:
     rng = random.Random(SEED)
     layer = {"content": '""', "position": "fixed", "pointerEvents": "none", "zIndex": TOP}
     ghost_w, ghost_h = 1400, 900
+    bat_w, bat_h = 1500, 700
     ember_w, ember_h, fog_w, fog_h = 1100, 640, 1400, 130
     css: dict[str, Any] = {
         **branches(),
@@ -420,6 +460,26 @@ def global_css() -> dict[str, Any]:
             "75%": _move(ghost_w * 3 / 4, -10),
             "100%": _move(ghost_w, 0),
         },
+        # Small dark bats fluttering along to the right on an uneven path.
+        "body::after": {
+            **layer,
+            "top": "0",
+            "height": f"{bat_h}px",
+            "left": f"-{bat_w}px",
+            "right": "0",
+            "backgroundImage": url(small_bats_svg(rng, bat_w, bat_h, 9)),
+            "backgroundSize": f"{bat_w}px {bat_h}px",
+            "backgroundRepeat": "repeat-x",
+            "willChange": "transform",
+            "animation": "dagwickBats 46s linear infinite",
+        },
+        "@keyframes dagwickBats": {
+            f"{i * 10}%": _move(bat_w * i / 10, dy)
+            for i, dy in enumerate((0, -16, 10, -22, 6, -8, 18, -12, 4, -20, 0))
+        },
+        # Keep Airflow's sidebar (and its user menu) clear of every decoration.
+        # Airflow's own style for the sidebar outranks theme styles, hence !important.
+        '[data-testid="nav-sidebar"]': {"zIndex": f"{SIDEBAR} !important"},
         # Fog drifting along the bottom.
         "#root::after": {
             **layer,
@@ -488,6 +548,7 @@ def global_css() -> dict[str, Any]:
     moving = [
         "html::before",
         "html::after",
+        "body::after",
         "#root::after",
         '[data-testid="main-content"]::after',
     ]
