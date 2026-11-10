@@ -232,21 +232,22 @@ def _server_error(what: str, exc: BaseException) -> HTTPException:
 app = FastAPI(title="Dagwick", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
 
 
-STATIC_FILES = {
-    "dagwick.js": "application/javascript",
-    "icon.svg": "image/svg+xml",
-    "icon-dark.svg": "image/svg+xml",
+# Allowlist of the files the UI loads: URL name -> (fixed path, media type).
+# The path is never built from the request, only looked up here.
+STATIC_FILES: dict[str, tuple[Path, str]] = {
+    "dagwick.js": (STATIC_DIR / "dagwick.js", "application/javascript"),
+    "icon.svg": (STATIC_DIR / "icon.svg", "image/svg+xml"),
+    "icon-dark.svg": (STATIC_DIR / "icon-dark.svg", "image/svg+xml"),
 }
 
 
 @app.get("/static/{name}", include_in_schema=False)
 def static(name: str) -> FileResponse:
-    media_type = STATIC_FILES.get(name)  # allowlist: never build paths from user input
-    if media_type is None:
+    entry = STATIC_FILES.get(name)
+    if entry is None:
         raise HTTPException(status_code=404)
-    return FileResponse(
-        STATIC_DIR / name, media_type=media_type, headers={"Cache-Control": "no-cache"}
-    )
+    path, media_type = entry
+    return FileResponse(path, media_type=media_type, headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/health", dependencies=[_require_dag_read()])

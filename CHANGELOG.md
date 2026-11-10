@@ -88,6 +88,11 @@ All notable changes to this project are documented here. The format follows
   could not be scored on Python 3.12: reading its `# dagwick: ack` comments
   crashed. Such a file is now scored as if it had no ack comments. Found by
   the new fuzz tests.
+- **Phones and a narrow DAG panel.** Below about 440 px the header no longer
+  clips the score ring and Wick's speech bubble: both shrink to fit side by
+  side. On the fleet page the search box now spans the row below 720 px, as
+  intended, instead of staying 260 px wide and pushing the DAG list past the
+  edge. Found in the 0.2.0 QA (#34).
 
 ## [0.2.0] - 2026-11-09
 
