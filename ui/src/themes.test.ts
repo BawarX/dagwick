@@ -9,6 +9,7 @@ import {
   readChoice,
   removeTheme,
   setAuto,
+  themeSeason,
   themeStatus,
 } from "./themes";
 
@@ -81,5 +82,14 @@ describe("theme dates", () => {
   it("formats dates, including ranges over the new year", () => {
     expect(dateRange([12, 18], [1, 2])).toBe("18 Dec – 2 Jan");
     expect(dateRange([5, 15], [5, 15])).toBe("15 May");
+  });
+});
+
+describe("theme banner", () => {
+  it("gives the banner the look of the theme showing, when there is one", () => {
+    expect(themeSeason("christmas")).toBe("christmas");
+    expect(themeSeason("halloween")).toBe("halloween");
+    expect(themeSeason(undefined)).toBeUndefined();
+    expect(themeSeason("something-new")).toBeUndefined();
   });
 });

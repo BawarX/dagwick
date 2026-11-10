@@ -1,3 +1,5 @@
+import { type SeasonId, isSeasonId } from "./season";
+
 // Seasonal themes for all of Airflow. The server adds a theme to Airflow's own UI config
 // (see themes.py); each viewer's choices live in cookies that the server reads.
 
@@ -101,4 +103,9 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export function dateRange(start: [number, number], end: [number, number]): string {
   const f = ([m, d]: [number, number]) => `${d} ${MONTHS[m - 1]}`;
   return start[0] === end[0] && start[1] === end[1] ? f(start) : `${f(start)} – ${f(end)}`;
+}
+
+/** The banner's seasonal look for a theme, when Dagwick has one (theme and mood ids match). */
+export function themeSeason(themeId: string | undefined): SeasonId | undefined {
+  return isSeasonId(themeId) ? themeId : undefined;
 }

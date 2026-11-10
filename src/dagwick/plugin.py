@@ -34,6 +34,8 @@ class DagwickPlugin(AirflowPlugin):
             "destination": "nav",
             "url_route": "dagwick-fleet",
             "nav_top_level": True,
+            # Outline icons in Airflow's own sidebar style and colours, one per mode.
             "icon": f"{PREFIX}/static/icon.svg",
+            "icon_dark_mode": f"{PREFIX}/static/icon-dark.svg",
         },
     ]

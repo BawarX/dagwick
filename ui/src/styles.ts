@@ -600,4 +600,11 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
   .dagwick-hero-text { grid-column: 1 / -1; order: 1; }
   .dagwick-chips, .dagwick-stats { justify-content: center; }
 }
+
+/* Dagwick's sidebar icon: when Dagwick's own page is open, Airflow highlights its item and
+   turns that item's icon white, so ours turns white too. (Not on a DAG's Dagwick tab: there
+   the highlighted item is "Dags".) */
+body:has(.dagwick-navpage) [data-testid="nav-sidebar"] img[src*="/dagwick/static/icon"] {
+  filter: brightness(0) invert(1);
+}
 `;

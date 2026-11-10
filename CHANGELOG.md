@@ -32,6 +32,13 @@ All notable changes to this project are documented here. The format follows
   top of the cards (like the snow at Christmas), and spiders dangle from them.
   Airflow's sidebar, with the user menu, always stays clear of the decorations.
   Switching between themes without a reload clears the old theme first.
+- **The banner follows the theme.** When a seasonal theme is showing, by date
+  or applied by the viewer, Dagwick's banner takes the matching seasonal look
+  (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
+  Halloween), whatever the `seasonal_moods` setting says.
+- **Sidebar icon in Airflow's style:** a candle outline in the same line style
+  and colours as Airflow's own sidebar icons, with a version for dark mode, and
+  white while Dagwick's page is open, like Airflow's highlighted items.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,
   tags, paused, score, grade, failing and warning checks, runs and success

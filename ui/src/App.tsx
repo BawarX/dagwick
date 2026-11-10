@@ -21,9 +21,9 @@ export function App({ dagId }: PluginProps) {
 function NavPage() {
   const [view, setView] = useState(() => readView(window.location.search));
   return (
-    <>
+    <div className="dagwick-navpage">
       <PageTabs view={view} onChange={setView} />
       {view === "themes" ? <ThemesView /> : <FleetView />}
-    </>
+    </div>
   );
 }

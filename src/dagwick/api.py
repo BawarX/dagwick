@@ -232,7 +232,11 @@ def _server_error(what: str, exc: BaseException) -> HTTPException:
 app = FastAPI(title="Dagwick", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
 
 
-STATIC_FILES = {"dagwick.js": "application/javascript", "icon.svg": "image/svg+xml"}
+STATIC_FILES = {
+    "dagwick.js": "application/javascript",
+    "icon.svg": "image/svg+xml",
+    "icon-dark.svg": "image/svg+xml",
+}
 
 
 @app.get("/static/{name}", include_in_schema=False)
