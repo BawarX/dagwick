@@ -16,6 +16,8 @@ export interface CheckResult {
   ack_reason: string;
   /** Why a "# dagwick: ack" comment for this check was ignored. */
   ack_note: string;
+  /** The package that registered the check: "dagwick" for built-ins, else the check pack. */
+  pack?: string;
 }
 
 export interface ScoreReport {
@@ -35,6 +37,41 @@ export interface FleetIssue {
   gain: number;
 }
 
+export interface RunHealth {
+  window_days: number;
+  runs: number;
+  succeeded: number;
+  failed: number;
+  success_rate: number | null;
+  tasks_finished: number;
+  tasks_retried: number;
+  retry_rate: number | null;
+  median_seconds: number | null;
+  duration_trend_pct: number | null;
+  last_state: string | null;
+  last_end: string | null;
+  truncated: boolean;
+}
+
+export interface FleetHealth {
+  runs: number;
+  success_rate: number | null;
+}
+
+export interface HistoryPoint {
+  version: number;
+  created_at: string | null;
+  score: number;
+  grade: Grade;
+  better: string[];
+  worse: string[];
+}
+
+export interface ScoreHistory {
+  versions: HistoryPoint[];
+  truncated: boolean;
+}
+
 export interface FleetDag {
   dag_id: string;
   score: number;
@@ -42,7 +79,9 @@ export interface FleetDag {
   counts: Record<Status, number>;
   is_paused: boolean;
   owners: string;
+  tags?: string[];
   issues: FleetIssue[];
+  health?: FleetHealth;
 }
 
 export interface FleetReport {

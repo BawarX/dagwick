@@ -6,6 +6,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Download the fleet as CSV.** A button on the fleet page saves the DAGs
+  shown (with the current search and filters) as a CSV file: dag_id, owners,
+  tags, paused, score, grade, failing and warning checks, runs and success
+  rate over 30 days. It is built in the browser from `/api/fleet`, so it holds
+  only the DAGs the user may read. Cells that a spreadsheet would run as a
+  formula are written as text.
+- `/api/fleet` includes each DAG's `tags`.
+- **Fleet data in a dashboard** (`docs/dashboards.md`): how to read
+  `/dagwick/api/fleet` with an Airflow API token and feed it to Grafana, a
+  warehouse or alerts. Dagwick does not add a metrics endpoint or push
+  metrics: scrapers can't easily authenticate against Airflow 3, and the
+  plugin makes no network calls.
+- **Tune the scoring in `airflow.cfg`.** Three optional `[dagwick]` settings:
+  `disabled_checks` leaves checks out of every score, `weights` changes how
+  many points a check is worth, and `grades` sets the grade thresholds.
+  Invalid values are logged and ignored. The DAG tab, the fleet page and
+  `dagwick check` all follow them. See `docs/checks.md`.
+- `/api/checks` shows each check's `default_weight` and whether it is
+  `enabled`; `/api/config` includes the grade thresholds.
+- **Check packs.** A guide, "Write a check pack", in `docs/checks.md`, and an
+  example pack in `examples/dagwick-pack-example` with one check and its
+  tests. The guide says which parts of the check interface are stable.
+- Each check now records which pack it came from: `pack` in `/api/checks` and
+  in score reports, and a tag on pack checks in the DAG tab.
+
 ### Changed
 
 - **New mascot and icon.** Dagwick's mascot is now Wick, a little flame on a
@@ -14,7 +41,7 @@ All notable changes to this project are documented here. The format follows
   (a bonfire at Newroz, a pumpkin at Halloween, a fanous at Ramadan, a cupcake
   on its birthday, ...). The sidebar icon and the README banner match.
 
-## [0.2.0] - unreleased
+## [0.2.0] - 2026-11-09
 
 ### Added
 
@@ -53,6 +80,38 @@ All notable changes to this project are documented here. The format follows
   private keys, GitHub and Slack tokens, Slack webhooks, Google API keys) and
   passwords inside connection URIs. Only the line and the kind are shown,
   never the value. It cannot be acknowledged.
+- New check, **Sensors free their worker slot**: warns when a sensor that
+  runs in poke mode typically waits a minute or more per run, holding a
+  worker slot the whole time. Which tasks are sensors comes from the
+  serialized DAG, how each one waits from the DAG source (`mode`,
+  `deferrable`, `*Async` classes, `default_args`, `@task.sensor`), and how
+  long it waits from the last 30 days of runs. Rescheduled sensors are proven
+  by their `task_reschedule` rows. When the evidence is unclear the check
+  skips instead of guessing. It can be acknowledged with a reason.
+- `Context` gains `sensor_tasks`, `sensor_runs` and `default_deferrable`.
+- **Run health** on the DAG tab, next to the score but not part of it: share
+  of runs that succeeded, share of tasks that needed a retry, the typical
+  run time with its trend (last 7 days against the rest of the window) and
+  the last run, all over the last 30 days. The fleet page shows each DAG's
+  success rate. Read from the runs Airflow already records; nothing is stored.
+- New endpoint `GET /dagwick/api/health?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
+- **Score history** on the DAG tab: the score of each of the last 20 DAG
+  versions, re-scored from the serialized DAG and source code Airflow keeps
+  for every version, with which checks started or stopped passing at each
+  step. Nothing is stored by Dagwick; each version's score is cached in
+  memory until that version's DAG or source changes (Airflow updates the
+  newest version in place until the DAG runs again). Only code checks
+  count (parse time and other run-time facts describe the present, not past
+  versions).
+- New endpoint `GET /dagwick/api/history?dag_id=...`, behind the same DAG
+  permission as `/api/score`.
+- **`dagwick check` command** and a **pre-commit hook**: grade DAG files
+  before they are merged, with the same checks as the UI (acknowledgements,
+  source checks and parse time included), and exit with status 1 below
+  `--min-grade`, or 2 when a file fails to load. `--json` prints the reports.
+  It imports the DAG files, so it is meant for developer machines and CI; the
+  plugin itself still never runs DAG code.
 
 ### Fixed
 
@@ -66,6 +125,8 @@ All notable changes to this project are documented here. The format follows
   sit side by side, and the fleet's "Most common issues" moves below the list.
 - Category cards no longer leave one card alone on the last row.
 - Every failing check opens with its fix by default.
+- On screens wider than 1440 px the page is centered instead of sticking to
+  the left with empty space on the right.
 
 ## [0.1.0] - 2026-11-08
 

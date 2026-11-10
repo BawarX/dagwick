@@ -3,7 +3,10 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchScore, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
+import { RunHealth } from "./RunHealth";
+import { ScoreHistory } from "./ScoreHistory";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
+import { type Thresholds, useThresholds } from "./grades";
 import { useSeason } from "./useSeason";
 import type { CheckResult, Grade, ScoreReport, Status } from "./types";
 
@@ -24,12 +27,6 @@ const HEADLINE: Record<Grade, string> = {
   D: "Flickering. This DAG needs attention soon.",
   F: "The flame has gone out. Start with the red items below.",
 };
-const THRESHOLDS: [Grade, number][] = [
-  ["A", 90],
-  ["B", 75],
-  ["C", 60],
-  ["D", 40],
-];
 
 type Filter = "attention" | "all" | "passed";
 
@@ -56,8 +53,8 @@ export function DagView({ dagId }: { dagId: string }) {
 }
 
 /** Cheapest set of fixes (largest gains first) that reaches the next grade. */
-function nextGoal(report: ScoreReport) {
-  const next = [...THRESHOLDS].reverse().find(([, t]) => t > report.score);
+function nextGoal(report: ScoreReport, thresholds: Thresholds) {
+  const next = [...thresholds].reverse().find(([, t]) => t > report.score);
   if (!next) return undefined;
   const [grade, threshold] = next;
   let needed = (threshold / 100) * report.max_points - report.points;
@@ -88,7 +85,8 @@ function Report({ report }: { report: ScoreReport }) {
       return next;
     });
   const categories = useMemo(() => summarise(report.checks), [report]);
-  const goal = useMemo(() => nextGoal(report), [report]);
+  const thresholds = useThresholds();
+  const goal = useMemo(() => nextGoal(report, thresholds), [report, thresholds]);
   const visible = useMemo(
     () =>
       report.checks
@@ -169,6 +167,10 @@ function Report({ report }: { report: ScoreReport }) {
         ))}
       </section>
 
+      <RunHealth dagId={report.dag_id} />
+
+      <ScoreHistory dagId={report.dag_id} />
+
       <section className="dagwick-list">
         <div className="dagwick-tabs" role="tablist">
           <Tab active={filter === "attention"} onClick={() => setFilter("attention")}>
@@ -222,6 +224,11 @@ function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean
         >
           <span className="dagwick-check-title">{check.title}</span>
           <span className="dagwick-tag">{CATEGORY_LABEL[check.category] ?? check.category}</span>
+          {check.pack && check.pack !== "dagwick" && (
+            <span className="dagwick-tag dagwick-tag--pack" title={`From the check pack ${check.pack}`}>
+              {check.pack}
+            </span>
+          )}
           <span className="dagwick-pts">
             {check.status === "skip" || check.status === "ack" ? "n/a" : `${check.points} / ${check.weight}`}
             {actionable && <span className="dagwick-caret">{open ? "▾" : "▸"}</span>}

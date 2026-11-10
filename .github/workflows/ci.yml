@@ -34,6 +34,10 @@ jobs:
       - name: Test (coverage >= 70 %)
         run: uv run --locked pytest -q
 
+      - name: Example check pack tests pass
+        working-directory: examples/dagwick-pack-example
+        run: uv run --locked --project ../.. pytest -q -p no:cacheprovider
+
       - name: Code compiles on every supported Python (no Airflow install, seconds)
         run: |
           for v in 3.10 3.11 3.12 3.14 3.15; do
@@ -58,3 +62,37 @@ jobs:
           uv build -q
           unzip -l dist/*.whl | grep -q dagwick/static/dagwick.js
           ! unzip -p dist/*.whl '*/METADATA' | grep -q '^Requires-Dist'
+
+  airflow-versions:
+    name: Airflow ${{ matrix.airflow }} on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - airflow: "3.1.8"
+            python: "3.10"
+          - airflow: "3.2.2"
+            python: "3.12"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+
+      - name: Install Dagwick with Airflow ${{ matrix.airflow }} and its constraints
+        env:
+          AIRFLOW_VERSION: ${{ matrix.airflow }}
+          PYTHON_VERSION: ${{ matrix.python }}
+        run: |
+          uv venv --python "${PYTHON_VERSION}"
+          uv pip install -e . "apache-airflow==${AIRFLOW_VERSION}" pytest pytest-cov \
+            -c "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+      - name: Test
+        run: .venv/bin/python -m pytest -q

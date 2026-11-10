@@ -9,7 +9,11 @@ os.environ.setdefault("AIRFLOW__CORE__LOAD_EXAMPLES", "False")
 from pathlib import Path  # noqa: E402
 
 import pytest  # noqa: E402
-from airflow.serialization.serialized_objects import DagSerialization  # noqa: E402
+
+try:  # noqa: E402
+    from airflow.serialization.serialized_objects import DagSerialization
+except ImportError:
+    from airflow.serialization.serialized_objects import SerializedDAG as DagSerialization
 
 DAGS = Path(__file__).parent.parent / "dev" / "dags"
 
@@ -24,6 +28,10 @@ def _serialized(filename: str):
     assert not bag.import_errors, bag.import_errors
     (dag,) = bag.dags.values()
     # Score what the api-server sees: the round-tripped serialized DAG.
+    return roundtrip(dag)
+
+
+def roundtrip(dag):
     return DagSerialization.from_dict(DagSerialization.to_dict(dag))
 
 

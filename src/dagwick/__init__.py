@@ -1,5 +1,7 @@
 """Dagwick: the wick that keeps your Airflow DAGs lit."""
 
+# The check interface for check packs: check, Finding, Status, Category, Context.
+# score_dag is exported for scripts and tests; its report layout is not yet stable.
 from dagwick.core import Category, Context, Finding, Status, check, score_dag
 
 __version__ = "0.2.0"

@@ -3,7 +3,11 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchFleet, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { DagLink, Empty, GradeBadge, Loading, Mascot, MiniRing, ScoreRing, brandEyebrow } from "./components";
+import { Dropdown } from "./Dropdown";
 import { SeasonEffects, SeasonGreeting } from "./SeasonEffects";
+import { gradeFor, useThresholds } from "./grades";
+import { csvFileName, download, fleetCsv } from "./csv";
+import { type Scope, inScope, readScope, scopeLabel, scopeOptions, writeScope } from "./scope";
 import { useSeason } from "./useSeason";
 import type { FleetDag, Grade } from "./types";
 
@@ -16,6 +20,14 @@ const HEADLINE: Record<Grade, string> = {
   D: "The fleet is flickering.",
   F: "The fleet has gone dark.",
 };
+/** The headline for a scope, after its name: "finance burns steady." */
+const SCOPED: Record<Grade, string> = {
+  A: "is shining.",
+  B: "burns steady.",
+  C: "glows dimly.",
+  D: "is flickering.",
+  F: "has gone dark.",
+};
 const SORTS = [
   { id: "worst", label: "Needs care" },
   { id: "best", label: "Healthiest" },
@@ -24,10 +36,6 @@ const SORTS = [
 type Sort = (typeof SORTS)[number]["id"];
 const MAX_CHIPS = 3;
 const MAX_COMMON = 6;
-
-function gradeFor(score: number): Grade {
-  return score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "F";
-}
 
 export function FleetView() {
   const { data, error, reload } = useLoad((s) => fetchFleet(s), []);
@@ -49,16 +57,34 @@ export function FleetView() {
   return <Fleet dags={data.dags} truncated={data.truncated} />;
 }
 
-function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
+function Fleet({ dags: fleet, truncated }: { dags: FleetDag[]; truncated: boolean }) {
   const seasonState = useSeason();
   const season = seasonState.season;
   const [query, setQuery] = useState("");
   const [grade, setGrade] = useState<Grade>();
   const [issue, setIssue] = useState<{ id: string; title: string }>();
   const [sort, setSort] = useState<Sort>("worst");
+  const [scope, setScopeState] = useState<Scope>(() => readScope(window.location.search));
+
+  // Owner and tag set the scope: everything on the page describes those DAGs.
+  // Grade and issue are drill-downs: they only narrow the list.
+  const setScope = (next: Scope) => {
+    setScopeState(next);
+    setGrade(undefined);
+    setIssue(undefined);
+    const { pathname, search, hash } = window.location;
+    window.history.replaceState(window.history.state, "", pathname + writeScope(search, next) + hash);
+  };
+  // Each field only suggests what fits the other one, so a pick never leads to an empty page.
+  const { owners: ownerOptions, tags: tagOptions } = useMemo(() => scopeOptions(fleet, scope), [fleet, scope]);
+  const dags = useMemo(() => fleet.filter((d) => inScope(d, scope)), [fleet, scope]);
+  const label = scopeLabel(scope);
+
+
 
   const avg = dags.reduce((s, d) => s + d.score, 0) / dags.length;
-  const avgGrade = gradeFor(avg);
+  const thresholds = useThresholds();
+  const avgGrade = gradeFor(avg, thresholds);
   const dist = useMemo(
     () => Object.fromEntries(GRADES.map((g) => [g, dags.filter((d) => d.grade === g).length])) as Record<Grade, number>,
     [dags],
@@ -95,6 +121,21 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
 
   const filtered = Boolean(grade || issue || query.trim());
 
+  if (dags.length === 0)
+    return (
+      <>
+        <Empty
+          title={`No DAGs for ${label}`}
+          body="Nothing you can see matches this owner and tag. The link may be old, or the DAGs may have moved."
+          action={
+            <button className="dagwick-btn" onClick={() => setScope({})}>
+              Show all DAGs
+            </button>
+          }
+        />
+      </>
+    );
+
   return (
     <>
       <section
@@ -105,9 +146,9 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
         <div className="dagwick-hero-text">
           <SeasonGreeting state={seasonState} />
           {brandEyebrow("Fleet health")}
-          <h2 className="dagwick-dag">All DAGs</h2>
+          <h2 className="dagwick-dag">{label ?? "All DAGs"}</h2>
           <p className="dagwick-headline">
-            {HEADLINE[avgGrade]}{" "}
+            {label ? `${label} ${SCOPED[avgGrade]}` : HEADLINE[avgGrade]}{" "}
             {needsCare === 0
               ? "Every DAG is healthy."
               : `${needsCare} of ${dags.length} ${dags.length === 1 ? "DAG needs" : "DAGs need"} care.`}
@@ -122,7 +163,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
         </div>
         <div className="dagwick-hero-side">
           <ScoreRing score={avg} grade={avgGrade} />
-          <span className="dagwick-muted dagwick-ring-caption">fleet average</span>
+          <span className="dagwick-muted dagwick-ring-caption">{label ? "average" : "fleet average"}</span>
         </div>
       </section>
 
@@ -162,12 +203,28 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
               <input
                 className="dagwick-search"
                 type="search"
-                placeholder="Search DAGs or owners"
+                placeholder="Search DAGs"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 aria-label="Search DAGs"
               />
             </div>
+            <Dropdown
+              label="Filter by owner"
+              all="All owners"
+              empty="No owners"
+              options={ownerOptions}
+              value={scope.owner}
+              onChange={(owner) => setScope({ ...scope, owner })}
+            />
+            <Dropdown
+              label="Filter by tag"
+              all="All tags"
+              empty="No tags"
+              options={tagOptions}
+              value={scope.tag}
+              onChange={(tag) => setScope({ ...scope, tag })}
+            />
             <div className="dagwick-seg" role="radiogroup" aria-label="Sort">
               {SORTS.map((s) => (
                 <button
@@ -181,6 +238,14 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                 </button>
               ))}
             </div>
+            <button
+              className="dagwick-btn dagwick-csv"
+              onClick={() => download(csvFileName(), fleetCsv(rows))}
+              disabled={rows.length === 0}
+              title={filtered || label ? "Download the DAGs shown, as CSV" : "Download every DAG, as CSV"}
+            >
+              Download CSV
+            </button>
           </div>
           {filtered && (
             <div className="dagwick-filters">
@@ -213,6 +278,11 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
                             : `${d.counts.fail} failing · ${d.counts.warn} to improve`}
                         </span>
                         {d.counts.ack > 0 && <span>{d.counts.ack} acknowledged</span>}
+                        {d.health && d.health.runs > 0 && d.health.success_rate !== null && (
+                          <span className={d.health.success_rate < 90 ? "dagwick-health-low" : undefined}>
+                            {d.health.success_rate}% of {d.health.runs} runs succeeded
+                          </span>
+                        )}
                       </div>
                       {d.issues.length > 0 && (
                         <div className="dagwick-row-issues">
@@ -240,7 +310,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
 
         <aside className="dagwick-side">
           <div className="dagwick-side-card">
-            <h3 className="dagwick-side-title">Most common issues</h3>
+            <h3 className="dagwick-side-title">Most common issues{label ? ` · ${label}` : ""}</h3>
             {common.length === 0 ? (
               <p className="dagwick-muted dagwick-side-empty">No issues anywhere. ✨</p>
             ) : (
@@ -280,7 +350,7 @@ function Fleet({ dags, truncated }: { dags: FleetDag[]; truncated: boolean }) {
         </aside>
       </div>
       <footer className="dagwick-foot dagwick-muted">
-        {truncated ? `Showing the first ${dags.length} DAGs. ` : ""}Scored automatically from the latest parsed
+        {truncated ? `Showing the first ${fleet.length} DAGs. ` : ""}Scored automatically from the latest parsed
         version of each DAG. · {BRAND} {VERSION}
       </footer>
     </>
