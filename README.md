@@ -4,6 +4,8 @@
 
 ![Dagwick: grade your Airflow DAGs from A to F, right inside the Airflow UI](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/banner.png)
 
+![Dagwick in 15 seconds: a DAG's Dagwick tab with its score, run health and score history, then the fleet page filtered by a common issue](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/demo.gif)
+
 ## Setup
 
 **1. Install** it where Airflow runs:
