@@ -85,6 +85,7 @@ def test_theme_as_stylesheets():
     assert "@media (prefers-reduced-motion: reduce){" in sheets["css"]
     assert "display:none !important" in sheets["hide"]
     assert "padding-top:0 !important" in sheets["hide"]
+    assert "{all:unset;}" in sheets["reset"]
 
 
 def _airflow(status: int = 200, gzip: bool = False) -> TestClient:
@@ -160,5 +161,26 @@ def test_theme_css_endpoint():
         ok, missing = client.get("/api/themes/christmas/css"), client.get("/api/themes/nope/css")
     finally:
         dagwick_app.dependency_overrides.clear()
-    assert ok.status_code == 200 and set(ok.json()) == {"css", "hide"}
+    assert ok.status_code == 200 and set(ok.json()) == {"css", "hide", "reset"}
     assert missing.status_code == 404
+
+
+def test_halloween_dates_and_scene():
+    from dagwick import halloween
+
+    theme = themes.BY_ID["halloween"]
+    assert theme.active_on(date(2026, 10, 31)) and theme.active_on(date(2026, 11, 1))
+    assert not theme.active_on(date(2026, 11, 2))
+    assert pick_theme({}, date(2026, 10, 31)) is theme
+    css = halloween.global_css()
+    for host in ("html::before", "html::after", "body::after", "#root::after"):
+        assert css[host]["willChange"] == "transform"  # moved by the graphics card
+        assert css[host]["pointerEvents"] == "none"
+        assert css["@media (prefers-reduced-motion: reduce)"][host] == {"animation": "none"}
+    assert len(json.dumps(css)) < 100_000
+
+
+def test_switching_themes_clears_the_old_one_first():
+    sheets = themes.theme_sheets("christmas")
+    assert '[data-testid="card-list"]{padding-top:0;}' in sheets["reset"]
+    assert "!important" not in sheets["reset"]  # so the next theme's rules still win

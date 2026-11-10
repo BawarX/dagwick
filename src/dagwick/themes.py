@@ -24,7 +24,7 @@ from functools import cache
 from http.cookies import CookieError, SimpleCookie
 from typing import Any
 
-from dagwick import snow
+from dagwick import halloween, snow
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +68,15 @@ THEMES: tuple[Theme, ...] = (
         start=(12, 18),
         end=(1, 2),
         css=snow.global_css,
+    ),
+    Theme(
+        id="halloween",
+        name="Halloween",
+        description="Bats glide across the top of Airflow, embers drift up, purple fog "
+        "rolls along the bottom, and spiders dangle from the cards.",
+        start=(10, 24),
+        end=(11, 1),
+        css=halloween.global_css,
     ),
 )
 BY_ID = {t.id: t for t in THEMES}
@@ -134,11 +143,29 @@ def hide_text(rules: dict[str, Any]) -> str:
     return "".join(out)
 
 
+def reset_text(rules: dict[str, Any]) -> str:
+    """A stylesheet that clears a theme Airflow already drew, so another can be drawn over it.
+
+    Each of the theme's decorations is reset to nothing; the next theme's rules come after
+    this in the same stylesheet, so they win.
+    """
+    pseudo = [s for s in rules if "::" in s and not s.startswith("@")]
+    out = [f"{', '.join(pseudo)}{{all:unset;}}"] if pseudo else []
+    for selector, body in rules.items():
+        if not selector.startswith("@") and "::" not in selector and "paddingTop" in body:
+            out.append(f"{selector}{{padding-top:0;}}")
+    return "".join(out)
+
+
 @cache
 def theme_sheets(theme_id: str) -> dict[str, str]:
-    """A theme as stylesheets: ``css`` draws it, ``hide`` removes it when Airflow drew it."""
+    """A theme as stylesheets, for changing themes without a reload.
+
+    ``css`` draws it; ``hide`` removes it where Airflow drew it at page load; ``reset``
+    clears it so that another theme can be drawn in its place.
+    """
     rules = theme_css(theme_id)
-    return {"css": css_text(rules), "hide": hide_text(rules)}
+    return {"css": css_text(rules), "hide": hide_text(rules), "reset": reset_text(rules)}
 
 
 def apply_theme(config: dict[str, Any], css: dict[str, Any]) -> dict[str, Any]:

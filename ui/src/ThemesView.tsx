@@ -71,8 +71,10 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
       const want = pickTheme(themes, next);
       const from = loaded.current;
       let css = "";
-      if (want && want !== from) css = (await fetchThemeSheets(want)).css;
-      else if (!want && from) css = (await fetchThemeSheets(from)).hide;
+      if (want && want !== from) {
+        const [drawn, old] = await Promise.all([fetchThemeSheets(want), from ? fetchThemeSheets(from) : undefined]);
+        css = (old?.reset ?? "") + drawn.css;
+      } else if (!want && from) css = (await fetchThemeSheets(from)).hide;
       for (const c of choiceCookies(next)) document.cookie = c;
       setLiveCss(css);
       setChoice(next);
@@ -127,7 +129,7 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
           const s = STATUS[status];
           return (
             <article key={t.id} className={`dagwick-theme${on ? " is-on" : ""}`}>
-              <SnowScene />
+              <Scene id={t.id} />
               <div className="dagwick-theme-body">
                 <div className="dagwick-theme-title">
                   <h3>{t.name}</h3>
@@ -163,7 +165,59 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
   );
 }
 
-/** A small still picture of the snow theme, for its card. */
+/** A small still picture of a theme, for its card. */
+function Scene({ id }: { id: string }) {
+  return id === "halloween" ? <HalloweenScene /> : <SnowScene />;
+}
+
+function HalloweenScene() {
+  const bats: [number, number, number, number][] = [
+    [70, 26, 0.55, -10],
+    [128, 18, 0.4, 8],
+    [176, 40, 0.7, -4],
+    [40, 52, 0.35, 12],
+  ];
+  const embers: [number, number, number][] = [
+    [30, 88, 1.6],
+    [96, 70, 1.2],
+    [150, 84, 1.8],
+    [196, 64, 1.1],
+    [118, 94, 1.3],
+  ];
+  return (
+    <svg className="dagwick-theme-scene" viewBox="0 0 220 110" role="img" aria-label="Bats over a foggy night">
+      <defs>
+        <radialGradient id="dagwick-hw-moon">
+          <stop offset="0" stopColor="#fde68a" />
+          <stop offset="1" stopColor="#f59e0b" />
+        </radialGradient>
+        <radialGradient id="dagwick-hw-ember">
+          <stop offset="0" stopColor="#fff3c4" />
+          <stop offset=".4" stopColor="#fb923c" />
+          <stop offset="1" stopColor="#f97316" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="220" height="110" fill="#1d1430" />
+      <circle cx="176" cy="30" r="26" fill="#f59e0b" opacity=".12" />
+      <circle cx="176" cy="30" r="15" fill="url(#dagwick-hw-moon)" />
+      {bats.map(([x, y, s, r], i) => (
+        <path
+          key={i}
+          transform={`translate(${x} ${y}) rotate(${r}) scale(${s})`}
+          fill="#0d0714"
+          d="M0 -2 C2 -6 6 -6 8 -3 C10 -6 14 -7 18 -4 C15 -3 14 0 15 3 C12 1 9 2 8 4 C6 2 3 2 0 5 C-3 2 -6 2 -8 4 C-9 2 -12 1 -15 3 C-14 0 -15 -3 -18 -4 C-14 -7 -10 -6 -8 -3 C-6 -6 -2 -6 0 -2Z"
+        />
+      ))}
+      {embers.map(([x, y, r], i) => (
+        <circle key={i} cx={x} cy={y} r={r * 2.4} fill="url(#dagwick-hw-ember)" />
+      ))}
+      <ellipse cx="60" cy="104" rx="90" ry="14" fill="#7c3aed" opacity=".35" />
+      <ellipse cx="170" cy="106" rx="80" ry="12" fill="#4c1d95" opacity=".45" />
+    </svg>
+  );
+}
+
+/** The snow theme's picture. */
 function SnowScene() {
   const flakes: [number, number, number][] = [
     [26, 22, 7],
