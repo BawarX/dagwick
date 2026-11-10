@@ -22,7 +22,7 @@ const HEADLINE: Record<Grade, string> = {
   B: "A steady flame. A few small things to polish.",
   C: "Burning, but dimly. Some important habits are missing.",
   D: "Flickering. This DAG needs attention soon.",
-  F: "The lamp has gone out. Start with the red items below.",
+  F: "The flame has gone out. Start with the red items below.",
 };
 const THRESHOLDS: [Grade, number][] = [
   ["A", 90],

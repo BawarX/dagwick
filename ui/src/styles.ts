@@ -16,16 +16,28 @@ export const STYLES = `
   --dagwick-accent: #d97706;
   --dagwick-flame: #f59e0b;
   --dagwick-flame-deep: #ea580c;
+  --dagwick-flame-tip: #fbbf24;
   --dagwick-flame-core: #fde68a;
+  --dagwick-flame-heart: #fffbe3;
+  --dagwick-flame-cool: #60a5fa;
+  --dagwick-spark: #f59e0b;
+  --dagwick-moon: #f2b632;
   --dagwick-metal: #e0a040;
   --dagwick-metal-dark: #8a5a1c;
-  --dagwick-glass: #bfe3f7;
-  --dagwick-glass-edge: rgba(120, 150, 170, 0.55);
+  --dagwick-wax: #f5e6cc;
+  --dagwick-wax-top: #fff8ea;
+  --dagwick-wax-pool: #f0d9ae;
+  --dagwick-wax-shade: #d6bb91;
+  --dagwick-wax-edge: #cfb48a;
   --dagwick-wick: #3f2a1d;
   --dagwick-ink: #3b1f12;
-  --dagwick-blush: #f4a28c;
-  --dagwick-tear: #60a5fa;
-  --dagwick-smoke: #a8a29e;
+  --dagwick-mouth: #6b1d0e;
+  --dagwick-tongue: #ff8f80;
+  --dagwick-blush: #ff8a65;
+  --dagwick-tear: #7cc0ff;
+  --dagwick-smoke-hi: #cdd1dc;
+  --dagwick-smoke-lo: #9ba0b3;
+  --dagwick-smoke-ink: #394056;
   --dagwick-shadow: rgba(60, 40, 20, 0.12);
   color: var(--dagwick-text);
   font: inherit;
@@ -49,9 +61,11 @@ html.dark .dagwick {
   --dagwick-fail-bg: rgba(251, 124, 76, 0.12);
   --dagwick-accent: #fbbf24;
   --dagwick-shadow: rgba(0, 0, 0, 0.35);
-  --dagwick-glass: #dbeefa;
-  --dagwick-glass-edge: rgba(200, 225, 240, 0.4);
-  --dagwick-smoke: #6b7280;
+  --dagwick-spark: #fde68a;
+  --dagwick-moon: #fde68a;
+  --dagwick-wax-edge: transparent;
+  --dagwick-smoke-hi: #d9dce8;
+  --dagwick-smoke-lo: #a3a8bb;
 }
 .dagwick * { box-sizing: border-box; }
 .dagwick-muted { color: var(--dagwick-muted); }
@@ -68,7 +82,7 @@ html.dark .dagwick {
     radial-gradient(600px 220px at 0% 0%, color-mix(in srgb, var(--dagwick-flame) 14%, transparent), transparent 70%),
     var(--dagwick-bg);
 }
-.dagwick-grade-D, .dagwick-grade-F { background: var(--dagwick-bg); }
+.dagwick-hero.dagwick-grade-D, .dagwick-hero.dagwick-grade-F { background: var(--dagwick-bg); }
 .dagwick-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dagwick-muted); }
 .dagwick-brand { color: var(--dagwick-accent); font-weight: 700; }
 .dagwick-dag { margin: 4px 0 6px; font-size: 22px; font-weight: 700; word-break: break-all; }
@@ -141,7 +155,7 @@ html.dark .dagwick {
 /* Mascot + speech bubble */
 .dagwick-mascot { position: relative; display: flex; flex-direction: column; align-items: center; }
 .dagwick-bubble {
-  position: relative; margin-bottom: -6px; padding: 5px 12px; border-radius: 12px; font-size: 13px; white-space: nowrap;
+  position: relative; margin-bottom: -2px; padding: 5px 12px; border-radius: 12px; font-size: 13px; white-space: nowrap;
   background: var(--dagwick-surface); border: 1px solid var(--dagwick-border); box-shadow: 0 2px 6px var(--dagwick-shadow);
   animation: dagwick-pop .5s cubic-bezier(.2,1.4,.4,1) both;
 }
@@ -316,9 +330,8 @@ html.dark .dagwick {
 .dagwick-hero { position: relative; overflow: hidden; isolation: isolate; }
 .dagwick-hero > :not(.dagwick-fx) { position: relative; z-index: 1; }
 .dagwick-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.dagwick-season-halloween { --dagwick-flame: #22c55e; --dagwick-flame-deep: #15803d; --dagwick-flame-core: #d9f99d; --dagwick-glass: #fb923c; }
-.dagwick-season-newroz { --dagwick-flame: #f97316; --dagwick-flame-deep: #dc2626; --dagwick-flame-core: #fde68a; }
-.dagwick-season-ramadan, .dagwick-season-eid { --dagwick-glass: #e6fffa; }
+.dagwick-season-halloween { --dagwick-flame: #22c55e; --dagwick-flame-deep: #15803d; --dagwick-flame-tip: #4ade80; --dagwick-flame-core: #d9f99d; --dagwick-flame-heart: #f7fee7; --dagwick-spark: #a3e635; }
+.dagwick-season-newroz { --dagwick-flame: #f97316; --dagwick-flame-deep: #dc2626; --dagwick-flame-tip: #fb923c; --dagwick-flame-core: #fde68a; }
 
 .dagwick-fx--christmas { background: linear-gradient(180deg, rgba(37, 66, 122, .35), transparent 80%); }
 .dagwick-fx--halloween { background: radial-gradient(420px 220px at 55% 0%, rgba(124, 58, 237, .28), transparent 70%), linear-gradient(180deg, rgba(42, 22, 64, .45), transparent 90%); }
@@ -395,26 +408,56 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-greeting-show:hover { color: var(--dagwick-accent); }
 .dagwick-greeting-hide:focus-visible, .dagwick-greeting-show:focus-visible { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
 
-/* The lamp */
-.dagwick-lamp { flex: none; overflow: visible; }
-.dagwick-flame { transform-box: fill-box; transform-origin: 50% 100%; }
-.dagwick-flame path:first-child { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-sway 2.4s ease-in-out infinite; }
-.dagwick-lamp--worried .dagwick-flame path:first-child { animation: dagwick-flicker .5s steps(2) infinite; }
-.dagwick-glow { animation: dagwick-breathe 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.dagwick-sparkles path { animation: dagwick-twinkle 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.dagwick-sparkles path:nth-child(2) { animation-delay: .6s; }
-.dagwick-sparkles path:nth-child(3) { animation-delay: 1.2s; }
-.dagwick-lamp--radiant .dagwick-body, .dagwick-lamp--happy .dagwick-body { animation: dagwick-bob 3s ease-in-out infinite; }
-.dagwick-eyes { animation: dagwick-blink 4s infinite; transform-box: fill-box; transform-origin: center; }
-.dagwick-smoke path { stroke-dasharray: 80; animation: dagwick-smoke 3.2s ease-in-out infinite; }
-@keyframes dagwick-sway { 0%,100% { transform: rotate(-3deg) scaleY(1); } 50% { transform: rotate(3deg) scaleY(1.06); } }
-@keyframes dagwick-flicker { 0% { opacity: 1; transform: scaleY(1); } 100% { opacity: .55; transform: scaleY(.8) rotate(4deg); } }
-@keyframes dagwick-breathe { 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
-@keyframes dagwick-twinkle { 0%,100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
-@keyframes dagwick-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-@keyframes dagwick-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
-@keyframes dagwick-smoke { 0% { stroke-dashoffset: 80; opacity: 0; } 30% { opacity: .9; } 100% { stroke-dashoffset: -80; opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .dagwick *, .dagwick-lamp * { animation: none !important; transition: none !important; } }
+/* The mascot: Wick, a little flame (keyframes are prefixed dagwick-m-) */
+.dagwick-wick { flex: none; overflow: visible; }
+.dagwick-spirit { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-ignite .7s cubic-bezier(.2, 1.5, .4, 1) both; }
+.dagwick-loading .dagwick-spirit { animation: dagwick-m-kindle 1.1s ease-in-out infinite alternate; }
+.dagwick-hop { transform-box: fill-box; transform-origin: 50% 100%; }
+.dagwick-wick:hover .dagwick-hop { animation: dagwick-m-hop .55s cubic-bezier(.3, 1.4, .5, 1); }
+.dagwick-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-sway 2.8s ease-in-out infinite; }
+.dagwick-core { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-pulse 1.7s ease-in-out infinite; }
+.dagwick-licks path { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-lick 1.1s ease-in-out infinite alternate; }
+.dagwick-arm { transform-box: fill-box; transform-origin: 85% 100%; animation: dagwick-m-cheer 1.5s ease-in-out infinite alternate; }
+.dagwick-arm + .dagwick-arm { transform-origin: 15% 100%; animation-name: dagwick-m-cheer-r; }
+.dagwick-licks path:nth-child(2) { animation-delay: -.5s; }
+.dagwick-glow { transform-box: fill-box; transform-origin: center; animation: dagwick-m-breathe 3s ease-in-out infinite; }
+.dagwick-sparkles path { transform-box: fill-box; transform-origin: center; animation: dagwick-m-twinkle 2.2s ease-in-out infinite; }
+.dagwick-sparkles path:nth-child(2) { animation-delay: .55s; }
+.dagwick-sparkles path:nth-child(3) { animation-delay: 1.1s; }
+.dagwick-sparkles path:nth-child(4) { animation-delay: 1.65s; }
+.dagwick-eyes { transform-box: fill-box; transform-origin: center; animation: dagwick-m-blink 4.2s infinite; }
+.dagwick-wick--calm .dagwick-flame { animation-duration: 3.8s; }
+.dagwick-wick--worried .dagwick-flame { animation: dagwick-m-shiver .9s ease-in-out infinite; }
+.dagwick-wick--worried .dagwick-glow { animation: dagwick-m-gutter 1.3s steps(3) infinite; }
+.dagwick-sweat { transform-box: fill-box; animation: dagwick-m-sweat 2.4s ease-in infinite; }
+.dagwick-ghost { transform-box: fill-box; transform-origin: 50% 100%; animation: dagwick-m-drift 4s ease-in-out infinite; }
+.dagwick-puff { transform-box: fill-box; transform-origin: center; animation: dagwick-m-puff 3.4s ease-out infinite; }
+.dagwick-puff:nth-child(2) { animation-delay: 1.1s; }
+.dagwick-puff:nth-child(3) { animation-delay: 2.2s; }
+.dagwick-ember { transform-box: fill-box; transform-origin: center; animation: dagwick-m-ember 2s ease-in-out infinite; }
+.dagwick-ember-halo { transform-box: fill-box; transform-origin: center; animation: dagwick-m-halo 2s ease-in-out infinite; }
+.dagwick-spider { transform-box: fill-box; transform-origin: 50% 0; animation: dagwick-m-dangle 3.2s ease-in-out infinite; }
+.dagwick-wick--out .dagwick-vessel { filter: brightness(.86) saturate(.85); }
+@keyframes dagwick-m-ignite { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+@keyframes dagwick-m-kindle { from { opacity: .7; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+@keyframes dagwick-m-hop { 0%,100% { transform: translateY(0) scale(1); } 35% { transform: translateY(-7px) scale(.97, 1.04); } 70% { transform: translateY(0) scale(1.03, .97); } }
+@keyframes dagwick-m-sway { 0%,100% { transform: rotate(-2.2deg) scaleY(1); } 50% { transform: rotate(2.2deg) scaleY(1.035); } }
+@keyframes dagwick-m-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03, 1.045); } }
+@keyframes dagwick-m-cheer { from { transform: rotate(7deg) scaleY(.94); } to { transform: rotate(-9deg) scaleY(1.06); } }
+@keyframes dagwick-m-cheer-r { from { transform: rotate(-7deg) scaleY(.94); } to { transform: rotate(9deg) scaleY(1.06); } }
+@keyframes dagwick-m-lick { from { transform: scaleY(.82) rotate(-4deg); } to { transform: scaleY(1.12) rotate(5deg); } }
+@keyframes dagwick-m-breathe { 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+@keyframes dagwick-m-twinkle { 0%,100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1) rotate(20deg); } }
+@keyframes dagwick-m-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes dagwick-m-shiver { 0%,100% { transform: rotate(-3deg) scale(1, .97); } 20% { transform: rotate(2deg) scale(.985, 1.02); } 40% { transform: rotate(-1.5deg) scale(1.01, .96); } 60% { transform: rotate(3.2deg) scale(.99, 1.03); } 80% { transform: rotate(-2.4deg) scale(1, .98); } }
+@keyframes dagwick-m-gutter { 0%,100% { opacity: .9; } 50% { opacity: .45; } }
+@keyframes dagwick-m-sweat { 0% { opacity: 0; transform: translateY(-3px); } 20% { opacity: 1; } 75% { opacity: 1; transform: translateY(9px); } 100% { opacity: 0; transform: translateY(12px); } }
+@keyframes dagwick-m-drift { 0%,100% { transform: translate(0, 0) rotate(-1.5deg); } 50% { transform: translate(1px, -2.5px) rotate(1.5deg); } }
+@keyframes dagwick-m-puff { 0% { opacity: 0; transform: translateY(8px) scale(.5); } 30% { opacity: .55; } 100% { opacity: 0; transform: translateY(-12px) scale(1.25); } }
+@keyframes dagwick-m-ember { 0%,100% { opacity: .6; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes dagwick-m-halo { 0%,100% { opacity: .15; transform: scale(.8); } 50% { opacity: .4; transform: scale(1.2); } }
+@keyframes dagwick-m-dangle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@media (prefers-reduced-motion: reduce) { .dagwick * { animation: none !important; transition: none !important; } }
 
 @container dagwick (max-width: 720px) {
   .dagwick-hero { grid-template-columns: auto auto; justify-content: center; justify-items: center; text-align: center; gap: 16px 32px; }

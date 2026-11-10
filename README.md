@@ -21,8 +21,8 @@ Using Docker? Add `dagwick` to your Airflow image's `requirements.txt`.
 
 That's it. There is nothing to configure.
 
-Experimental and off by default: the lantern can dress up for holidays like
-Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
+Experimental and off by default: Wick, the little flame, dresses up for holidays
+like Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
 
 ![The Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
 

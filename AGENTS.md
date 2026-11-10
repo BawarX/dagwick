@@ -34,7 +34,7 @@ Airflow environment; it is not deployed on its own.
 ```bash
 uv sync                      # dev environment (includes Airflow, for tests only)
 uv run pytest                # tests + coverage gate
-cd ui && npm test            # UI tests (seasonal mood dates)
+cd ui && npm test            # UI tests (seasonal mood dates, the mascot)
 uv run ruff check && uv run ruff format --check
 cd ui && npm ci && npm run build   # rebuild src/dagwick/static/dagwick.js
 uv build                     # wheel + sdist into dist/
@@ -49,6 +49,8 @@ src/dagwick/checks/        Built-in checks, one module per category.
 src/dagwick/api.py         FastAPI app mounted at /dagwick (score, fleet, checks, static).
 src/dagwick/plugin.py      AirflowPlugin: the FastAPI app + two React apps.
 src/dagwick/settings.py    Optional [dagwick] settings (seasonal_moods).
+ui/src/Wick.tsx            The mascot: Wick, a flame whose mood follows the grade (tested in Wick.test.tsx).
+ui/src/WickSkins.tsx       What Wick burns on and wears in each seasonal mood.
 ui/src/season.ts           Seasonal mood dates (tested in season.test.ts).
 ui/src/SeasonEffects.tsx   Seasonal header scenes and the greeting.
 src/dagwick/static/        Built UI bundle (committed; CI fails if it is stale).
