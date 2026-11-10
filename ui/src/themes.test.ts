@@ -13,6 +13,7 @@ import {
   themeSeason,
   themeStatus,
 } from "./themes";
+import { bannerSeason } from "./useSeason";
 
 const christmas = {
   id: "christmas",
@@ -106,5 +107,26 @@ describe("theme banner", () => {
     expect(themeSeason("halloween")).toBe("halloween");
     expect(themeSeason(undefined)).toBeUndefined();
     expect(themeSeason("something-new")).toBeUndefined();
+  });
+});
+
+describe("the banner's seasonal look", () => {
+  const diwaliDay = new Date("2026-11-08T12:00:00");
+  const diwali = { ...newroz, id: "diwali", active: true, decorated: false };
+
+  it("follows the seasonal mood on its dates, for a theme coming soon", () => {
+    expect(bannerSeason([diwali], fresh, "auto", new Date("2026-11-09T12:00:00"))?.id).toBe("diwali");
+  });
+
+  it("shows nothing by date when the viewer turned off 'Show themes on their dates'", () => {
+    const off = setAuto(fresh, false);
+    expect(bannerSeason([diwali], off, "auto", diwaliDay)).toBeUndefined();
+    // A theme applied by hand still dresses the banner.
+    expect(bannerSeason([christmas], applyTheme(off, "christmas"), "auto", diwaliDay)?.id).toBe("christmas");
+  });
+
+  it("stays off when the admin turned moods off or the setting can't be read", () => {
+    expect(bannerSeason([diwali], fresh, "off", diwaliDay)).toBeUndefined();
+    expect(bannerSeason([diwali], fresh, undefined, diwaliDay)).toBeUndefined();
   });
 });

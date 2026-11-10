@@ -122,7 +122,7 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
             <small className="dagwick-muted">
               {choice.auto
                 ? "Each theme appears by itself on its dates and goes away afterwards."
-                : "No theme appears by itself. Apply one below whenever you like."}
+                : "Nothing appears by itself, Dagwick's banner included. Apply a theme below whenever you like."}
             </small>
           </span>
         </label>
