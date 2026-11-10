@@ -159,6 +159,7 @@ Then restart the api-server.
 ## More
 
 - [Seasonal moods, and how to turn them off](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)
+- [Seasonal themes for all of Airflow, config only](https://github.com/ardalan-jalal/dagwick/blob/main/themes/README.md)
 - [What it checks, and how to add your own checks](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md)
 - [Roadmap](https://github.com/ardalan-jalal/dagwick/blob/main/ROADMAP.md)
 - [Security](https://github.com/ardalan-jalal/dagwick/blob/main/SECURITY.md) · [Contributing](https://github.com/ardalan-jalal/dagwick/blob/main/CONTRIBUTING.md) · [Changelog](https://github.com/ardalan-jalal/dagwick/blob/main/CHANGELOG.md) · [Releasing](https://github.com/ardalan-jalal/dagwick/blob/main/RELEASING.md)
