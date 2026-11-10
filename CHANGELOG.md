@@ -20,9 +20,11 @@ All notable changes to this project are documented here. The format follows
   change shows at once, without a reload. Choices are saved in their browser,
   and Dagwick still writes nothing to Airflow's database. Any theme the admin
   already set in Airflow is kept.
-- **Halloween theme** (24 October to 1 November): bats glide across the top of
-  Airflow, embers drift up, a thin purple fog rolls along the bottom, a small
-  cobweb hangs in the corner, and spiders dangle from the cards. Switching
+- **Halloween theme** (24 October to 1 November): bats with scalloped wings
+  glide across the top of Airflow, ghosts drift below them, embers rise, a pale
+  moon peeks from the corner, darkness closes in from the edges, glowing eyes
+  blink in the fog along the bottom, a small cobweb hangs in the corner, and
+  spiders dangle from the cards. Switching
   between themes without a reload clears the old theme first.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,

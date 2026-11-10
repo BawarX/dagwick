@@ -1,10 +1,12 @@
 """Halloween for the whole Airflow UI, drawn with CSS only (used by the Halloween theme).
 
 Bats glide across the top of the screen in two layers (far ones to the right, near ones to
-the left), glowing embers rise slowly from below, purple fog drifts along the bottom, a
-cobweb hangs in the bottom-right corner, and small spiders dangle on silk from the top of
-some cards. Every moving part is moved with a CSS transform, which the graphics card does
-without repainting the page. Viewers who prefer reduced motion get a still scene.
+the left) with ghosts drifting below them, glowing embers rise slowly, purple fog drifts
+along the bottom with eyes peering out of it, a full moon hangs in the corner, darkness
+closes in from the edges, a cobweb hangs in the bottom-right corner, and small spiders
+dangle on silk from the top of some cards. Every moving part is moved with a CSS transform
+(or faded), which the graphics card does without repainting the page. Viewers who prefer
+reduced motion get a still scene.
 """
 
 from __future__ import annotations
@@ -26,32 +28,180 @@ def _move(x: float, y: float) -> dict[str, str]:
 
 # ---- bats ----
 
-BAT = (
-    "M0 -2 C2 -6 6 -6 8 -3 C10 -6 14 -7 18 -4 C15 -3 14 0 15 3 C12 1 9 2 8 4 "
-    "C6 2 3 2 0 5 C-3 2 -6 2 -8 4 C-9 2 -12 1 -15 3 C-14 0 -15 -3 -18 -4 "
-    "C-14 -7 -10 -6 -8 -3 C-6 -6 -2 -6 0 -2Z M-2.2 -2.5 L-1.6 -6 L-0.4 -3.2Z "
-    "M2.2 -2.5 L1.6 -6 L0.4 -3.2Z"
-)
+# One wing, from the shoulder out, as (x, y) points: shoulder, wrist, tip, then the
+# scalloped trailing edge back to the body. The other wing is its mirror image.
+WING = [
+    (2, -3),
+    (10, -9),
+    (16, -11),
+    (30, -5),
+    (26, -2),
+    (24, 3),
+    (20, 0),
+    (17, 5),
+    (13, 2),
+    (9, 6),
+    (6, 3),
+    (2, 4),
+]
+WRIST, SCALLOPS = 2, (4, 6, 8, 10)  # finger bones run from the wrist to these points
+POSES = {"up": -38, "glide": 0, "down": 26}  # wing turn (degrees) at the shoulder
 
 
-def bats_svg(rng: random.Random, width: int, height: int, count: int, size: tuple) -> str:
-    """Bats spread over the top part of one repeat, each at its own size, tilt and shade."""
+def _turn(pts, deg: float, about=(2, -3)):
+    rad = math.radians(deg)
+    cx, cy = about
+    return [
+        (
+            cx + (x - cx) * math.cos(rad) - (y - cy) * math.sin(rad),
+            cy + (x - cx) * math.sin(rad) + (y - cy) * math.cos(rad),
+        )
+        for x, y in pts
+    ]
+
+
+def bat_svg(pose: str, eyes: bool) -> str:
+    """A bat with scalloped wings, finger bones, ears and (for near bats) glowing eyes."""
+    right = _turn(WING, POSES[pose])
+    left = [(-x, y) for x, y in right]
+
+    def wing(pts) -> str:
+        sh, wr, j, tip = pts[0], pts[1], pts[2], pts[3]
+        d = f"M{sh[0]:.1f} {sh[1]:.1f} Q{wr[0]:.1f} {wr[1]:.1f} {j[0]:.1f} {j[1]:.1f} "
+        d += f"L{tip[0]:.1f} {tip[1]:.1f} "
+        rest = pts[4:]
+        for c, e in zip(rest[0::2], rest[1::2], strict=False):  # scallops curve inwards
+            d += f"Q{c[0]:.1f} {c[1]:.1f} {e[0]:.1f} {e[1]:.1f} "
+        return d + "Z"
+
+    def bones(pts) -> str:
+        wr = pts[WRIST]
+        return " ".join(
+            f"M{wr[0]:.1f} {wr[1]:.1f} L{pts[i][0]:.1f} {pts[i][1]:.1f}" for i in SCALLOPS
+        )
+
+    rim = "stroke='#c4b5fd' stroke-opacity='.6' stroke-width='.7' stroke-linejoin='round'"
+    eye = (
+        "<circle cx='-1.2' cy='-6.6' r='.75' fill='#ff5a36'/>"
+        "<circle cx='1.2' cy='-6.6' r='.75' fill='#ff5a36'/>"
+        if eyes
+        else ""
+    )
+    return (
+        f"<g><path d='{wing(left)} {wing(right)}' fill='#1d0f2e' {rim}/>"
+        f"<path d='{bones(left)} {bones(right)}' stroke='#8b5cf6' stroke-opacity='.45' "
+        "stroke-width='.6' fill='none'/>"
+        f"<ellipse cx='0' cy='0' rx='3.3' ry='5.6' fill='#140a20' {rim}/>"
+        f"<path d='M-2.6 -6 L-2.2 -11 L-0.6 -7.6 Z M2.6 -6 L2.2 -11 L0.6 -7.6 Z' "
+        f"fill='#140a20' {rim}/>"
+        f"<circle cy='-6' r='2.9' fill='#140a20'/>{eye}</g>"
+    )
+
+
+def ghost_svg() -> str:
+    """A small see-through ghost with a wavy hem and dark eyes."""
+    return (
+        "<g><path d='M0 -14 C8 -14 12 -8 12 0 V12 Q9 9 6 12 Q3 15 0 12 Q-3 15 -6 12 "
+        "Q-9 9 -12 12 V0 C-12 -8 -8 -14 0 -14Z' fill='#ede9fe' filter='url(#g)'/>"
+        "<ellipse cx='-4' cy='-4' rx='1.8' ry='2.6' fill='#1d0f2e'/>"
+        "<ellipse cx='4' cy='-4' rx='1.8' ry='2.6' fill='#1d0f2e'/>"
+        "<ellipse cx='0' cy='3' rx='1.6' ry='2.2' fill='#1d0f2e' opacity='.7'/></g>"
+    )
+
+
+def bats_svg(
+    rng: random.Random,
+    width: int,
+    height: int,
+    count: int,
+    size: tuple,
+    eyes: bool = False,
+    ghosts: int = 0,
+) -> str:
+    """Bats over the top part of one repeat, each in its own pose, size and tilt.
+
+    Bats caught at different points of their wing beat make the flock look like it is
+    flapping, without animating each bat. Optional ghosts drift lower down.
+    """
     out = [
         f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>",
-        f"<defs><path id='b' d='{BAT}'/></defs>",
+        "<defs><filter id='g' x='-30%' y='-30%' width='160%' height='160%'>"
+        "<feGaussianBlur stdDeviation='.8'/></filter>",
+        *(f"<g id='{p}'>{bat_svg(p, eyes)}</g>" for p in POSES),
+        f"<g id='ghost'>{ghost_svg()}</g></defs>",
     ]
-    for _ in range(count):
-        s = rng.uniform(*size) / 18
-        x, y = rng.uniform(0, width), rng.uniform(height * 0.04, height * 0.42)
-        tilt, op = rng.uniform(-14, 14), rng.uniform(0.75, 0.95)
+
+    def place(ref: str, x: float, y: float, scale: float, tilt: float, op: float) -> None:
         for dx in (-width, 0, width):
-            if abs(x + dx - width / 2) < width / 2 + 30:
+            if abs(x + dx - width / 2) < width / 2 + 60:
                 out.append(
-                    f"<use href='#b' transform='translate({x + dx:.0f} {y:.0f}) "
-                    f"rotate({tilt:.0f}) scale({s:.2f})' fill='#2b1745' "
-                    f"stroke='#c4b5fd' stroke-opacity='.7' stroke-width='{1.1 / s:.2f}' "
-                    f"opacity='{op:.2f}'/>"
+                    f"<use href='#{ref}' transform='translate({x + dx:.0f} {y:.0f}) "
+                    f"rotate({tilt:.0f}) scale({scale:.2f})' opacity='{op:.2f}'/>"
                 )
+
+    for _ in range(count):
+        place(
+            rng.choice(list(POSES)),
+            rng.uniform(0, width),
+            rng.uniform(height * 0.04, height * 0.42),
+            rng.uniform(*size) / 30,
+            rng.uniform(-12, 12),
+            rng.uniform(0.8, 0.98),
+        )
+    for _ in range(ghosts):
+        place(
+            "ghost",
+            rng.uniform(0, width),
+            rng.uniform(height * 0.5, height * 0.85),
+            rng.uniform(0.9, 1.4),
+            rng.uniform(-8, 8),
+            rng.uniform(0.16, 0.3),
+        )
+    out.append("</svg>")
+    return "".join(out)
+
+
+# ---- moon, eyes and vignette ----
+
+
+def moon_svg(size: int) -> str:
+    """A pale full moon with a soft glow and a few darker seas."""
+    c = size / 2
+    r = size * 0.26
+    return (
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{size}' height='{size}'>"
+        "<defs><radialGradient id='h'><stop offset='.3' stop-color='#fef3c7' stop-opacity='.16'/>"
+        "<stop offset='1' stop-color='#fde68a' stop-opacity='0'/></radialGradient>"
+        "<radialGradient id='m' cx='40%' cy='38%'><stop offset='0' stop-color='#fffbeb'/>"
+        "<stop offset='1' stop-color='#e9dcb0'/></radialGradient></defs>"
+        f"<circle cx='{c}' cy='{c}' r='{c}' fill='url(#h)'/>"
+        f"<circle cx='{c}' cy='{c}' r='{r:.0f}' fill='url(#m)' opacity='.62'/>"
+        f"<circle cx='{c - r * 0.3:.0f}' cy='{c - r * 0.2:.0f}' r='{r * 0.22:.0f}' "
+        "fill='#d6a43a' opacity='.35'/>"
+        f"<circle cx='{c + r * 0.35:.0f}' cy='{c + r * 0.25:.0f}' r='{r * 0.15:.0f}' "
+        "fill='#d6a43a' opacity='.3'/>"
+        f"<circle cx='{c + r * 0.1:.0f}' cy='{c - r * 0.45:.0f}' r='{r * 0.1:.0f}' "
+        "fill='#d6a43a' opacity='.3'/>"
+        "</svg>"
+    )
+
+
+def eyes_svg(width: int, height: int) -> str:
+    """Pairs of glowing eyes peering out of the dark fog."""
+    pairs = [(0.05, 0.62, 1.0), (0.12, 0.8, 0.8), (0.9, 0.7, 1.1), (0.97, 0.45, 0.7)]
+    out = [
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>",
+        "<defs><radialGradient id='y'><stop offset='0' stop-color='#fef08a'/>"
+        "<stop offset='.5' stop-color='#facc15'/>"
+        "<stop offset='1' stop-color='#facc15' stop-opacity='0'/></radialGradient></defs>",
+    ]
+    for fx, fy, s in pairs:
+        x, y = fx * width, fy * height
+        for dx in (-5 * s, 5 * s):
+            out.append(
+                f"<ellipse cx='{x + dx:.0f}' cy='{y:.0f}' rx='{4 * s:.1f}' ry='{2.4 * s:.1f}' "
+                "fill='url(#y)'/>"
+            )
     out.append("</svg>")
     return "".join(out)
 
@@ -234,7 +384,7 @@ def global_css() -> dict[str, Any]:
             "height": f"{far_h}px",
             "left": f"-{far_w}px",
             "right": "0",
-            "backgroundImage": url(bats_svg(rng, far_w, far_h, 5, (15, 22))),
+            "backgroundImage": url(bats_svg(rng, far_w, far_h, 5, (26, 36), ghosts=3)),
             "backgroundSize": f"{far_w}px {far_h}px",
             "backgroundRepeat": "repeat-x",
             "willChange": "transform",
@@ -254,7 +404,7 @@ def global_css() -> dict[str, Any]:
             "height": f"{near_h}px",
             "left": "0",
             "right": f"-{near_w}px",
-            "backgroundImage": url(bats_svg(rng, near_w, near_h, 3, (28, 40))),
+            "backgroundImage": url(bats_svg(rng, near_w, near_h, 3, (36, 48), eyes=True)),
             "backgroundSize": f"{near_w}px {near_h}px",
             "backgroundRepeat": "repeat-x",
             "willChange": "transform",
@@ -281,14 +431,39 @@ def global_css() -> dict[str, Any]:
             "animation": "dagwickFog 80s linear infinite",
         },
         "@keyframes dagwickFog": {"from": _move(0, 0), "to": _move(fog_w, 0)},
-        # A soft purple glow at the very bottom, and a cobweb in the corner.
+        # Darkness closing in from the edges, a purple glow along the bottom, and the moon.
         "body::before": {
+            **layer,
+            "inset": "0",
+            "backgroundImage": f"{url(moon_svg(260))}, "
+            "linear-gradient(to top, rgba(76, 29, 149, 0.2), transparent 90px), "
+            "radial-gradient(ellipse at center, transparent 55%, rgba(8, 3, 16, 0.55) 100%)",
+            "backgroundRepeat": "no-repeat",
+            "backgroundPosition": "right -64px top -64px, 0 0, 0 0",
+            "backgroundSize": "200px 200px, 100% 100%, 100% 100%",
+        },
+        # Glowing eyes in the fog that fade in, blink and vanish again.
+        '[data-testid="main-content"]::after': {
             **layer,
             "left": "0",
             "right": "0",
             "bottom": "0",
-            "height": "80px",
-            "background": "linear-gradient(to top, rgba(76, 29, 149, 0.16), transparent)",
+            "height": "220px",
+            "backgroundImage": url(eyes_svg(1400, 220)),
+            "backgroundSize": "100% 100%",
+            "opacity": "0",
+            "willChange": "opacity",
+            "animation": "dagwickEyes 14s ease-in-out infinite",
+        },
+        "@keyframes dagwickEyes": {
+            "0%": {"opacity": "0"},
+            "18%": {"opacity": "0.85"},
+            "40%": {"opacity": "0.85"},
+            "41.5%": {"opacity": "0"},
+            "43%": {"opacity": "0.85"},
+            "62%": {"opacity": "0.85"},
+            "78%": {"opacity": "0"},
+            "100%": {"opacity": "0"},
         },
         "#root::before": {
             **layer,
@@ -302,10 +477,18 @@ def global_css() -> dict[str, Any]:
             "backgroundImage": url(web_svg(96, "rgba(90, 86, 110, 0.4)")),
         },
         "html.light body::before": {
-            "background": "linear-gradient(to top, rgba(124, 58, 237, 0.16), transparent)",
+            "backgroundImage": f"{url(moon_svg(260))}, "
+            "linear-gradient(to top, rgba(124, 58, 237, 0.14), transparent 90px), "
+            "radial-gradient(ellipse at center, transparent 60%, rgba(46, 16, 101, 0.16) 100%)",
         },
     }
-    moving = ["html::before", "html::after", "body::after", "#root::after"]
+    moving = [
+        "html::before",
+        "html::after",
+        "body::after",
+        "#root::after",
+        '[data-testid="main-content"]::after',
+    ]
     spider_keys = [k for k in css if k.endswith("::after") and "nth-child" in k]
     css["@media (prefers-reduced-motion: reduce)"] = {
         sel: {"animation": "none"} for sel in moving + spider_keys
