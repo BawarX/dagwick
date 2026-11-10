@@ -178,10 +178,14 @@ def test_halloween_dates_and_scene():
         assert css[host]["willChange"] == "transform"  # moved by the graphics card
         assert css[host]["pointerEvents"] == "none"
         assert still[host] == {"animation": "none"}
-    for bats in ("html::after", "body::after"):  # each flies and flaps at once
-        assert "dagwickFlap" in css[bats]["animation"]
-        assert css[bats]["willChange"] == "translate, rotate, scale"
-        assert still[bats] == {"animation": "none"}
+    for host in halloween.BAT_HOSTS:  # each bat flies its own path and flaps at once
+        assert "dagwickFlap" in css[host]["animation"]
+        assert "steps(4)" in css[host]["animation"]
+        assert still[host] == {"animation": "none"}
+    shared = css[", ".join(halloween.BAT_HOSTS)]
+    assert shared["opacity"] == "0"  # hidden when not animating
+    paths = {json.dumps(css[f"@keyframes dagwickBat{i}"]) for i in range(len(halloween.BAT_HOSTS))}
+    assert len(paths) == len(halloween.BAT_HOSTS)  # no two bats fly the same way
     assert len(json.dumps(css)) < 100_000
 
 

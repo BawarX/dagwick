@@ -1,6 +1,6 @@
 """Halloween for the whole Airflow UI, drawn with CSS only (used by the Halloween theme).
 
-Small groups of dark bats flap their wings as they swoop across the top, ghosts drift
+Dark bats flit about on their own random paths, beating their wings, ghosts drift
 through the screen, glowing embers rise slowly, purple fog drifts along the bottom with
 eyes peering out of it, a full moon hangs in the corner, darkness closes in from the
 edges, a cobweb hangs in the bottom-right corner, black gnarled branches lie on top of
@@ -74,53 +74,157 @@ BAT = (
 )
 
 
-GROUP_W, GROUP_H = 150, 46  # px; one small group of bats flying together
+# Each bat is drawn in four wing positions, one above the other, and flips through them
+# like a flip-book: wings up, half, down, half.
+FRAME_W, FRAME_H = 64, 40
+WING_POSES = (-46, -14, 22, -14)  # wing turn (degrees) at the shoulder, per frame
+
+# One wing from the shoulder out: shoulder, wrist, tip, then the scalloped trailing edge.
+WING = [
+    (3, -2),
+    (12, -9),
+    (19, -11),
+    (31, -4),
+    (27, -1),
+    (25, 4),
+    (21, 1),
+    (18, 6),
+    (14, 3),
+    (10, 7),
+    (7, 4),
+    (3, 5),
+]
 
 
-def bat_group_svg(seed: int, count: int) -> str:
-    """A few dark bats side by side, flying together as one loose group."""
-    rng = random.Random(seed)
-    out = [
-        f"<svg xmlns='http://www.w3.org/2000/svg' width='{GROUP_W}' height='{GROUP_H}'>",
-        f"<defs><path id='b' d='{BAT}'/></defs>",
-    ]
-    for i in range(count):
-        span = rng.uniform(24, 36) / 36  # wingspan of 24-36 px
-        x = 22 + i * (GROUP_W - 44) / max(1, count - 1) + rng.uniform(-8, 8)
-        y = GROUP_H / 2 + rng.uniform(-9, 9)
-        out.append(
-            f"<use href='#b' transform='translate({x:.0f} {y:.0f}) "
-            f"rotate({rng.uniform(-14, 14):.0f}) scale({span:.2f})' fill='#07040b' "
-            "stroke='#ffffff' stroke-opacity='.16' "
-            f"stroke-width='{0.8 / span:.1f}'/>"
+def _turn(pts, deg: float, about=(3, -2)):
+    rad = math.radians(deg)
+    cx, cy = about
+    return [
+        (
+            cx + (x - cx) * math.cos(rad) - (y - cy) * math.sin(rad),
+            cy + (x - cx) * math.sin(rad) + (y - cy) * math.cos(rad),
         )
-    out.append("</svg>")
-    return "".join(out)
+        for x, y in pts
+    ]
 
 
-def flight(name: str, rightwards: bool, seed: int) -> dict[str, Any]:
-    """Keyframes for a swooping flight across the screen, tilting into its turns.
+def _bat_frame(deg: float, dy: float) -> str:
+    """One frame: a bat with both wings turned to the same pose."""
+    right = _turn(WING, deg)
+    left = [(-x, y) for x, y in right]
 
-    Uses the separate ``translate`` and ``rotate`` properties, so the wing beat can run
-    at the same time on ``scale`` with its own timing.
+    def wing(pts) -> str:
+        sh, wr, j, tip = pts[0], pts[1], pts[2], pts[3]
+        d = f"M{sh[0]:.1f} {sh[1]:.1f} Q{wr[0]:.1f} {wr[1]:.1f} {j[0]:.1f} {j[1]:.1f} "
+        d += f"L{tip[0]:.1f} {tip[1]:.1f} "
+        rest = pts[4:]
+        for c, e in zip(rest[0::2], rest[1::2], strict=False):
+            d += f"Q{c[0]:.1f} {c[1]:.1f} {e[0]:.1f} {e[1]:.1f} "
+        return d + "Z"
+
+    rim = "stroke='#ffffff' stroke-opacity='.16' stroke-width='.8' stroke-linejoin='round'"
+    return (
+        f"<g transform='translate({FRAME_W / 2} {FRAME_H / 2 + dy:.1f})' fill='#07040b' {rim}>"
+        f"<path d='{wing(left)} {wing(right)}'/>"
+        "<ellipse rx='3.4' ry='5.8'/>"
+        "<path d='M-2.6 -5.5 L-2.1 -10 L-0.5 -7.2 Z M2.6 -5.5 L2.1 -10 L0.5 -7.2 Z'/>"
+        "<circle cy='-5.6' r='2.9'/>"
+        "<circle cx='-1.1' cy='-6' r='.6' fill='#ff5a36' stroke='none'/>"
+        "<circle cx='1.1' cy='-6' r='.6' fill='#ff5a36' stroke='none'/></g>"
+    )
+
+
+def bat_sprite_svg() -> str:
+    """The four wing positions stacked from top to bottom. The body rises a little as the
+    wings push down, as a real bat's does."""
+    frames = "".join(
+        f"<g transform='translate(0 {i * FRAME_H})'>{_bat_frame(deg, dy)}</g>"
+        for i, (deg, dy) in enumerate(zip(WING_POSES, (2, 0, -2, 0), strict=True))
+    )
+    return (
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{FRAME_W}' "
+        f"height='{FRAME_H * len(WING_POSES)}'>{frames}</svg>"
+    )
+
+
+def bat_flight(name: str, seed: int) -> dict[str, Any]:
+    """A bat's own random, jittery flight: it fades in out of the dark somewhere on the
+    page, flits between random points with sudden turns, and fades out again.
+
+    It stays to the right of Airflow's sidebar and in the upper part of the screen.
     """
     rng = random.Random(seed)
+    stops = rng.randint(9, 13)
+    x, y = rng.uniform(15, 85), rng.uniform(8, 50)
     steps: dict[str, Any] = {}
-    stops = 9
-    y = rng.uniform(70, 220)
     for i in range(stops + 1):
         t = i / stops
-        x = f"calc({t:.3f} * (100vw + {2 * GROUP_W}px) - {GROUP_W}px)"
-        if not rightwards:
-            x = f"calc({1 - t:.3f} * (100vw + {2 * GROUP_W}px) - {GROUP_W}px)"
-        dy = rng.uniform(-48, 48)
-        y = max(40.0, min(360.0, y + dy))
-        tilt = max(-24.0, min(24.0, -dy * 0.45)) * (1 if rightwards else -1)
-        # The flight takes 70% of the cycle; the rest is a pause off-screen.
-        steps[f"{t * 70:.1f}%"] = {"translate": f"{x} {y:.0f}px", "rotate": f"{tilt:.0f}deg"}
-    end = steps[f"{70.0:.1f}%"]
-    steps["100%"] = dict(end)
+        # Short, sudden darts in a new direction each time.
+        x = max(6.0, min(94.0, x + rng.uniform(-18, 18)))
+        y = max(6.0, min(55.0, y + rng.uniform(-12, 12)))
+        tilt = rng.uniform(-28, 28)
+        fade = 0 if i in (0, stops) else 1
+        steps[f"{t * 100:.1f}%"] = {
+            "translate": f"calc(64px + {x:.1f} * (100vw - 64px) / 100 - 50%) {y:.1f}vh",
+            "rotate": f"{tilt:.0f}deg",
+            "opacity": str(fade),
+            "animationTimingFunction": "ease-in-out",
+        }
     return {f"@keyframes {name}": steps}
+
+
+# Elements whose free ::before/::after carry one bat each; they exist on every Airflow page.
+BAT_HOSTS = (
+    "html::after",
+    "body::after",
+    '[data-testid="nav-sidebar"]::before',
+    '[data-testid="nav-sidebar"]::after',
+    '[data-testid="nav-home-link"]::before',
+    '[data-testid="nav-dags-link"]::before',
+)
+
+
+def bats() -> dict[str, Any]:
+    """Six bats, each with its own size, path, speed and wing beat."""
+    sprite = url(bat_sprite_svg())
+    frames = len(WING_POSES)
+    # What all six bats share, once: the flip-book drawing and how they are placed.
+    css: dict[str, Any] = {
+        ", ".join(BAT_HOSTS): {
+            "content": '""',
+            "position": "fixed",
+            "top": "0",
+            "left": "0",
+            "pointerEvents": "none",
+            "zIndex": TOP,
+            "opacity": "0",
+            "backgroundImage": sprite,
+            "backgroundRepeat": "no-repeat",
+            "willChange": "translate, rotate, opacity",
+        }
+    }
+    for i, host in enumerate(BAT_HOSTS):
+        rng = random.Random(SEED + 50 + i)
+        w = rng.uniform(30, 46)  # wingspan in px
+        h = w * FRAME_H / FRAME_W
+        flight, flap = f"dagwickBat{i}", rng.uniform(0.22, 0.34)
+        css[host] = {
+            "width": f"{w:.0f}px",
+            "height": f"{h:.0f}px",
+            "backgroundSize": f"{w:.0f}px {h * frames:.0f}px",
+            "animation": f"{flight} {rng.uniform(16, 28):.1f}s linear "
+            f"-{rng.uniform(0, 28):.1f}s infinite, "
+            f"dagwickFlap {flap:.2f}s steps({frames}) infinite",
+        }
+        css.update(bat_flight(flight, SEED + 60 + i))
+    # A percentage offset is measured against (box - image) = -(frames - 1) box heights,
+    # so frames / (frames - 1) * 100% moves the strip up by all four frames; steps() then
+    # shows each frame in turn and loops back to the first.
+    css["@keyframes dagwickFlap"] = {
+        "from": {"backgroundPosition": "0 0"},
+        "to": {"backgroundPosition": f"0 {frames / (frames - 1) * 100:.3f}%"},
+    }
+    return css
 
 
 # ---- moon, eyes and vignette ----
@@ -484,18 +588,10 @@ def global_css() -> dict[str, Any]:
     rng = random.Random(SEED)
     layer = {"content": '""', "position": "fixed", "pointerEvents": "none", "zIndex": TOP}
     ghost_w, ghost_h = 1400, 900
-    bats = {
-        **layer,
-        "top": "0",
-        "left": "0",
-        "width": f"{GROUP_W}px",
-        "height": f"{GROUP_H}px",
-        "translate": f"-{GROUP_W}px 120px",  # start off-screen
-        "willChange": "translate, rotate, scale",
-    }
     ember_w, ember_h, fog_w, fog_h = 1100, 640, 1400, 130
     css: dict[str, Any] = {
         **branches(),
+        **bats(),
         **spiders(),
         # Embers rising from below, with a gentle sway.
         "html::before": {
@@ -536,24 +632,6 @@ def global_css() -> dict[str, Any]:
             "75%": _move(ghost_w * 3 / 4, -10),
             "100%": _move(ghost_w, 0),
         },
-        # Two small groups of bats flapping their wings as they swoop across: one to the
-        # right, one to the left, each at its own speed and wing beat.
-        "html::after": {
-            **bats,
-            "backgroundImage": url(bat_group_svg(SEED + 31, 3)),
-            "animation": "dagwickFlyRight 24s linear infinite, "
-            "dagwickFlap .15s ease-in-out infinite alternate",
-        },
-        **flight("dagwickFlyRight", True, SEED + 32),
-        "body::after": {
-            **bats,
-            "backgroundImage": url(bat_group_svg(SEED + 41, 2)),
-            "animation": "dagwickFlyLeft 31s linear -12s infinite, "
-            "dagwickFlap .19s ease-in-out infinite alternate",
-        },
-        **flight("dagwickFlyLeft", False, SEED + 42),
-        # The wing beat: squeezing the bats up and down reads as flapping at this size.
-        "@keyframes dagwickFlap": {"from": {"scale": "1 1"}, "to": {"scale": "1 0.4"}},
         # Keep Airflow's sidebar (and its user menu) clear of every decoration.
         # Airflow's own style for the sidebar outranks theme styles, hence !important.
         '[data-testid="nav-sidebar"]': {"zIndex": f"{SIDEBAR} !important"},
@@ -624,8 +702,7 @@ def global_css() -> dict[str, Any]:
     }
     moving = [
         "html::before",
-        "html::after",
-        "body::after",
+        *BAT_HOSTS,
         '[data-testid="main-content"]::before',
         "#root::after",
         '[data-testid="main-content"]::after',
