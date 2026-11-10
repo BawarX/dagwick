@@ -1,6 +1,6 @@
 # Dagwick
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ardalan-jalal/dagwick/badge)](https://scorecard.dev/viewer/?uri=github.com/ardalan-jalal/dagwick)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ardalan-jalal/dagwick/badge)](https://scorecard.dev/viewer/?uri=github.com/ardalan-jalal/dagwick) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16521/badge)](https://www.bestpractices.dev/projects/16521)
 
 ![Dagwick: grade your Airflow DAGs from A to F, right inside the Airflow UI](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/banner.png)
 
