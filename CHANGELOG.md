@@ -40,7 +40,9 @@ All notable changes to this project are documented here. The format follows
   Year, Dagwick's birthday, Çarşema Sor, Diwali and the Lantern Festival are
   listed on the Themes page as "Coming soon", after Christmas and Halloween.
   They can't be applied until their decorations for all of Airflow are made;
-  on their dates Dagwick's banner still dresses up (the seasonal mood). Eid
+  on their dates Dagwick's banner still dresses up (the seasonal mood), unless
+  the viewer turned off "Show themes on their dates": that switch now turns off
+  the banner's date-based look too. Eid
   and Ramadan follow the Islamic calendar, from a table of approximate dates
   for 2026-2031.
 - **Sidebar icon in Airflow's style:** a candle outline in the same line style
