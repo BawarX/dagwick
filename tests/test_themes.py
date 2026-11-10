@@ -173,10 +173,15 @@ def test_halloween_dates_and_scene():
     assert not theme.active_on(date(2026, 11, 2))
     assert pick_theme({}, date(2026, 10, 31)) is theme
     css = halloween.global_css()
-    for host in ("html::before", "html::after", "body::after", "#root::after"):
+    still = css["@media (prefers-reduced-motion: reduce)"]
+    for host in ("html::before", '[data-testid="main-content"]::before', "#root::after"):
         assert css[host]["willChange"] == "transform"  # moved by the graphics card
         assert css[host]["pointerEvents"] == "none"
-        assert css["@media (prefers-reduced-motion: reduce)"][host] == {"animation": "none"}
+        assert still[host] == {"animation": "none"}
+    for bats in ("html::after", "body::after"):  # each flies and flaps at once
+        assert "dagwickFlap" in css[bats]["animation"]
+        assert css[bats]["willChange"] == "translate, rotate, scale"
+        assert still[bats] == {"animation": "none"}
     assert len(json.dumps(css)) < 100_000
 
 

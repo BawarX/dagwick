@@ -20,8 +20,8 @@ All notable changes to this project are documented here. The format follows
   change shows at once, without a reload. Choices are saved in their browser,
   and Dagwick still writes nothing to Airflow's database. Any theme the admin
   already set in Airflow is kept.
-- **Halloween theme** (24 October to 1 November): small dark bats flutter
-  across the top, ghosts drift across Airflow,
+- **Halloween theme** (24 October to 1 November): small groups of dark bats
+  flap their wings as they swoop across the top, ghosts drift across Airflow,
   embers rise, a full moon with seas, craters and thin clouds peeks from the corner, darkness closes in from the
   edges, glowing eyes blink in the fog along the bottom, a small cobweb hangs in
   the corner, black gnarled branches lie on top of the cards (like the snow at
