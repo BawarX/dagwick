@@ -583,6 +583,84 @@ def spiders() -> dict[str, Any]:
 # ---- the whole scene ----
 
 
+# ---- Airflow's sidebar ----
+
+# Free pseudo-elements on the sidebar's first links. They are positioned against the
+# window (the sidebar is fixed at the left, SIDEBAR_W wide) and drawn inside the
+# sidebar's own layer, so they stay with it and never cover the main page.
+SIDEBAR_W = 64
+SIDEBAR_GLOW = '[data-testid="nav-home-link"]::after'
+SIDEBAR_WEB = '[data-testid="nav-dags-link"]::after'
+SIDEBAR_SPIDER = '[data-testid="nav-assets-link"]::before'
+SPIDER_THREAD = 120
+
+
+def sidebar() -> dict[str, Any]:
+    """Halloween on Airflow's sidebar: a dusk glow, a cobweb and a spider on its thread.
+
+    The glow and the web sit behind the sidebar's icons; the spider hangs at the edge.
+    None of them takes a click.
+    """
+    fixed = {"content": '""', "position": "fixed", "pointerEvents": "none"}
+    web = 40
+    return {
+        # Behind the icons: night purple fading down to an ember glow along the bottom.
+        SIDEBAR_GLOW: {
+            **fixed,
+            "top": "0",
+            "left": "0",
+            "width": f"{SIDEBAR_W}px",
+            "height": "100vh",
+            "zIndex": "-1",
+            "backgroundImage": "radial-gradient(90px 160px at 50% 100%, "
+            "rgba(234, 88, 12, 0.22), transparent 70%), "
+            "linear-gradient(to bottom, rgba(46, 16, 101, 0.5), rgba(12, 6, 20, 0.35) 55%, "
+            "rgba(46, 16, 101, 0.35))",
+        },
+        "html.light " + SIDEBAR_GLOW: {
+            "backgroundImage": "radial-gradient(90px 160px at 50% 100%, "
+            "rgba(234, 88, 12, 0.16), transparent 70%), "
+            "linear-gradient(to bottom, rgba(124, 58, 237, 0.16), transparent 60%, "
+            "rgba(124, 58, 237, 0.12))",
+        },
+        # A cobweb strung across the top-right corner, behind Airflow's logo.
+        SIDEBAR_WEB: {
+            **fixed,
+            "top": "0",
+            "left": f"{SIDEBAR_W - web}px",
+            "width": f"{web}px",
+            "height": f"{web}px",
+            "zIndex": "-1",
+            "transform": "scaleY(-1)",
+            "backgroundImage": url(web_svg(web, "rgba(225, 222, 240, 0.4)")),
+        },
+        "html.light " + SIDEBAR_WEB: {
+            "backgroundImage": url(web_svg(web, "rgba(90, 86, 110, 0.4)")),
+        },
+        # A spider letting itself down from the top along the edge, and climbing back.
+        SIDEBAR_SPIDER: {
+            **fixed,
+            "top": f"-{SPIDER_THREAD // 2}px",
+            "left": f"{SIDEBAR_W - 15}px",
+            "width": "22px",
+            "height": f"{SPIDER_THREAD + 22}px",
+            "zIndex": "1",
+            "backgroundImage": url(spider_svg(SPIDER_THREAD)),
+            "transformOrigin": "50% 0",
+            "willChange": "translate, rotate",
+            "animation": "dagwickSidebarSpider 19s ease-in-out infinite",
+        },
+        "@keyframes dagwickSidebarSpider": {
+            "0%": {"translate": "0 -60px", "rotate": "0deg"},
+            "30%": {"translate": "0 110px", "rotate": "2deg"},
+            "42%": {"translate": "0 96px", "rotate": "-2deg"},
+            "55%": {"translate": "0 120px", "rotate": "1deg"},
+            "80%": {"translate": "0 -10px", "rotate": "-1deg"},
+            "100%": {"translate": "0 -60px", "rotate": "0deg"},
+        },
+    }
+
+
 def global_css() -> dict[str, Any]:
     """Halloween as Airflow theme ``globalCss`` (selector -> style)."""
     rng = random.Random(SEED)
@@ -593,6 +671,7 @@ def global_css() -> dict[str, Any]:
         **branches(),
         **bats(),
         **spiders(),
+        **sidebar(),
         # Embers rising from below, with a gentle sway.
         "html::before": {
             **layer,
@@ -632,7 +711,8 @@ def global_css() -> dict[str, Any]:
             "75%": _move(ghost_w * 3 / 4, -10),
             "100%": _move(ghost_w, 0),
         },
-        # Keep Airflow's sidebar (and its user menu) clear of every decoration.
+        # Keep Airflow's sidebar (and its user menu) above the page's decorations; it has
+        # its own (see sidebar()).
         # Airflow's own style for the sidebar outranks theme styles, hence !important.
         '[data-testid="nav-sidebar"]': {"zIndex": f"{SIDEBAR} !important"},
         # Fog drifting along the bottom.
@@ -706,6 +786,7 @@ def global_css() -> dict[str, Any]:
         '[data-testid="main-content"]::before',
         "#root::after",
         '[data-testid="main-content"]::after',
+        SIDEBAR_SPIDER,
     ]
     spider_keys = [k for k in css if k.endswith("::after") and "nth-child" in k]
     css["@media (prefers-reduced-motion: reduce)"] = {

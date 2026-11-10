@@ -278,6 +278,25 @@ def apply_theme(config: dict[str, Any], css: dict[str, Any]) -> dict[str, Any]:
     return {**config, "theme": theme}
 
 
+def _uncached(send: Callable) -> Callable:
+    """Marks the config reply as never to be stored: it depends on the theme cookies.
+
+    Without this a browser (or a proxy) could keep serving the theme from before an
+    Apply or Remove, until a hard refresh.
+    """
+
+    async def wrapped(message: dict) -> None:
+        if message["type"] == "http.response.start":
+            kept = [
+                (k, v) for k, v in message.get("headers") or [] if k.lower() != b"cache-control"
+            ]
+            kept += [(b"cache-control", b"no-store"), (b"vary", b"Cookie")]
+            message = {**message, "headers": kept}
+        await send(message)
+
+    return wrapped
+
+
 class ThemeMiddleware:
     """Adds the viewer's seasonal theme to Airflow's ``GET /ui/config`` reply.
 
@@ -300,6 +319,7 @@ class ThemeMiddleware:
             return
         headers = dict(scope.get("headers") or [])
         theme = pick_theme(_cookies(headers.get(b"cookie", b"").decode("latin-1")), self.today())
+        send = _uncached(send)
         if theme is None or not theme_css(theme.id):  # nothing to draw (banner-only theme)
             await self.app(scope, receive, send)
             return
