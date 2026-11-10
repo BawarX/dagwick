@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 
 import { fetchThemeSheets, fetchThemes, useLoad } from "./api";
 import { Empty, Loading } from "./components";
+import { SEASONS, isSeasonId } from "./season";
 import {
   type Choice,
   type ThemeInfo,
@@ -134,8 +135,9 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
                 <div className="dagwick-theme-title">
                   <h3>{t.name}</h3>
                   <span className={`dagwick-theme-status is-${s.tone}`}>{s.label}</span>
+                  {t.decorated === false && <span className="dagwick-theme-tag">Banner only</span>}
                 </div>
-                <p className="dagwick-theme-dates">{dateRange(t.start, t.end)} · every year</p>
+                <p className="dagwick-theme-dates">{t.when ?? `${dateRange(t.start, t.end)} · every year`}</p>
                 <p className="dagwick-muted">{t.description}</p>
                 <div className="dagwick-theme-actions">
                   {on ? (
@@ -167,7 +169,39 @@ function Themes({ themes }: { themes: ThemeInfo[] }) {
 
 /** A small still picture of a theme, for its card. */
 function Scene({ id }: { id: string }) {
-  return id === "halloween" ? <HalloweenScene /> : <SnowScene />;
+  if (id === "halloween") return <HalloweenScene />;
+  if (id === "christmas") return <SnowScene />;
+  return <BannerScene id={id} />;
+}
+
+/** Colours for the themes that so far only change the banner. */
+const BANNER_SCENES: Record<string, [string, string]> = {
+  newroz: ["#14532d", "#b91c1c"],
+  eid: ["#3b2a07", "#a16207"],
+  ramadan: ["#0b2a3a", "#134e4a"],
+  "language-day": ["#422006", "#b45309"],
+  "new-year": ["#1e1b4b", "#6d28d9"],
+  birthday: ["#500724", "#be185d"],
+};
+
+/** A simple picture for a banner-only theme: its colours and its sign. */
+function BannerScene({ id }: { id: string }) {
+  const [from, to] = BANNER_SCENES[id] ?? ["#1f2937", "#374151"];
+  const season = isSeasonId(id) ? SEASONS[id] : undefined;
+  return (
+    <svg className="dagwick-theme-scene" viewBox="0 0 220 110" role="img" aria-label={season?.name ?? id}>
+      <defs>
+        <linearGradient id={`dagwick-bs-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={from} />
+          <stop offset="1" stopColor={to} />
+        </linearGradient>
+      </defs>
+      <rect width="220" height="110" fill={`url(#dagwick-bs-${id})`} />
+      <text x="110" y="70" textAnchor="middle" fontSize="44">
+        {season?.icon ?? "✨"}
+      </text>
+    </svg>
+  );
 }
 
 function HalloweenScene() {

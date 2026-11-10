@@ -513,6 +513,7 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-theme-status.is-on { color: var(--dagwick-pass); background: var(--dagwick-pass-bg); }
 .dagwick-theme-status.is-off { color: var(--dagwick-fail); background: var(--dagwick-fail-bg); }
 .dagwick-theme-status.is-idle { color: var(--dagwick-muted); background: var(--dagwick-bg); border: 1px solid var(--dagwick-border); }
+.dagwick-theme-tag { font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--dagwick-muted); border: 1px dashed var(--dagwick-border); }
 .dagwick-theme-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
 .dagwick-theme { transition: border-color .25s ease, box-shadow .25s ease; }
 .dagwick-theme.is-on { border-color: color-mix(in srgb, var(--dagwick-accent) 55%, var(--dagwick-border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--dagwick-accent) 25%, transparent); }

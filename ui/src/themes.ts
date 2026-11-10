@@ -12,6 +12,10 @@ export interface ThemeInfo {
   end: [number, number];
   /** In season today (server date). */
   active: boolean;
+  /** The dates in words, for example "18 Dec – 2 Jan · every year". */
+  when?: string;
+  /** False while a theme only changes Dagwick's banner (no decorations for Airflow yet). */
+  decorated?: boolean;
 }
 
 /** One viewer's choices. By default every theme shows on its dates. */

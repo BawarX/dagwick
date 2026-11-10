@@ -36,6 +36,11 @@ All notable changes to this project are documented here. The format follows
   or applied by the viewer, Dagwick's banner takes the matching seasonal look
   (Wick in a Santa hat with snow at Christmas, a witch hat and pumpkin at
   Halloween), whatever the `seasonal_moods` setting says.
+- **A theme for every banner.** Newroz, Eid, Ramadan, Kurdish Language Day,
+  New Year and Dagwick's birthday join Christmas and Halloween on the Themes
+  page. For now they change Dagwick's banner only (marked "Banner only");
+  their decorations for all of Airflow are still to come. Eid and Ramadan
+  follow the Islamic calendar, from a table of approximate dates for 2026-2031.
 - **Sidebar icon in Airflow's style:** a candle outline in the same line style
   and colours as Airflow's own sidebar icons, with a version for dark mode, and
   white while Dagwick's page is open, like Airflow's highlighted items.

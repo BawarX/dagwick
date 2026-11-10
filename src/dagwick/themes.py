@@ -33,32 +33,117 @@ ALL = "*"  # in OFF_COOKIE: no theme appears by date
 APPLIED_COOKIE = "dagwick_theme"
 
 
-@dataclass(frozen=True)
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _no_css() -> dict[str, Any]:
+    return {}
+
+
+@dataclass(frozen=True, kw_only=True)
 class Theme:
-    id: str
+    """A seasonal theme. It runs either on the same dates every year (``start``/``end``)
+    or, for festivals on the Islamic calendar, in the listed ``windows``."""
+
+    id: str  # also the id of Dagwick's matching banner (seasonal mood)
     name: str
     description: str
-    start: tuple[int, int]  # (month, day), inclusive
-    end: tuple[int, int]  # (month, day), inclusive; may wrap into the next year
-    css: Callable[[], dict[str, Any]]
+    start: tuple[int, int] | None = None  # (month, day), inclusive
+    end: tuple[int, int] | None = None  # (month, day), inclusive; may wrap into next year
+    windows: tuple[tuple[date, date], ...] = ()  # exact (first, last) days, inclusive
+    css: Callable[[], dict[str, Any]] = _no_css  # decorations; none means banner only
 
     def active_on(self, day: date) -> bool:
+        if self.windows:
+            return any(first <= day <= last for first, last in self.windows)
+        assert self.start and self.end
         v = day.month * 100 + day.day
         a = self.start[0] * 100 + self.start[1]
         b = self.end[0] * 100 + self.end[1]
         return a <= v <= b if a <= b else v >= a or v <= b
 
+    def next_window(self, today: date) -> tuple[date, date] | None:
+        """The window running today, or the next one."""
+        return next(((a, b) for a, b in sorted(self.windows) if b >= today), None)
+
+    def when(self, today: date) -> str:
+        """The dates in words: "18 Dec – 2 Jan · every year", or the next Islamic window."""
+
+        def day(m: int, d: int) -> str:
+            return f"{d} {MONTHS[m - 1]}"
+
+        if self.windows:
+            window = self.next_window(today)
+            if window is None:
+                return "Islamic calendar: no dates listed yet"
+            a, b = window
+            span = (
+                day(a.month, a.day) if a == b else f"{day(a.month, a.day)} – {day(b.month, b.day)}"
+            )
+            return f"About {span} {b.year} · Islamic calendar, moves each year"
+        assert self.start and self.end
+        span = (
+            day(*self.start) if self.start == self.end else f"{day(*self.start)} – {day(*self.end)}"
+        )
+        return f"{span} · every year"
+
     def info(self, today: date) -> dict[str, Any]:
+        window = self.next_window(today) if self.windows else None
+        start = (window[0].month, window[0].day) if window else self.start
+        end = (window[1].month, window[1].day) if window else self.end
         return {
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "start": list(self.start),
-            "end": list(self.end),
+            "start": list(start) if start else None,
+            "end": list(end) if end else None,
+            "when": self.when(today),
             "active": self.active_on(today),
+            "decorated": self.css is not _no_css,
         }
 
 
+def _d(text: str) -> date:
+    return date.fromisoformat(text)
+
+
+# Islamic-calendar dates (Umm al-Qura), approximate: the exact day can shift by one with
+# the moon sighting. Python has no Islamic calendar and Dagwick adds no dependencies, so
+# the dates are listed here; extend the table as the years go by.
+RAMADAN = tuple(
+    (_d(a), _d(b))
+    for a, b in (
+        ("2026-02-18", "2026-03-19"),
+        ("2027-02-08", "2027-03-09"),
+        ("2028-01-28", "2028-02-26"),
+        ("2029-01-16", "2029-02-13"),
+        ("2030-01-06", "2030-02-03"),
+        ("2030-12-26", "2031-01-24"),
+    )
+)
+# Eid al-Fitr (1–3 Shawwal) and Eid al-Adha (10–13 Dhu al-Hijjah).
+EID = tuple(
+    (_d(a), _d(b))
+    for a, b in (
+        ("2026-03-20", "2026-03-22"),
+        ("2026-05-27", "2026-05-30"),
+        ("2027-03-10", "2027-03-12"),
+        ("2027-05-16", "2027-05-19"),
+        ("2028-02-27", "2028-02-29"),
+        ("2028-05-05", "2028-05-08"),
+        ("2029-02-14", "2029-02-16"),
+        ("2029-04-24", "2029-04-27"),
+        ("2030-02-04", "2030-02-06"),
+        ("2030-04-13", "2030-04-16"),
+    )
+)
+
+BANNER_ONLY = (
+    "For now this theme changes Dagwick's banner only; decorations for all of Airflow "
+    "are still to come."
+)
+
+# When two themes overlap, the earlier one in this list shows.
 THEMES: tuple[Theme, ...] = (
     Theme(
         id="christmas",
@@ -72,11 +157,29 @@ THEMES: tuple[Theme, ...] = (
     Theme(
         id="halloween",
         name="Halloween",
-        description="Bats glide across the top of Airflow, embers drift up, purple fog "
-        "rolls along the bottom, and spiders dangle from the cards.",
+        description="Bats flit across Airflow, ghosts and embers drift, fog rolls along "
+        "the bottom, and spiders dangle from branches on the cards.",
         start=(10, 24),
         end=(11, 1),
         css=halloween.global_css,
+    ),
+    Theme(id="newroz", name="Newroz", description=BANNER_ONLY, start=(3, 19), end=(3, 23)),
+    Theme(id="eid", name="Eid", description=BANNER_ONLY, windows=EID),
+    Theme(id="ramadan", name="Ramadan", description=BANNER_ONLY, windows=RAMADAN),
+    Theme(
+        id="language-day",
+        name="Kurdish Language Day",
+        description=BANNER_ONLY,
+        start=(5, 15),
+        end=(5, 15),
+    ),
+    Theme(id="new-year", name="New Year", description=BANNER_ONLY, start=(12, 31), end=(1, 2)),
+    Theme(
+        id="birthday",
+        name="Dagwick's birthday",
+        description=BANNER_ONLY,
+        start=(11, 8),
+        end=(11, 8),
     ),
 )
 BY_ID = {t.id: t for t in THEMES}
@@ -197,7 +300,7 @@ class ThemeMiddleware:
             return
         headers = dict(scope.get("headers") or [])
         theme = pick_theme(_cookies(headers.get(b"cookie", b"").decode("latin-1")), self.today())
-        if theme is None:
+        if theme is None or not theme_css(theme.id):  # nothing to draw (banner-only theme)
             await self.app(scope, receive, send)
             return
 

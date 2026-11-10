@@ -211,3 +211,39 @@ def test_halloween_keeps_the_sidebar_clear():
     layer = int(css["html::before"]["zIndex"])
     assert int(css['[data-testid="nav-sidebar"]']["zIndex"].split()[0]) > layer
     assert layer < 1400  # Airflow's menus and dialogs stay on top
+
+
+def test_there_is_a_theme_for_every_banner():
+    from dagwick.settings import SEASONAL_MOODS
+
+    assert {t.id for t in themes.THEMES} == set(SEASONAL_MOODS)
+
+
+def test_islamic_calendar_themes_use_their_listed_windows():
+    ramadan, eid = themes.BY_ID["ramadan"], themes.BY_ID["eid"]
+    assert ramadan.active_on(date(2027, 2, 20)) and not ramadan.active_on(date(2027, 3, 10))
+    assert eid.active_on(date(2027, 3, 10)) and eid.active_on(date(2027, 5, 18))
+    assert not eid.active_on(date(2027, 4, 1))
+    assert ramadan.when(date(2026, 11, 10)) == (
+        "About 8 Feb – 9 Mar 2027 · Islamic calendar, moves each year"
+    )
+    assert ramadan.info(date(2026, 11, 10))["start"] == [2, 8]
+
+
+def test_fixed_dates_in_words():
+    assert themes.BY_ID["christmas"].when(date(2026, 1, 1)) == "18 Dec – 2 Jan · every year"
+    assert themes.BY_ID["language-day"].when(date(2026, 1, 1)) == "15 May · every year"
+
+
+def test_overlapping_themes_show_the_earlier_one():
+    # New Year (31 Dec - 2 Jan) falls inside Christmas (18 Dec - 2 Jan).
+    assert pick_theme({}, date(2027, 1, 1)).id == "christmas"
+    assert pick_theme({}, date(2026, 5, 15)).id == "language-day"
+
+
+def test_banner_only_themes_leave_airflow_untouched():
+    info = themes.BY_ID["newroz"].info(date(2026, 3, 20))
+    assert info["decorated"] is False and info["active"] is True
+    assert themes.BY_ID["christmas"].info(date(2026, 3, 20))["decorated"] is True
+    res = _airflow()(date(2026, 3, 20)).get("/ui/config")  # Newroz: banner only
+    assert res.json()["theme"] is None
