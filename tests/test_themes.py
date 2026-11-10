@@ -184,3 +184,11 @@ def test_switching_themes_clears_the_old_one_first():
     sheets = themes.theme_sheets("christmas")
     assert '[data-testid="card-list"]{padding-top:0;}' in sheets["reset"]
     assert "!important" not in sheets["reset"]  # so the next theme's rules still win
+
+
+def test_halloween_card_rules_do_not_overwrite_each_other():
+    from dagwick import halloween
+
+    css = halloween.global_css()
+    for sel in (".dagwick-gcard", ".dagwick-list", '[data-testid="dag-card"]'):
+        assert css[sel]["isolation"] == "isolate"  # keeps the tree above the card's background
