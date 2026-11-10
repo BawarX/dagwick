@@ -17,9 +17,9 @@ SEED = 1225  # fixed, so the file is reproducible
 
 # (tile size px, flakes per tile, kind, size range px, fall time range s, opacity range, sway px)
 LAYERS = [
-    (431, 6, "dot", (1.0, 1.8), (18, 28), (0.3, 0.5), 10),  # far: a few faint soft flakes
-    (557, 4, "crystal", (5, 8), (13, 19), (0.35, 0.6), 22),  # middle: snowflakes
-    (743, 2, "crystal", (10, 14), (9, 13), (0.35, 0.6), 34),  # near: big snowflakes
+    (431, 9, "dot", (1.0, 1.8), (18, 28), (0.3, 0.5), 10),  # far: faint soft flakes
+    (557, 6, "crystal", (5, 8), (13, 19), (0.35, 0.6), 22),  # middle: snowflakes
+    (743, 3, "crystal", (10, 14), (9, 13), (0.35, 0.6), 34),  # near: big snowflakes
 ]
 WIND = 0.45  # share of flakes that the wind also carries sideways
 
@@ -120,6 +120,80 @@ def drift_svg(theme: str) -> str:
     )
 
 
+# Cards that collect a little snow on their top edge: Airflow's DAG cards (stable test id)
+# and Dagwick's own cards.
+CAPPED = (
+    '[data-testid="dag-card"]',
+    ".dagwick-gcard",
+    ".dagwick-cat",
+    ".dagwick-list",
+    ".dagwick-theme",
+)
+
+
+CAP_W = 140  # width of one repeat of the snow on a card
+
+
+def cap_svg(seed: int, theme: str) -> str:
+    """A lumpy layer of snow lying on a card's top edge, a little different for each seed."""
+    rng = random.Random(seed)
+    steps = 8
+    xs = [i * CAP_W / steps for i in range(steps + 1)]
+    top = [rng.uniform(1, 7) for _ in xs]
+    bottom = [rng.uniform(13, 17) if rng.random() < 0.3 else rng.uniform(10, 12) for _ in xs]
+    # The pattern repeats along the card, so both ends must meet.
+    top[-1], bottom[-1] = top[0], bottom[0]
+
+    def smooth(pts: list[tuple[float, float]]) -> str:
+        """A soft curve through the points (each point is a control point)."""
+        return " ".join(
+            f"Q{x0:.0f} {y0:.1f} {(x0 + x1) / 2:.0f} {(y0 + y1) / 2:.1f}"
+            for (x0, y0), (x1, y1) in zip(pts, pts[1:], strict=False)
+        )
+
+    upper = list(zip(xs, top, strict=True))
+    lower = list(zip(xs, bottom, strict=True))[::-1]  # back from right to left
+    edge = "#c9d8ea" if theme == "light" else "#ffffff"
+    d = (
+        f"M0 {top[0]:.1f} {smooth(upper)} L{CAP_W} {top[-1]:.1f} "
+        f"L{CAP_W} {bottom[-1]:.1f} {smooth(lower)} L0 {bottom[0]:.1f} Z"
+    )
+    return (
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{CAP_W}' height='18' "
+        f"viewBox='0 0 {CAP_W} 18'>"
+        f"<path d='{d}' fill='#ffffff' stroke='{edge}' stroke-width='.8'/>"
+        "</svg>"
+    )
+
+
+def caps(theme: str) -> dict[str, Any]:
+    """Snow on the top edge of each card, in three shapes so neighbours differ."""
+    css: dict[str, Any] = {}
+    for sel in CAPPED:
+        if theme == "dark":
+            css[sel] = {"position": "relative"}
+            css[f"{sel}::after"] = {
+                "content": '""',
+                "position": "absolute",
+                "top": "-7px",
+                "left": "6px",
+                "right": "6px",
+                "height": "18px",
+                "backgroundSize": f"{CAP_W}px 18px",
+                "backgroundRepeat": "repeat-x",
+                "borderRadius": "8px 8px 0 0",
+                "pointerEvents": "none",
+                "zIndex": "1",
+                "filter": "drop-shadow(0 1px 1px rgba(15, 30, 60, 0.18))",
+            }
+        for n in range(3):
+            key = f"{sel}:nth-of-type(3n+{n + 1})::after"
+            if theme == "light":
+                key = f"html.light {key}"
+            css[key] = {"backgroundImage": url(cap_svg(n + 7, theme))}
+    return css
+
+
 def url(svg: str) -> str:
     return f'url("data:image/svg+xml,{quote(svg, safe="")}")'
 
@@ -155,6 +229,8 @@ def global_css() -> dict[str, Any]:
         "filter": "drop-shadow(0 -2px 4px rgba(15, 30, 60, 0.12))",
     }
     return {
+        **caps("dark"),
+        **caps("light"),
         "body::after": {**flakes, **snow("dark", True)},
         "body::before": {**drift, "backgroundImage": url(drift_svg("dark"))},
         "html.light body::after": snow("light", True),
