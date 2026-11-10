@@ -1,12 +1,11 @@
 """Halloween for the whole Airflow UI, drawn with CSS only (used by the Halloween theme).
 
-Bats glide across the top of the screen in two layers (far ones to the right, near ones to
-the left) with ghosts drifting below them, glowing embers rise slowly, purple fog drifts
-along the bottom with eyes peering out of it, a full moon hangs in the corner, darkness
-closes in from the edges, a cobweb hangs in the bottom-right corner, bare twisted trees
-grow up the corners of the cards, and small spiders dangle on silk from the top of some
-cards. Every moving part is moved with a CSS transform (or faded), which the graphics card
-does without repainting the page. Viewers who prefer reduced motion get a still scene.
+Ghosts drift through the screen, glowing embers rise slowly, purple fog drifts along the
+bottom with eyes peering out of it, a full moon hangs in the corner, darkness closes in
+from the edges, a cobweb hangs in the bottom-right corner, black gnarled branches lie on
+top of the cards, and small spiders dangle on silk from them. Every moving part is moved
+with a CSS transform (or faded), which the graphics card does without repainting the
+page. Viewers who prefer reduced motion get a still scene.
 """
 
 from __future__ import annotations
@@ -26,76 +25,7 @@ def _move(x: float, y: float) -> dict[str, str]:
     return {"transform": f"translate3d({x:.0f}px, {y:.0f}px, 0)"}
 
 
-# ---- bats ----
-
-# One wing, from the shoulder out, as (x, y) points: shoulder, wrist, tip, then the
-# scalloped trailing edge back to the body. The other wing is its mirror image.
-WING = [
-    (2, -3),
-    (10, -9),
-    (16, -11),
-    (30, -5),
-    (26, -2),
-    (24, 3),
-    (20, 0),
-    (17, 5),
-    (13, 2),
-    (9, 6),
-    (6, 3),
-    (2, 4),
-]
-WRIST, SCALLOPS = 2, (4, 6, 8, 10)  # finger bones run from the wrist to these points
-POSES = {"up": -38, "glide": 0, "down": 26}  # wing turn (degrees) at the shoulder
-
-
-def _turn(pts, deg: float, about=(2, -3)):
-    rad = math.radians(deg)
-    cx, cy = about
-    return [
-        (
-            cx + (x - cx) * math.cos(rad) - (y - cy) * math.sin(rad),
-            cy + (x - cx) * math.sin(rad) + (y - cy) * math.cos(rad),
-        )
-        for x, y in pts
-    ]
-
-
-def bat_svg(pose: str, eyes: bool) -> str:
-    """A bat with scalloped wings, finger bones, ears and (for near bats) glowing eyes."""
-    right = _turn(WING, POSES[pose])
-    left = [(-x, y) for x, y in right]
-
-    def wing(pts) -> str:
-        sh, wr, j, tip = pts[0], pts[1], pts[2], pts[3]
-        d = f"M{sh[0]:.1f} {sh[1]:.1f} Q{wr[0]:.1f} {wr[1]:.1f} {j[0]:.1f} {j[1]:.1f} "
-        d += f"L{tip[0]:.1f} {tip[1]:.1f} "
-        rest = pts[4:]
-        for c, e in zip(rest[0::2], rest[1::2], strict=False):  # scallops curve inwards
-            d += f"Q{c[0]:.1f} {c[1]:.1f} {e[0]:.1f} {e[1]:.1f} "
-        return d + "Z"
-
-    def bones(pts) -> str:
-        wr = pts[WRIST]
-        return " ".join(
-            f"M{wr[0]:.1f} {wr[1]:.1f} L{pts[i][0]:.1f} {pts[i][1]:.1f}" for i in SCALLOPS
-        )
-
-    rim = "stroke='#c4b5fd' stroke-opacity='.6' stroke-width='.7' stroke-linejoin='round'"
-    eye = (
-        "<circle cx='-1.2' cy='-6.6' r='.75' fill='#ff5a36'/>"
-        "<circle cx='1.2' cy='-6.6' r='.75' fill='#ff5a36'/>"
-        if eyes
-        else ""
-    )
-    return (
-        f"<g><path d='{wing(left)} {wing(right)}' fill='#1d0f2e' {rim}/>"
-        f"<path d='{bones(left)} {bones(right)}' stroke='#8b5cf6' stroke-opacity='.45' "
-        "stroke-width='.6' fill='none'/>"
-        f"<ellipse cx='0' cy='0' rx='3.3' ry='5.6' fill='#140a20' {rim}/>"
-        f"<path d='M-2.6 -6 L-2.2 -11 L-0.6 -7.6 Z M2.6 -6 L2.2 -11 L0.6 -7.6 Z' "
-        f"fill='#140a20' {rim}/>"
-        f"<circle cy='-6' r='2.9' fill='#140a20'/>{eye}</g>"
-    )
+# ---- ghosts ----
 
 
 def ghost_svg() -> str:
@@ -109,54 +39,23 @@ def ghost_svg() -> str:
     )
 
 
-def bats_svg(
-    rng: random.Random,
-    width: int,
-    height: int,
-    count: int,
-    size: tuple,
-    eyes: bool = False,
-    ghosts: int = 0,
-) -> str:
-    """Bats over the top part of one repeat, each in its own pose, size and tilt.
-
-    Bats caught at different points of their wing beat make the flock look like it is
-    flapping, without animating each bat. Optional ghosts drift lower down.
-    """
+def ghosts_svg(rng: random.Random, width: int, height: int, count: int) -> str:
+    """Ghosts drifting through the lower part of one repeat, each its own size and tilt."""
     out = [
         f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>",
         "<defs><filter id='g' x='-30%' y='-30%' width='160%' height='160%'>"
         "<feGaussianBlur stdDeviation='.8'/></filter>",
-        *(f"<g id='{p}'>{bat_svg(p, eyes)}</g>" for p in POSES),
         f"<g id='ghost'>{ghost_svg()}</g></defs>",
     ]
-
-    def place(ref: str, x: float, y: float, scale: float, tilt: float, op: float) -> None:
+    for _ in range(count):
+        x, y = rng.uniform(0, width), rng.uniform(height * 0.5, height * 0.85)
+        scale, tilt, op = rng.uniform(0.9, 1.4), rng.uniform(-8, 8), rng.uniform(0.16, 0.3)
         for dx in (-width, 0, width):
-            if abs(x + dx - width / 2) < width / 2 + 60:
+            if abs(x + dx - width / 2) < width / 2 + 30:
                 out.append(
-                    f"<use href='#{ref}' transform='translate({x + dx:.0f} {y:.0f}) "
+                    f"<use href='#ghost' transform='translate({x + dx:.0f} {y:.0f}) "
                     f"rotate({tilt:.0f}) scale({scale:.2f})' opacity='{op:.2f}'/>"
                 )
-
-    for _ in range(count):
-        place(
-            rng.choice(list(POSES)),
-            rng.uniform(0, width),
-            rng.uniform(height * 0.04, height * 0.42),
-            rng.uniform(*size) / 30,
-            rng.uniform(-12, 12),
-            rng.uniform(0.8, 0.98),
-        )
-    for _ in range(ghosts):
-        place(
-            "ghost",
-            rng.uniform(0, width),
-            rng.uniform(height * 0.5, height * 0.85),
-            rng.uniform(0.9, 1.4),
-            rng.uniform(-8, 8),
-            rng.uniform(0.16, 0.3),
-        )
     out.append("</svg>")
     return "".join(out)
 
@@ -314,147 +213,134 @@ def spider_svg(thread: int) -> str:
     )
 
 
-# ---- spooky trees on cards ----
+# ---- spooky branches on top of cards ----
 
-TREE_W, TREE_H = 240, 230  # one tree's drawing; it is scaled to fit each card's height
-BARK, RIM = "#0c0610", "rgba(196, 181, 253, 0.32)"
-
-# Where the trees grow: inside each card, behind its text. A DAG card's variant is picked
-# by its wrapper's place in the list.
-TREED: dict[str, Any] = {
-    '[data-testid="dag-card"]': (
-        lambda k: f'[data-testid="card-list"] > :nth-child(5n+{k}) > [data-testid="dag-card"]'
-    ),
-    ".dagwick-gcard": lambda k: f".dagwick-gcard:nth-child(5n+{k})",
-    ".dagwick-cat": lambda k: f".dagwick-cat:nth-child(5n+{k})",
-    ".dagwick-list": lambda k: f".dagwick-list:nth-child(5n+{k})",
-    ".dagwick-theme": lambda k: f".dagwick-theme:nth-child(5n+{k})",
-}
+BRANCH_H = 40  # px tall; the card's top edge is BRANCH_EDGE px down from the top
+BRANCH_EDGE = 26
+BARK, RIM = "#0c0610", "rgba(196, 181, 253, 0.34)"
 
 
-class _Tree:
-    """A bare, twisted tree grown from a seed, rising from the bottom-right corner."""
+def branch_svg(seed: int, width: int) -> str:
+    """One repeat of a black, gnarled branch lying on a card's top edge, with twigs.
 
-    def __init__(self, seed: int) -> None:
-        self.rng = random.Random(seed)
-        self.limbs: list[tuple[float, float, float, float, float]] = []  # x0 y0 x1 y1 width
-
-    def segment(self, x: float, y: float, angle: float, length: float, width: float):
-        rad = math.radians(angle)
-        x1, y1 = x + math.cos(rad) * length, y + math.sin(rad) * length
-        self.limbs.append((x, y, x1, y1, width))
-        return x1, y1
-
-    def branch(self, x: float, y: float, angle: float, length: float, width: float, depth: int):
-        """A crooked branch of a few kinked segments that forks into smaller ones."""
-        for _ in range(2):  # kinks make it look gnarled
-            angle = max(-178.0, min(-2.0, angle + self.rng.uniform(-24, 24)))
-            x, y = self.segment(x, y, angle, length / 2, width)
-            width *= 0.88
-        if depth == 0:
-            return
-        for turn in (self.rng.uniform(-46, -16), self.rng.uniform(16, 46)):
-            if self.rng.random() < 0.9:
-                self.branch(
-                    x,
-                    y,
-                    angle + turn,
-                    length * self.rng.uniform(0.62, 0.8),
-                    width * 0.66,
-                    depth - 1,
-                )
-
-    def grow(self, eyes: bool) -> str:
-        rng = self.rng
-        # The trunk, leaning left as it rises from the corner.
-        x, y, width = TREE_W - 34.0, float(TREE_H) + 6, 15.0
-        lean = rng.uniform(-104, -96)
-        for _ in range(5):
-            x, y = self.segment(x, y, lean + rng.uniform(-10, 8), rng.uniform(18, 24), width)
-            width *= 0.9
-        hole = (x + 3, y + 40)
-        # The crown: big limbs reaching up and out to the left, and one to the right.
-        for angle, reach in ((-160, 64), (-132, 72), (-104, 58), (-62, 46)):
-            self.branch(
-                x, y, angle + rng.uniform(-8, 8), reach * rng.uniform(0.85, 1.1), width * 0.75, 3
-            )
-        # Roots gripping the bottom edge.
-        for angle in (-170, -10, 175):
-            self.segment(TREE_W - 34, TREE_H + 4, angle, rng.uniform(14, 26), 6)
-
-        by_width: dict[float, list[str]] = {}
-        for x0, y0, x1, y1, w in self.limbs:
-            by_width.setdefault(round(w * 2) / 2, []).append(
-                f"M{x0:.0f} {y0:.0f}L{x1:.0f} {y1:.0f}"
-            )
-
-        def paths(extra: float, color: str, dx: float = 0) -> str:
-            return "".join(
-                f"<path d='{''.join(d)}' stroke='{color}' stroke-width='{w + extra:.1f}' "
-                f"stroke-linecap='round' stroke-linejoin='round' fill='none' "
-                f"transform='translate({dx} 0)'/>"
-                for w, d in by_width.items()
-            )
-
-        glow = (
-            f"<ellipse cx='{hole[0]:.0f}' cy='{hole[1]:.0f}' rx='5' ry='7' fill='#000'/>"
-            f"<circle cx='{hole[0] - 2:.0f}' cy='{hole[1] - 1:.0f}' r='1.3' fill='#facc15'/>"
-            f"<circle cx='{hole[0] + 2:.0f}' cy='{hole[1] - 1:.0f}' r='1.3' fill='#facc15'/>"
-            if eyes
-            else ""
-        )
-        # A moonlit rim on the right of every limb, then the dark silhouette over it.
-        return (
-            f"<svg xmlns='http://www.w3.org/2000/svg' width='{TREE_W}' height='{TREE_H}' "
-            f"viewBox='0 0 {TREE_W} {TREE_H}'>{paths(1.2, RIM, 1.2)}{paths(0, BARK)}{glow}</svg>"
-        )
-
-
-def tree_svg(seed: int, eyes: bool = False) -> str:
-    return _Tree(seed).grow(eyes)
-
-
-def trees() -> dict[str, Any]:
-    """A spooky bare tree in the bottom-right corner of every card, behind its text.
-
-    Each tree stands against a soft moonlit glow, so the dark silhouette shows on dark
-    cards.
+    The limb is a filled shape that swells at knots; twigs are crooked and fork as they
+    reach up. Everything near an end is also drawn one repeat over, so repeats join
+    without a seam.
     """
-    glow = (
-        "radial-gradient(ellipse 70% 75% at 72% 62%, rgba(251, 146, 60, 0.22), "
-        "rgba(124, 58, 237, 0.14) 45%, transparent 72%)"
+    rng = random.Random(seed)
+    waves = [(k, rng.uniform(0.6, 1.6), rng.uniform(0, math.tau)) for k in (1, 2, 3)]
+    knots = [(rng.uniform(0, width), rng.uniform(1.5, 3), rng.uniform(5, 11)) for _ in range(3)]
+
+    def y_at(x: float) -> float:
+        return (
+            BRANCH_EDGE - 1 + sum(a * math.sin(k * math.tau * x / width + ph) for k, a, ph in waves)
+        )
+
+    def thick(x: float) -> float:
+        knot = sum(
+            h * math.exp(-(((x - c - shift) / w) ** 2))
+            for c, h, w in knots
+            for shift in (-width, 0, width)
+        )
+        return 6.2 + 1.4 * math.sin(2 * math.tau * x / width + waves[0][2]) + knot
+
+    xs = [i * width / 60 for i in range(61)]
+    top = " L".join(f"{x:.1f} {y_at(x) - thick(x) / 2:.1f}" for x in xs)
+    bottom = " L".join(f"{x:.1f} {y_at(x) + thick(x) / 2:.1f}" for x in reversed(xs))
+    limb = f"M{top} L{bottom} Z"
+
+    # Twigs: crooked, forking, reaching up (never down into the card).
+    segments: list[tuple[float, float, float, float, float]] = []
+
+    def twig(x: float, y: float, angle: float, length: float, width_: float, depth: int) -> None:
+        for _ in range(2):  # kinks make it look gnarled
+            angle = max(-170.0, min(-10.0, angle + rng.uniform(-22, 22)))
+            rad = math.radians(angle)
+            x1, y1 = x + math.cos(rad) * length / 2, y + math.sin(rad) * length / 2
+            segments.append((x, y, x1, y1, width_))
+            x, y, width_ = x1, y1, width_ * 0.85
+        if depth:
+            for turn in (rng.uniform(-45, -15), rng.uniform(15, 45)):
+                if rng.random() < 0.8:
+                    twig(
+                        x,
+                        y,
+                        angle + turn,
+                        length * rng.uniform(0.55, 0.75),
+                        width_ * 0.7,
+                        depth - 1,
+                    )
+
+    for _ in range(rng.randint(3, 5)):
+        x = rng.uniform(0, width)
+        before = len(segments)
+        long = rng.random() < 0.45  # some twigs reach far, most stay short
+        twig(
+            x,
+            y_at(x) - 1,
+            rng.uniform(-160, -110) if rng.random() < 0.5 else rng.uniform(-70, -20),
+            rng.uniform(20, 28) if long else rng.uniform(9, 14),
+            3.2 if long else 2.4,
+            2 if long else 1,
+        )
+        # Wrap twigs that cross an end of the repeat.
+        for x0, y0, x1, y1, w in segments[before:]:
+            for dx in (-width, width):
+                if min(x0, x1) + dx < width and max(x0, x1) + dx > 0:
+                    segments.append((x0 + dx, y0, x1 + dx, y1, w))
+
+    by_width: dict[float, list[str]] = {}
+    for x0, y0, x1, y1, w in segments:
+        by_width.setdefault(round(w * 2) / 2, []).append(f"M{x0:.0f} {y0:.0f}L{x1:.0f} {y1:.0f}")
+
+    def twigs(extra: float, color: str, dx: float = 0) -> str:
+        return "".join(
+            f"<path d='{''.join(d)}' stroke='{color}' stroke-width='{w + extra:.1f}' "
+            f"stroke-linecap='round' fill='none' transform='translate({dx} 0)'/>"
+            for w, d in by_width.items()
+        )
+
+    return (
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{BRANCH_H}' "
+        f"viewBox='0 0 {width} {BRANCH_H}'>"
+        f"{twigs(1.2, RIM, 1)}<path d='{limb}' fill='{BARK}' stroke='{RIM}' stroke-width='1'/>"
+        f"{twigs(0, BARK)}</svg>"
     )
-    css: dict[str, Any] = {}
-    for sel in TREED:
-        # The card becomes its own layer, so the tree sits on its background but under
-        # its text, and the card's rounded corners trim the tree.
-        css[sel] = {"position": "relative", "isolation": "isolate"}
+
+
+def branches() -> dict[str, Any]:
+    """A spooky branch lying on top of every card, like snow, in five random variants."""
+    # Airflow's DAG list clips its top edge: leave room for the first card's branch.
+    css: dict[str, Any] = {'[data-testid="card-list"]': {"paddingTop": f"{BRANCH_EDGE}px"}}
+    # The small grade cards keep only their spiders: a branch would cover their numbers.
+    targets = {sel: pick for sel, pick in CAPPED.items() if sel != ".dagwick-gcard"}
+    for sel in targets:
         css[f"{sel}::before"] = {
             "content": '""',
             "position": "absolute",
-            "right": "0",
-            "bottom": "0",
-            "width": f"{TREE_W}px",
-            "height": "100%",
-            "maxHeight": f"{TREE_H}px",
-            "backgroundRepeat": "no-repeat",
-            "backgroundPosition": "right bottom, 0 0",
-            "backgroundSize": "contain, 100% 100%",
+            "top": f"-{BRANCH_EDGE}px",
+            "left": "2px",
+            "right": "2px",
+            "height": f"{BRANCH_H}px",
+            "backgroundRepeat": "repeat-x",
             "pointerEvents": "none",
-            "zIndex": "-1",
+            "zIndex": "1",
         }
-    # Airflow's DAG card has a dark header bar: the tree grows below it.
-    css['[data-testid="dag-card"]::before'].update({"top": "34px", "height": "auto"})
     for k in range(5):
-        key = ", ".join(f"{pick(k + 1)}::before" for pick in TREED.values())
-        css[key] = {"backgroundImage": f"{url(tree_svg(SEED + 700 + k, eyes=k == 2))}, {glow}"}
+        rng = random.Random(SEED + 800 + k)
+        width = rng.randint(280, 380)
+        key = ", ".join(f"{pick(k + 1)}::before" for pick in targets.values())
+        css[key] = {
+            "backgroundImage": url(branch_svg(SEED + 900 + k, width)),
+            "backgroundSize": f"{width}px {BRANCH_H}px",
+            "backgroundPosition": f"{rng.randint(0, width)}px 0",
+        }
     return css
 
 
 def spiders() -> dict[str, Any]:
     """Spiders dangle from the top of about three in five cards, each a little different."""
-    # Cards with a tree are already positioned (and must keep the tree's settings).
-    css: dict[str, Any] = {sel: {"position": "relative"} for sel in CAPPED if sel not in TREED}
+    css: dict[str, Any] = {sel: {"position": "relative"} for sel in CAPPED}
     for k in range(5):
         if k in (1, 4):  # these cards get no spider
             continue
@@ -490,10 +376,10 @@ def global_css() -> dict[str, Any]:
     """Halloween as Airflow theme ``globalCss`` (selector -> style)."""
     rng = random.Random(SEED)
     layer = {"content": '""', "position": "fixed", "pointerEvents": "none", "zIndex": TOP}
-    far_w, far_h, near_w, near_h = 1400, 900, 1700, 1000
+    ghost_w, ghost_h = 1400, 900
     ember_w, ember_h, fog_w, fog_h = 1100, 640, 1400, 130
     css: dict[str, Any] = {
-        **trees(),
+        **branches(),
         **spiders(),
         # Embers rising from below, with a gentle sway.
         "html::before": {
@@ -514,45 +400,25 @@ def global_css() -> dict[str, Any]:
             "75%": _move(-18, -ember_h * 3 / 4),
             "100%": _move(0, -ember_h),
         },
-        # Far bats, small and slow, flying right.
+        # Ghosts drifting slowly to the right, bobbing up and down.
         "html::after": {
             **layer,
             "top": "0",
-            "height": f"{far_h}px",
-            "left": f"-{far_w}px",
+            "height": f"{ghost_h}px",
+            "left": f"-{ghost_w}px",
             "right": "0",
-            "backgroundImage": url(bats_svg(rng, far_w, far_h, 5, (26, 36), ghosts=3)),
-            "backgroundSize": f"{far_w}px {far_h}px",
+            "backgroundImage": url(ghosts_svg(rng, ghost_w, ghost_h, 3)),
+            "backgroundSize": f"{ghost_w}px {ghost_h}px",
             "backgroundRepeat": "repeat-x",
             "willChange": "transform",
-            "animation": "dagwickBatsFar 70s linear infinite",
+            "animation": "dagwickGhosts 70s linear infinite",
         },
-        "@keyframes dagwickBatsFar": {
+        "@keyframes dagwickGhosts": {
             "0%": _move(0, 0),
-            "25%": _move(far_w / 4, -14),
-            "50%": _move(far_w / 2, 6),
-            "75%": _move(far_w * 3 / 4, -10),
-            "100%": _move(far_w, 0),
-        },
-        # Near bats, bigger and quicker, flying left.
-        "body::after": {
-            **layer,
-            "top": "0",
-            "height": f"{near_h}px",
-            "left": "0",
-            "right": f"-{near_w}px",
-            "backgroundImage": url(bats_svg(rng, near_w, near_h, 3, (36, 48), eyes=True)),
-            "backgroundSize": f"{near_w}px {near_h}px",
-            "backgroundRepeat": "repeat-x",
-            "willChange": "transform",
-            "animation": "dagwickBatsNear 42s linear infinite",
-        },
-        "@keyframes dagwickBatsNear": {
-            "0%": _move(0, 0),
-            "25%": _move(-near_w / 4, 18),
-            "50%": _move(-near_w / 2, -8),
-            "75%": _move(-near_w * 3 / 4, 12),
-            "100%": _move(-near_w, 0),
+            "25%": _move(ghost_w / 4, -14),
+            "50%": _move(ghost_w / 2, 6),
+            "75%": _move(ghost_w * 3 / 4, -10),
+            "100%": _move(ghost_w, 0),
         },
         # Fog drifting along the bottom.
         "#root::after": {
@@ -622,7 +488,6 @@ def global_css() -> dict[str, Any]:
     moving = [
         "html::before",
         "html::after",
-        "body::after",
         "#root::after",
         '[data-testid="main-content"]::after',
     ]

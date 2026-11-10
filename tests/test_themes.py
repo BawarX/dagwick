@@ -173,7 +173,7 @@ def test_halloween_dates_and_scene():
     assert not theme.active_on(date(2026, 11, 2))
     assert pick_theme({}, date(2026, 10, 31)) is theme
     css = halloween.global_css()
-    for host in ("html::before", "html::after", "body::after", "#root::after"):
+    for host in ("html::before", "html::after", "#root::after"):
         assert css[host]["willChange"] == "transform"  # moved by the graphics card
         assert css[host]["pointerEvents"] == "none"
         assert css["@media (prefers-reduced-motion: reduce)"][host] == {"animation": "none"}
@@ -186,9 +186,10 @@ def test_switching_themes_clears_the_old_one_first():
     assert "!important" not in sheets["reset"]  # so the next theme's rules still win
 
 
-def test_halloween_card_rules_do_not_overwrite_each_other():
+def test_halloween_puts_branches_on_cards_but_not_on_grade_cards():
     from dagwick import halloween
 
     css = halloween.global_css()
-    for sel in (".dagwick-gcard", ".dagwick-list", '[data-testid="dag-card"]'):
-        assert css[sel]["isolation"] == "isolate"  # keeps the tree above the card's background
+    assert '[data-testid="card-list"] > *::before' in css
+    assert ".dagwick-gcard::before" not in css  # keeps its numbers clear
+    assert ".dagwick-gcard" in css  # its spider still hangs from it
