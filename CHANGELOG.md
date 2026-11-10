@@ -93,6 +93,11 @@ All notable changes to this project are documented here. The format follows
   side. On the fleet page the search box now spans the row below 720 px, as
   intended, instead of staying 260 px wide and pushing the DAG list past the
   edge. Found in the 0.2.0 QA (#34).
+- **Text contrast now meets WCAG AA (4.5:1).** The A–D grade badges use darker
+  shades so their white letter is readable at small sizes, and small amber text
+  in the light theme ("Dagwick", "Next step", "How to fix") uses a darker amber.
+  Tab counts and "passed" chips are darker too. Bars and the score ring keep
+  their colours (#59).
 
 ## [0.2.0] - 2026-11-09
 
