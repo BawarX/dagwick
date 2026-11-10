@@ -93,6 +93,11 @@ All notable changes to this project are documented here. The format follows
   side. On the fleet page the search box now spans the row below 720 px, as
   intended, instead of staying 260 px wide and pushing the DAG list past the
   edge. Found in the 0.2.0 QA (#34).
+- `/dagwick/api/health` and `/dagwick/api/history` now return 404 for a DAG
+  that does not exist, like `/dagwick/api/score`, instead of an empty 200. A
+  typo in a script or dashboard now fails loudly (#60).
+- The README now explains that Viewer and User roles need `can read on
+  Plugins` (FAB) to see Dagwick's pages, and how to give it (#58).
 
 ## [0.2.0] - 2026-11-09
 
