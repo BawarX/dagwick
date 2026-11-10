@@ -4,5 +4,5 @@
 # score_dag is exported for scripts and tests; its report layout is not yet stable.
 from dagwick.core import Category, Context, Finding, Status, check, score_dag
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["Category", "Context", "Finding", "Status", "__version__", "check", "score_dag"]
