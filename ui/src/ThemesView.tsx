@@ -201,6 +201,9 @@ const BANNER_SCENES: Record<string, [string, string]> = {
   "language-day": ["#422006", "#b45309"],
   "new-year": ["#1e1b4b", "#6d28d9"],
   birthday: ["#500724", "#be185d"],
+  diwali: ["#431407", "#c2410c"],
+  "lantern-festival": ["#450a0a", "#b91c1c"],
+  "carsema-sor": ["#14532d", "#dc2626"],
 };
 
 /** A simple picture for a banner-only theme: its colours and its sign. */

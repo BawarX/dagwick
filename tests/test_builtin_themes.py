@@ -247,3 +247,64 @@ def test_banner_only_themes_leave_airflow_untouched():
     assert themes.BY_ID["christmas"].info(date(2026, 3, 20))["decorated"] is True
     res = _airflow()(date(2026, 3, 20)).get("/ui/config")  # Newroz: banner only
     assert res.json()["theme"] is None
+
+
+@pytest.mark.parametrize(
+    ("theme_id", "day", "active"),
+    [
+        # Diwali: the five days around Lakshmi Puja.
+        ("diwali", date(2027, 10, 27), True),
+        ("diwali", date(2027, 10, 31), True),
+        ("diwali", date(2027, 11, 1), False),
+        ("diwali", date(2028, 10, 17), True),
+        ("diwali", date(2029, 11, 5), True),
+        ("diwali", date(2030, 10, 26), True),
+        ("diwali", date(2031, 11, 14), True),
+        # The Lantern Festival: the 15th day of the first Chinese month, one day.
+        ("lantern-festival", date(2026, 3, 3), True),
+        ("lantern-festival", date(2026, 3, 4), False),
+        ("lantern-festival", date(2027, 2, 20), True),
+        ("lantern-festival", date(2028, 2, 9), True),
+        ("lantern-festival", date(2029, 2, 27), True),
+        ("lantern-festival", date(2030, 2, 17), True),
+        ("lantern-festival", date(2031, 2, 6), True),
+        # Çarşema Sor: the first Wednesday on or after 14 April.
+        ("carsema-sor", date(2026, 4, 15), True),
+        ("carsema-sor", date(2026, 4, 14), False),
+        ("carsema-sor", date(2027, 4, 14), True),
+        ("carsema-sor", date(2028, 4, 19), True),
+        ("carsema-sor", date(2029, 4, 18), True),
+        ("carsema-sor", date(2030, 4, 17), True),
+        ("carsema-sor", date(2031, 4, 16), True),
+    ],
+)
+def test_new_festivals_follow_their_calendars(theme_id, day, active):
+    assert themes.BY_ID[theme_id].active_on(day) is active
+
+
+def test_every_carsema_sor_is_a_wednesday_in_mid_april():
+    for first, last in themes.CARSEMA_SOR:
+        assert first == last and first.weekday() == 2 and first.month == 4
+        assert 14 <= first.day <= 20
+
+
+@pytest.mark.parametrize(
+    ("day", "shown"),
+    [
+        (date(2026, 11, 8), "birthday"),  # Dagwick's birthday falls during Diwali 2026
+        (date(2026, 11, 7), "diwali"),
+        (date(2027, 10, 29), "diwali"),  # Diwali 2027 falls during Halloween
+        (date(2027, 10, 26), "halloween"),
+        (date(2026, 3, 3), "lantern-festival"),  # during Ramadan 2026
+    ],
+)
+def test_a_short_festival_wins_over_a_longer_one(day, shown):
+    assert themes.pick_theme({}, day).id == shown
+
+
+def test_new_festivals_name_their_calendar():
+    today = date(2026, 11, 11)  # the day after Diwali 2026
+    assert themes.BY_ID["diwali"].when(today) == (
+        "About 27 Oct – 31 Oct 2027 · Hindu calendar, moves each year"
+    )
+    assert "Chinese calendar" in themes.BY_ID["lantern-festival"].when(today)
