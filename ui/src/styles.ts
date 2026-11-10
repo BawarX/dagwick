@@ -501,18 +501,34 @@ html:not(.dark) .dagwick-mountains .near { fill: rgba(110, 70, 90, .3); }
 .dagwick-theme-status.is-off { color: var(--dagwick-fail); background: var(--dagwick-fail-bg); }
 .dagwick-theme-status.is-idle { color: var(--dagwick-muted); background: var(--dagwick-bg); border: 1px solid var(--dagwick-border); }
 .dagwick-theme-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+.dagwick-theme { transition: border-color .25s ease, box-shadow .25s ease; }
+.dagwick-theme.is-on { border-color: color-mix(in srgb, var(--dagwick-accent) 55%, var(--dagwick-border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--dagwick-accent) 25%, transparent); }
+.dagwick-theme-status { transition: color .25s ease, background-color .25s ease; }
+.dagwick-theme-settings {
+  display: flex; align-items: center; padding: 14px 16px; max-width: 760px;
+  border: 1px solid var(--dagwick-border); border-radius: 14px; background: var(--dagwick-surface);
+}
+.dagwick-switch-text { display: grid; gap: 2px; }
+.dagwick-switch-text strong { font-size: 14px; }
+.dagwick-switch-text small { font-size: 12.5px; }
+.dagwick-switch input:disabled + .dagwick-switch-track { opacity: .6; }
+.dagwick-btn-primary { background: var(--dagwick-accent); border-color: var(--dagwick-accent); color: #1d1405; font-weight: 600; }
+.dagwick-btn-primary:hover:not(:disabled) { filter: brightness(1.06); }
+.dagwick-btn { transition: background-color .2s ease, border-color .2s ease, opacity .2s ease, filter .2s ease; }
+.dagwick-btn:disabled { opacity: .65; cursor: progress; }
+.dagwick-theme-problem { margin: 0; color: var(--dagwick-fail); font-size: 13.5px; }
 .dagwick-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
 .dagwick-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.dagwick-switch span {
-  width: 34px; height: 20px; border-radius: 999px; background: var(--dagwick-border); position: relative; transition: background .15s;
+.dagwick-switch-track {
+  flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--dagwick-border); position: relative; transition: background .15s;
 }
-.dagwick-switch span::after {
+.dagwick-switch-track::after {
   content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%;
   background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25);
 }
-.dagwick-switch input:checked + span { background: var(--dagwick-accent); }
-.dagwick-switch input:checked + span::after { transform: translateX(14px); }
-.dagwick-switch input:focus-visible + span { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
+.dagwick-switch input:checked + .dagwick-switch-track { background: var(--dagwick-accent); }
+.dagwick-switch input:checked + .dagwick-switch-track::after { transform: translateX(14px); }
+.dagwick-switch input:focus-visible + .dagwick-switch-track { outline: 2px solid var(--dagwick-accent); outline-offset: 2px; }
 @container dagwick (max-width: 560px) { .dagwick-theme { grid-template-columns: 1fr; } }
 
 /* The lamp */

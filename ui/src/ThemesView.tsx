@@ -1,36 +1,46 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { fetchThemes, useLoad } from "./api";
+import { fetchThemeSheets, fetchThemes, useLoad } from "./api";
 import { Empty, Loading } from "./components";
 import {
+  type Choice,
   type ThemeInfo,
   type ThemeStatus,
-  PREVIEW_COOKIE,
+  applyTheme,
+  choiceCookies,
   dateRange,
-  offCookie,
-  offList,
-  previewCookie,
-  readCookies,
+  pickTheme,
+  readChoice,
+  removeTheme,
+  setAuto,
   themeStatus,
-  withOff,
 } from "./themes";
 
 const STATUS: Record<ThemeStatus, { label: string; tone: string }> = {
+  applied: { label: "Applied", tone: "on" },
   showing: { label: "Showing now", tone: "on" },
-  preview: { label: "Previewing", tone: "on" },
-  off: { label: "Off for you", tone: "off" },
+  removed: { label: "Removed", tone: "off" },
   waiting: { label: "Not in season", tone: "idle" },
 };
 
-/** Airflow reads its theme once per page load, so a change shows after a reload. */
-function save(cookie: string) {
-  document.cookie = cookie;
-  window.location.reload();
+const LIVE_ID = "dagwick-live-theme";
+
+/**
+ * Airflow draws the theme it was given when the page loaded. To change it without a
+ * reload, Dagwick adds a stylesheet: the new theme, or one that hides the loaded theme.
+ */
+function setLiveCss(css: string) {
+  let el = document.getElementById(LIVE_ID);
+  if (!el) {
+    el = document.createElement("style");
+    el.id = LIVE_ID;
+    document.head.appendChild(el);
+  }
+  el.textContent = css;
 }
 
 export function ThemesView() {
   const { data, error, reload } = useLoad((s) => fetchThemes(s), []);
-  const [cookies] = useState(() => document.cookie);
   if (error)
     return (
       <Empty
@@ -44,86 +54,112 @@ export function ThemesView() {
       />
     );
   if (!data) return <Loading label="Loading themes…" />;
-  const off = offList(cookies);
-  const preview = readCookies(cookies)[PREVIEW_COOKIE] || undefined;
+  return <Themes themes={data} />;
+}
+
+function Themes({ themes }: { themes: ThemeInfo[] }) {
+  const [choice, setChoice] = useState<Choice>(() => readChoice(document.cookie));
+  // What Airflow drew when this page loaded; a change is applied on top of it.
+  const loaded = useRef(pickTheme(themes, readChoice(document.cookie)));
+  const [busy, setBusy] = useState<string>();
+  const [problem, setProblem] = useState<string>();
+
+  const change = async (next: Choice, label: string) => {
+    setBusy(label);
+    setProblem(undefined);
+    try {
+      const want = pickTheme(themes, next);
+      const from = loaded.current;
+      let css = "";
+      if (want && want !== from) css = (await fetchThemeSheets(want)).css;
+      else if (!want && from) css = (await fetchThemeSheets(from)).hide;
+      for (const c of choiceCookies(next)) document.cookie = c;
+      setLiveCss(css);
+      setChoice(next);
+    } catch (e) {
+      setProblem(e instanceof Error ? e.message : "Couldn't change the theme");
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
   return (
     <section className="dagwick-themes">
       <header className="dagwick-themes-head">
         <h2>Seasonal themes</h2>
         <p className="dagwick-muted">
-          On their dates, themes decorate all of Airflow, not only Dagwick, and
-          switch off by themselves afterwards. Your choices are saved in this
-          browser and only change what you see.
+          Themes decorate all of Airflow, not only Dagwick. Your choices are saved in this browser and only change what
+          you see.
         </p>
       </header>
-      <div className="dagwick-theme-list">
-        {data.map((t) => (
-          <ThemeCard
-            key={t.id}
-            theme={t}
-            status={themeStatus(t, off, preview)}
-            off={off}
+
+      <div className="dagwick-theme-settings">
+        <label className="dagwick-switch">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={choice.auto}
+            disabled={!!busy}
+            onChange={(e) => change(setAuto(choice, e.target.checked), "auto")}
           />
-        ))}
+          <span className="dagwick-switch-track" aria-hidden="true" />
+          <span className="dagwick-switch-text">
+            <strong>Show themes on their dates</strong>
+            <small className="dagwick-muted">
+              {choice.auto
+                ? "Each theme appears by itself on its dates and goes away afterwards."
+                : "No theme appears by itself. Apply one below whenever you like."}
+            </small>
+          </span>
+        </label>
+      </div>
+
+      {problem && (
+        <p className="dagwick-theme-problem" role="alert">
+          {problem}
+        </p>
+      )}
+
+      <div className="dagwick-theme-list">
+        {themes.map((t) => {
+          const status = themeStatus(t, themes, choice);
+          const on = status === "applied" || status === "showing";
+          const s = STATUS[status];
+          return (
+            <article key={t.id} className={`dagwick-theme${on ? " is-on" : ""}`}>
+              <SnowScene />
+              <div className="dagwick-theme-body">
+                <div className="dagwick-theme-title">
+                  <h3>{t.name}</h3>
+                  <span className={`dagwick-theme-status is-${s.tone}`}>{s.label}</span>
+                </div>
+                <p className="dagwick-theme-dates">{dateRange(t.start, t.end)} · every year</p>
+                <p className="dagwick-muted">{t.description}</p>
+                <div className="dagwick-theme-actions">
+                  {on ? (
+                    <button
+                      className="dagwick-btn"
+                      disabled={!!busy}
+                      onClick={() => change(removeTheme(themes, choice, t.id), t.id)}
+                    >
+                      {busy === t.id ? "Removing…" : "Remove theme"}
+                    </button>
+                  ) : (
+                    <button
+                      className="dagwick-btn dagwick-btn-primary"
+                      disabled={!!busy}
+                      onClick={() => change(applyTheme(choice, t.id), t.id)}
+                    >
+                      {busy === t.id ? "Applying…" : "Apply theme"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
-  );
-}
-
-function ThemeCard({
-  theme,
-  status,
-  off,
-}: {
-  theme: ThemeInfo;
-  status: ThemeStatus;
-  off: string[];
-}) {
-  const isOff = off.includes(theme.id);
-  const s = STATUS[status];
-  return (
-    <article className="dagwick-theme">
-      <SnowScene />
-      <div className="dagwick-theme-body">
-        <div className="dagwick-theme-title">
-          <h3>{theme.name}</h3>
-          <span className={`dagwick-theme-status is-${s.tone}`}>{s.label}</span>
-        </div>
-        <p className="dagwick-theme-dates">
-          {dateRange(theme.start, theme.end)} · every year
-        </p>
-        <p className="dagwick-muted">{theme.description}</p>
-        <div className="dagwick-theme-actions">
-          <label className="dagwick-switch">
-            <input
-              type="checkbox"
-              role="switch"
-              checked={!isOff}
-              onChange={(e) =>
-                save(offCookie(withOff(off, theme.id, !e.target.checked)))
-              }
-            />
-            <span aria-hidden="true" />
-            Show on its dates
-          </label>
-          {status === "preview" ? (
-            <button
-              className="dagwick-btn"
-              onClick={() => save(previewCookie())}
-            >
-              Stop preview
-            </button>
-          ) : (
-            <button
-              className="dagwick-btn"
-              onClick={() => save(previewCookie(theme.id))}
-            >
-              Preview now
-            </button>
-          )}
-        </div>
-      </div>
-    </article>
   );
 }
 
@@ -139,12 +175,7 @@ function SnowScene() {
     [132, 74, 4],
   ];
   return (
-    <svg
-      className="dagwick-theme-scene"
-      viewBox="0 0 220 110"
-      role="img"
-      aria-label="Snow falling over Airflow"
-    >
+    <svg className="dagwick-theme-scene" viewBox="0 0 220 110" role="img" aria-label="Snow falling over Airflow">
       <rect width="220" height="110" fill="#1b2433" />
       {flakes.map(([x, y, r], i) => (
         <g
@@ -165,10 +196,7 @@ function SnowScene() {
           ))}
         </g>
       ))}
-      <path
-        d="M0 96 C30 86 60 88 90 94 S150 102 180 92 S210 86 220 90 V110 H0Z"
-        fill="#eef4fa"
-      />
+      <path d="M0 96 C30 86 60 88 90 94 S150 102 180 92 S210 86 220 90 V110 H0Z" fill="#eef4fa" />
     </svg>
   );
 }

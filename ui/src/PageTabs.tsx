@@ -6,9 +6,7 @@ const TABS: { id: View; label: string }[] = [
 ];
 
 export function readView(search: string): View {
-  return new URLSearchParams(search).get("view") === "themes"
-    ? "themes"
-    : "fleet";
+  return new URLSearchParams(search).get("view") === "themes" ? "themes" : "fleet";
 }
 
 /** The query string with the view, keeping every other parameter (fleet is the default). */
@@ -21,20 +19,10 @@ export function writeView(search: string, view: View): string {
 }
 
 /** Page tabs in the style of Airflow's own "Dags | Dag Runs | Task Instances". */
-export function PageTabs({
-  view,
-  onChange,
-}: {
-  view: View;
-  onChange: (view: View) => void;
-}) {
+export function PageTabs({ view, onChange }: { view: View; onChange: (view: View) => void }) {
   const pick = (next: View) => {
     const { pathname, search, hash } = window.location;
-    window.history.replaceState(
-      window.history.state,
-      "",
-      pathname + writeView(search, next) + hash,
-    );
+    window.history.replaceState(window.history.state, "", pathname + writeView(search, next) + hash);
     onChange(next);
   };
   return (

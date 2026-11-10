@@ -34,6 +34,10 @@ export const fetchFleet = (signal?: AbortSignal) => get<FleetReport>("/fleet", {
 
 export const fetchThemes = (signal?: AbortSignal) => get<ThemeInfo[]>("/themes", {}, signal);
 
+/** A theme as stylesheets: `css` draws it, `hide` removes it where Airflow already drew it. */
+export const fetchThemeSheets = (id: string) =>
+  get<{ css: string; hide: string }>(`/themes/${encodeURIComponent(id)}/css`, {});
+
 export interface UiConfig {
   /** "auto", "off", or the list of enabled mood ids. */
   seasonal_moods: "auto" | "off" | string[];

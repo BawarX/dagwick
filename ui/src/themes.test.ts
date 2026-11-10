@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type Choice,
+  applyTheme,
+  choiceCookies,
   dateRange,
-  offCookie,
-  offList,
-  previewCookie,
-  readCookies,
+  pickTheme,
+  readChoice,
+  removeTheme,
+  setAuto,
   themeStatus,
-  withOff,
 } from "./themes";
 
 const christmas = {
@@ -18,47 +20,66 @@ const christmas = {
   end: [1, 2] as [number, number],
   active: true,
 };
+const newroz = {
+  ...christmas,
+  id: "newroz",
+  start: [3, 19] as [number, number],
+  end: [3, 23] as [number, number],
+  active: false,
+};
+const themes = [christmas, newroz];
+const fresh: Choice = { auto: true, removed: [] };
 
-describe("theme cookies", () => {
-  it("reads the viewer's choices and ignores other cookies", () => {
-    const jar =
-      "session=abc; dagwick_themes_off=christmas,halloween; dagwick_theme_preview=newroz";
-    expect(offList(jar)).toEqual(["christmas", "halloween"]);
-    expect(readCookies(jar).dagwick_theme_preview).toBe("newroz");
-    expect(offList("")).toEqual([]);
+describe("theme choices", () => {
+  it("shows themes on their dates by default", () => {
+    expect(readChoice("session=abc")).toEqual(fresh);
+    expect(pickTheme(themes, fresh)).toBe("christmas");
+    expect(themeStatus(christmas, themes, fresh)).toBe("showing");
+    expect(themeStatus(newroz, themes, fresh)).toBe("waiting");
   });
 
-  it("turns a theme off and on again without duplicates", () => {
-    expect(withOff(["a"], "b", true)).toEqual(["a", "b"]);
-    expect(withOff(["a", "b"], "b", true)).toEqual(["a", "b"]);
-    expect(withOff(["a", "b"], "a", false)).toEqual(["b"]);
+  it("applies a theme by hand, outside its dates", () => {
+    const c = applyTheme(fresh, "newroz");
+    expect(pickTheme(themes, c)).toBe("newroz");
+    expect(themeStatus(newroz, themes, c)).toBe("applied");
+    expect(themeStatus(christmas, themes, c)).toBe("removed"); // one theme at a time
   });
 
-  it("writes cookies for the whole site, and clears them when empty", () => {
-    expect(offCookie(["christmas"])).toMatch(
-      /^dagwick_themes_off=christmas; Path=\/; Max-Age=\d+; SameSite=Lax$/,
-    );
-    expect(offCookie([])).toContain("Max-Age=0");
-    expect(previewCookie("christmas")).toBe(
-      "dagwick_theme_preview=christmas; Path=/; SameSite=Lax",
-    );
-    expect(previewCookie()).toContain("Max-Age=0");
+  it("removes a theme that is in season until it is applied again", () => {
+    const c = removeTheme(themes, fresh, "christmas");
+    expect(pickTheme(themes, c)).toBeUndefined();
+    expect(themeStatus(christmas, themes, c)).toBe("removed");
+    expect(pickTheme(themes, applyTheme(c, "christmas"))).toBe("christmas");
+    // Removing an applied theme that is out of season leaves nothing to remember.
+    expect(removeTheme(themes, applyTheme(fresh, "newroz"), "newroz")).toEqual(fresh);
+  });
+
+  it("turns 'show on their dates' off and on", () => {
+    const off = setAuto(fresh, false);
+    expect(pickTheme(themes, off)).toBeUndefined();
+    expect(themeStatus(christmas, themes, off)).toBe("waiting");
+    expect(pickTheme(themes, applyTheme(off, "christmas"))).toBe("christmas");
+    expect(setAuto(removeTheme(themes, fresh, "christmas"), true)).toEqual(fresh);
+  });
+
+  it("round-trips through cookies, and clears them when there is nothing to keep", () => {
+    const c: Choice = {
+      auto: false,
+      applied: "newroz",
+      removed: ["christmas"],
+    };
+    const jar = choiceCookies(c)
+      .map((s) => s.split(";")[0])
+      .join("; ");
+    expect(readChoice(jar)).toEqual(c);
+    expect(choiceCookies(fresh).every((s) => s.includes("Max-Age=0"))).toBe(true);
+    expect(choiceCookies(c)[0]).toMatch(/^dagwick_themes_off=\*,christmas; Path=\/; Max-Age=\d+; SameSite=Lax$/);
   });
 });
 
-describe("theme display", () => {
+describe("theme dates", () => {
   it("formats dates, including ranges over the new year", () => {
     expect(dateRange([12, 18], [1, 2])).toBe("18 Dec – 2 Jan");
     expect(dateRange([5, 15], [5, 15])).toBe("15 May");
-  });
-
-  it("says what the viewer sees now", () => {
-    expect(themeStatus(christmas, [])).toBe("showing");
-    expect(themeStatus(christmas, ["christmas"])).toBe("off");
-    expect(themeStatus({ ...christmas, active: false }, [])).toBe("waiting");
-    expect(
-      themeStatus({ ...christmas, active: false }, ["christmas"], "christmas"),
-    ).toBe("preview");
-    expect(themeStatus(christmas, [], "halloween")).toBe("waiting"); // another preview hides it
   });
 });

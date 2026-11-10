@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import random
 from datetime import date
 
 import pytest
@@ -11,8 +12,8 @@ from fastapi.testclient import TestClient
 from dagwick import snow, themes
 from dagwick.api import app as dagwick_app
 from dagwick.themes import (
+    APPLIED_COOKIE,
     OFF_COOKIE,
-    PREVIEW_COOKIE,
     ThemeMiddleware,
     apply_theme,
     pick_theme,
@@ -30,14 +31,19 @@ def test_christmas_runs_over_new_year():
     assert not CHRISTMAS.active_on(date(2027, 1, 3))
 
 
-def test_pick_theme_by_date_off_and_preview():
+def test_pick_theme_by_date_removed_and_applied():
     assert pick_theme({}, IN_SEASON) is CHRISTMAS
     assert pick_theme({}, OUT_OF_SEASON) is None
     assert pick_theme({OFF_COOKIE: "halloween, christmas"}, IN_SEASON) is None
-    assert pick_theme({PREVIEW_COOKIE: "christmas"}, OUT_OF_SEASON) is CHRISTMAS
-    # A preview wins even over "off", and an unknown preview id is ignored.
-    assert pick_theme({PREVIEW_COOKIE: "christmas", OFF_COOKIE: "christmas"}, OUT_OF_SEASON)
-    assert pick_theme({PREVIEW_COOKIE: "nope"}, OUT_OF_SEASON) is None
+    assert pick_theme({APPLIED_COOKIE: "christmas"}, OUT_OF_SEASON) is CHRISTMAS
+    # An applied theme wins over everything, and an unknown id is ignored.
+    assert pick_theme({APPLIED_COOKIE: "christmas", OFF_COOKIE: "*,christmas"}, OUT_OF_SEASON)
+    assert pick_theme({APPLIED_COOKIE: "nope"}, OUT_OF_SEASON) is None
+
+
+def test_turning_off_show_on_dates_stops_every_dated_theme():
+    assert pick_theme({OFF_COOKIE: "*"}, IN_SEASON) is None
+    assert pick_theme({OFF_COOKIE: "*", APPLIED_COOKIE: "christmas"}, IN_SEASON) is CHRISTMAS
 
 
 def test_apply_theme_keeps_the_admins_own_theme():
@@ -50,14 +56,35 @@ def test_apply_theme_keeps_the_admins_own_theme():
     assert config["theme"]["globalCss"] == {"h1": {"color": "red"}}  # input not changed
 
 
-def test_snow_is_css_only_and_still_for_reduced_motion():
+def test_snow_moves_whole_layers_and_stays_still_for_reduced_motion():
     css = snow.global_css()
-    assert {"body::after", "body::before", "@media (prefers-reduced-motion: reduce)"} <= set(css)
-    assert "animateMotion" in css["body::after"]["backgroundImage"]
-    still = css["@media (prefers-reduced-motion: reduce)"]["body::after"]["backgroundImage"]
-    assert "animate" not in still
-    assert css["body::after"]["pointerEvents"] == "none"  # never blocks a click
-    assert "<script" not in json.dumps(css)
+    hosts = [layer.host for layer in snow.LAYERS]
+    for i, host in enumerate(hosts):
+        assert css[host]["animation"].startswith(f"dagwickSnow{i} ")
+        assert css[host]["willChange"] == "transform"  # moved by the graphics card
+        assert css[host]["pointerEvents"] == "none"  # never blocks a click
+        assert "translate3d" in json.dumps(css[f"@keyframes dagwickSnow{i}"])
+    still = css["@media (prefers-reduced-motion: reduce)"]
+    assert all(still[h] == {"animation": "none"} for h in hosts)
+    text = json.dumps(css)
+    assert "<script" not in text and "animate" not in text.replace("animation", "")
+    assert len(text) < 200_000  # sent with every page load, so keep it small
+
+
+def test_a_layer_repeat_wraps_flakes_around_its_edges():
+    layer = snow.Layer("x", 100, 100, 1, "dot", (40, 40), (1, 1), 1, 0)
+    for seed in range(20):  # a big flake is always near an edge, so it gets copies
+        svg = snow.layer_svg(random.Random(seed), layer, "dark")
+        assert svg.count("<use ") >= 4
+
+
+def test_theme_as_stylesheets():
+    sheets = themes.theme_sheets("christmas")
+    assert "@keyframes dagwickSnow0{" in sheets["css"]
+    assert "will-change:transform;" in sheets["css"]  # camelCase becomes CSS
+    assert "@media (prefers-reduced-motion: reduce){" in sheets["css"]
+    assert "display:none !important" in sheets["hide"]
+    assert "padding-top:0 !important" in sheets["hide"]
 
 
 def _airflow(status: int = 200, gzip: bool = False) -> TestClient:
@@ -92,7 +119,7 @@ def test_middleware_adds_the_theme_in_season():
     [
         (OUT_OF_SEASON, {}, False),
         (IN_SEASON, {OFF_COOKIE: "christmas"}, False),
-        (OUT_OF_SEASON, {PREVIEW_COOKIE: "christmas"}, True),
+        (OUT_OF_SEASON, {APPLIED_COOKIE: "christmas"}, True),
     ],
 )
 def test_middleware_follows_the_date_and_the_viewers_choice(day, cookies, themed):
@@ -122,3 +149,16 @@ def test_themes_endpoint_lists_dates():
     christmas = next(r for r in rows.json() if r["id"] == "christmas")
     assert christmas["start"] == [12, 18] and christmas["end"] == [1, 2]
     assert isinstance(christmas["active"], bool)
+
+
+def test_theme_css_endpoint():
+    from airflow.api_fastapi.core_api.security import get_user
+
+    dagwick_app.dependency_overrides[get_user] = lambda: object()
+    try:
+        client = TestClient(dagwick_app)
+        ok, missing = client.get("/api/themes/christmas/css"), client.get("/api/themes/nope/css")
+    finally:
+        dagwick_app.dependency_overrides.clear()
+    assert ok.status_code == 200 and set(ok.json()) == {"css", "hide"}
+    assert missing.status_code == 404

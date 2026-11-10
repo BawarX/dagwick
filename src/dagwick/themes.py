@@ -8,8 +8,9 @@ Airflow's configuration and nothing is written anywhere.
 Each viewer chooses for themselves on Dagwick's Themes page. The choice lives in cookies
 in their browser (Dagwick never writes to Airflow's database):
 
-- ``dagwick_themes_off``: comma-separated theme ids this viewer turned off.
-- ``dagwick_theme_preview``: one theme id to show now, outside its dates.
+- ``dagwick_themes_off``: comma-separated theme ids this viewer removed while in season;
+  ``*`` in the list turns off "show themes on their dates" altogether.
+- ``dagwick_theme``: one theme id this viewer applied; it shows whatever the date.
 """
 
 from __future__ import annotations
@@ -28,7 +29,8 @@ from dagwick import snow
 log = logging.getLogger(__name__)
 
 OFF_COOKIE = "dagwick_themes_off"
-PREVIEW_COOKIE = "dagwick_theme_preview"
+ALL = "*"  # in OFF_COOKIE: no theme appears by date
+APPLIED_COOKIE = "dagwick_theme"
 
 
 @dataclass(frozen=True)
@@ -87,12 +89,56 @@ def _cookies(header: str) -> dict[str, str]:
 
 
 def pick_theme(cookies: dict[str, str], today: date) -> Theme | None:
-    """The theme this viewer sees today: their preview, else the first one in season."""
-    preview = BY_ID.get(cookies.get(PREVIEW_COOKIE, "").strip())
-    if preview:
-        return preview
+    """The theme this viewer sees today: the one they applied, else the first in season.
+
+    Must match pickTheme in ui/src/themes.ts.
+    """
+    applied = BY_ID.get(cookies.get(APPLIED_COOKIE, "").strip())
+    if applied:
+        return applied
     off = {part.strip() for part in cookies.get(OFF_COOKIE, "").split(",")}
+    if ALL in off:
+        return None
     return next((t for t in THEMES if t.id not in off and t.active_on(today)), None)
+
+
+def _decls(style: dict[str, Any], important: bool = False) -> str:
+    bang = " !important" if important else ""
+    return "".join(
+        f"{''.join('-' + c.lower() if c.isupper() else c for c in prop)}:{value}{bang};"
+        for prop, value in style.items()
+    )
+
+
+def css_text(rules: dict[str, Any]) -> str:
+    """Theme ``globalCss`` as a plain stylesheet, for applying a theme without a reload."""
+    out = []
+    for selector, body in rules.items():
+        if selector.startswith("@media"):
+            out.append(f"{selector}{{{css_text(body)}}}")
+        elif selector.startswith("@keyframes"):
+            steps = "".join(f"{step}{{{_decls(style)}}}" for step, style in body.items())
+            out.append(f"{selector}{{{steps}}}")
+        else:
+            out.append(f"{selector}{{{_decls(body)}}}")
+    return "".join(out)
+
+
+def hide_text(rules: dict[str, Any]) -> str:
+    """A stylesheet that hides a theme Airflow already drew, for removing it without a reload."""
+    hidden = [s for s in rules if "::" in s and not s.startswith("@")]
+    out = [f"{', '.join(hidden)}{{display:none !important;}}"] if hidden else []
+    for selector, body in rules.items():
+        if not selector.startswith("@") and "::" not in selector and "paddingTop" in body:
+            out.append(f"{selector}{{padding-top:0 !important;}}")
+    return "".join(out)
+
+
+@cache
+def theme_sheets(theme_id: str) -> dict[str, str]:
+    """A theme as stylesheets: ``css`` draws it, ``hide`` removes it when Airflow drew it."""
+    rules = theme_css(theme_id)
+    return {"css": css_text(rules), "hide": hide_text(rules)}
 
 
 def apply_theme(config: dict[str, Any], css: dict[str, Any]) -> dict[str, Any]:

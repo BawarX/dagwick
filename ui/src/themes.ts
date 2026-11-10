@@ -1,5 +1,5 @@
 // Seasonal themes for all of Airflow. The server adds a theme to Airflow's own UI config
-// on its dates; each viewer's choices live in cookies the server reads (see themes.py).
+// (see themes.py); each viewer's choices live in cookies that the server reads.
 
 export interface ThemeInfo {
   id: string;
@@ -12,83 +12,93 @@ export interface ThemeInfo {
   active: boolean;
 }
 
+/** One viewer's choices. By default every theme shows on its dates. */
+export interface Choice {
+  /** Show themes on their dates. */
+  auto: boolean;
+  /** A theme applied by hand: it shows whatever the date. */
+  applied?: string;
+  /** Themes removed by hand while in season. */
+  removed: string[];
+}
+
 export const OFF_COOKIE = "dagwick_themes_off";
-export const PREVIEW_COOKIE = "dagwick_theme_preview";
+export const APPLIED_COOKIE = "dagwick_theme";
+const ALL = "*"; // in OFF_COOKIE: no theme appears by date
 const YEAR = 60 * 60 * 24 * 365;
 
 export function readCookies(cookie: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const part of cookie.split(";")) {
     const at = part.indexOf("=");
-    if (at > 0)
-      out[part.slice(0, at).trim()] = decodeURIComponent(
-        part.slice(at + 1).trim(),
-      );
+    if (at > 0) out[part.slice(0, at).trim()] = decodeURIComponent(part.slice(at + 1).trim());
   }
   return out;
 }
 
-/** Theme ids this viewer turned off. */
-export function offList(cookie: string): string[] {
-  return (readCookies(cookie)[OFF_COOKIE] ?? "")
+export function readChoice(cookie: string): Choice {
+  const jar = readCookies(cookie);
+  const off = (jar[OFF_COOKIE] ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  return {
+    auto: !off.includes(ALL),
+    applied: jar[APPLIED_COOKIE] || undefined,
+    removed: off.filter((s) => s !== ALL),
+  };
 }
 
-export function withOff(list: string[], id: string, off: boolean): string[] {
-  const rest = list.filter((x) => x !== id);
-  return off ? [...rest, id] : rest;
+/** Cookie strings that store a choice: a year for the settings, until removed for the theme. */
+export function choiceCookies(choice: Choice): string[] {
+  const off = [...(choice.auto ? [] : [ALL]), ...choice.removed];
+  const keep = (name: string, value: string) =>
+    value ? `${name}=${value}; Path=/; Max-Age=${YEAR}; SameSite=Lax` : `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+  return [keep(OFF_COOKIE, off.join(",")), keep(APPLIED_COOKIE, choice.applied ?? "")];
 }
 
-/** Cookie strings to store the choices (a year for on/off, the browser session for a preview). */
-export function offCookie(list: string[]): string {
-  return list.length
-    ? `${OFF_COOKIE}=${list.join(",")}; Path=/; Max-Age=${YEAR}; SameSite=Lax`
-    : `${OFF_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+/** The theme this viewer sees now. Must match pick_theme in themes.py. */
+export function pickTheme(themes: ThemeInfo[], choice: Choice): string | undefined {
+  if (choice.applied && themes.some((t) => t.id === choice.applied)) return choice.applied;
+  if (!choice.auto) return undefined;
+  return themes.find((t) => t.active && !choice.removed.includes(t.id))?.id;
 }
 
-export function previewCookie(id?: string): string {
-  return id
-    ? `${PREVIEW_COOKIE}=${id}; Path=/; SameSite=Lax`
-    : `${PREVIEW_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+/** Apply a theme by hand: it replaces any other and shows whatever the date. */
+export function applyTheme(choice: Choice, id: string): Choice {
+  return {
+    ...choice,
+    applied: id,
+    removed: choice.removed.filter((r) => r !== id),
+  };
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+/** Remove the theme showing now; one in season stays away until applied again. */
+export function removeTheme(themes: ThemeInfo[], choice: Choice, id: string): Choice {
+  const inSeason = themes.find((t) => t.id === id)?.active;
+  return {
+    ...choice,
+    applied: choice.applied === id ? undefined : choice.applied,
+    removed: inSeason && !choice.removed.includes(id) ? [...choice.removed, id] : choice.removed,
+  };
+}
+
+/** Turn "show themes on their dates" on or off. Turning it on brings back removed themes. */
+export function setAuto(choice: Choice, auto: boolean): Choice {
+  return { ...choice, auto, removed: auto ? [] : choice.removed };
+}
+
+export type ThemeStatus = "applied" | "showing" | "removed" | "waiting";
+
+export function themeStatus(theme: ThemeInfo, themes: ThemeInfo[], choice: Choice): ThemeStatus {
+  if (pickTheme(themes, choice) === theme.id) return choice.applied === theme.id ? "applied" : "showing";
+  return theme.active && choice.auto ? "removed" : "waiting";
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "18 Dec – 2 Jan", or "15 May" for a single day. */
-export function dateRange(
-  start: [number, number],
-  end: [number, number],
-): string {
+export function dateRange(start: [number, number], end: [number, number]): string {
   const f = ([m, d]: [number, number]) => `${d} ${MONTHS[m - 1]}`;
-  return start[0] === end[0] && start[1] === end[1]
-    ? f(start)
-    : `${f(start)} – ${f(end)}`;
-}
-
-export type ThemeStatus = "preview" | "showing" | "off" | "waiting";
-
-/** What this viewer sees for a theme right now. */
-export function themeStatus(
-  theme: ThemeInfo,
-  off: string[],
-  preview?: string,
-): ThemeStatus {
-  if (preview === theme.id) return "preview";
-  if (off.includes(theme.id)) return "off";
-  return theme.active && !preview ? "showing" : "waiting";
+  return start[0] === end[0] && start[1] === end[1] ? f(start) : `${f(start)} – ${f(end)}`;
 }

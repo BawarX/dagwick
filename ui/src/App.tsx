@@ -1,10 +1,11 @@
+import { useState } from "react";
+
 import { DagView } from "./DagView";
 import { FleetView } from "./FleetView";
 import { PageTabs, readView } from "./PageTabs";
 import { ThemesView } from "./ThemesView";
 import { STYLES } from "./styles";
 import type { PluginProps } from "./types";
-import { useState } from "react";
 
 /** One bundle, two places: the DAG tab (Airflow passes dagId) and the fleet page (no dagId). */
 export function App({ dagId }: PluginProps) {

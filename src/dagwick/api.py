@@ -390,6 +390,14 @@ def list_themes() -> list[dict[str, Any]]:
     return [t.info(today) for t in themes.THEMES]
 
 
+@app.get("/api/themes/{theme_id}/css", dependencies=[_require_login()])
+def theme_stylesheets(theme_id: str) -> dict[str, str]:
+    """A theme as stylesheets, so the Themes page can apply or remove it without a reload."""
+    if theme_id not in themes.BY_ID:
+        raise HTTPException(status_code=404, detail="Unknown theme")
+    return themes.theme_sheets(theme_id)
+
+
 @app.get("/api/checks", dependencies=[_require_login()])
 def checks() -> list[dict[str, Any]]:
     scoring = settings.scoring()

@@ -1,28 +1,44 @@
 """Falling snow for the whole Airflow UI, drawn with CSS only (used by the Christmas theme).
 
-Each flake falls on its own path, with its own size, speed, sway and start time, so the
-snow looks random; about half of them also drift sideways in the wind. Three layers
-(far, middle, near) use different tile sizes, so the pattern never visibly repeats.
-Flakes are SVG images animated with SMIL, so no JavaScript runs on Airflow's pages.
-Viewers who prefer reduced motion get still snow. A snow drift sits along the bottom.
+The snow falls in four layers at different depths, speeds and wind directions: two fall
+straight down with a gentle sway, one is blown to the right and one to the left. Each
+layer is a still pattern of randomly placed flakes that the browser slides with a CSS
+transform, which the graphics card does without repainting the page, so Airflow stays
+smooth. Snow also settles on top of cards, and a drift lies along the bottom of the
+window. Viewers who prefer reduced motion get still snow.
 """
 
 from __future__ import annotations
 
 import math
 import random
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
 
-SEED = 1225  # fixed, so the file is reproducible
+SEED = 1225  # fixed, so the snow is the same on every start
 
-# (tile size px, flakes per tile, kind, size range px, fall time range s, opacity range, sway px)
-LAYERS = [
-    (431, 9, "dot", (1.0, 1.8), (18, 28), (0.3, 0.5), 10),  # far: faint soft flakes
-    (557, 6, "crystal", (5, 8), (13, 19), (0.35, 0.6), 22),  # middle: snowflakes
-    (743, 3, "crystal", (10, 14), (9, 13), (0.35, 0.6), 34),  # near: big snowflakes
-]
-WIND = 0.45  # share of flakes that the wind also carries sideways
+
+@dataclass(frozen=True)
+class Layer:
+    host: str  # the pseudo-element that carries this layer
+    width: int  # one repeat of the pattern, in px
+    height: int
+    count: int  # flakes per repeat
+    kind: str  # "dot" (soft, far away) or "crystal" (a six-armed snowflake)
+    size: tuple[float, float]
+    opacity: tuple[float, float]
+    seconds: float  # time to fall one repeat
+    wind: int  # -1 blown left, 0 straight down with a sway, 1 blown right
+
+
+LAYERS = (
+    Layer("html::before", 1093, 431, 22, "dot", (1.0, 1.8), (0.3, 0.5), 26, 0),
+    Layer("html::after", 1187, 557, 10, "crystal", (5, 8), (0.35, 0.6), 19, 0),
+    Layer("body::after", 547, 1291, 11, "crystal", (6, 10), (0.35, 0.6), 30, 1),
+    Layer("#root::after", 619, 1543, 10, "crystal", (10, 14), (0.35, 0.6), 22, -1),
+)
+SWAY = 16  # px, side to side, for the layers that fall straight down
 
 FLAKE = {
     # dark Airflow: white flakes
@@ -49,58 +65,85 @@ def crystal(size: float, color: str) -> str:
     )
 
 
-def layer_svg(rng: random.Random, layer: tuple, theme: str, animate: bool) -> str:
-    tile, count, kind, radius, fall, opacity, sway = layer
+def layer_svg(rng: random.Random, layer: Layer, theme: str) -> str:
+    """One repeat of a layer: flakes at random places, sizes, turns and opacities.
+
+    A flake near an edge is also drawn on the other side, so the repeats join seamlessly.
+    """
+    w, h = layer.width, layer.height
     centre, edge = FLAKE[theme]
     out = [
-        f"<svg xmlns='http://www.w3.org/2000/svg' width='{tile}' height='{tile}'>",
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}'>",
         "<defs><radialGradient id='f'>"
         f"<stop offset='0' stop-color='{centre}'/>"
         f"<stop offset='.55' stop-color='{centre}' stop-opacity='.9'/>"
         f"<stop offset='1' stop-color='{edge}' stop-opacity='0'/>"
         "</radialGradient></defs>",
     ]
-    for _ in range(count):
-        size = rng.uniform(*radius)
-        # Some flakes drift sideways in the wind as they fall, to the left or the right.
-        dx = rng.uniform(0.15, 0.35) * tile * rng.choice((-1, 1)) if rng.random() < WIND else 0
-        x = rng.uniform(sway + max(0, -dx), tile - sway - max(0, dx))
-        y = rng.uniform(0, tile)
-        dur = rng.uniform(*fall)
-        op = rng.uniform(*opacity)
-        a = rng.uniform(0.4, 1) * sway * rng.choice((-1, 1))
-        if kind == "dot":
+    defs, uses = [], []
+    for i in range(layer.count):
+        size = rng.uniform(*layer.size)
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        op = rng.uniform(*layer.opacity)
+        if layer.kind == "dot":
             shape = f"<circle r='{size * 1.6:.1f}' fill='url(#f)'/>"
         else:
-            spin = rng.uniform(10, 24)
-            start = rng.uniform(0, 60)
-            end = start + rng.choice((-360, 360))
-            shape = crystal(size, CRYSTAL[theme])
-            if animate:
-                shape = (
-                    f"<g>{shape}<animateTransform attributeName='transform' type='rotate' "
-                    f"from='{start:.0f}' to='{end:.0f}' dur='{spin:.1f}s' "
-                    "repeatCount='indefinite'/></g>"
-                )
-            else:
-                shape = f"<g transform='rotate({start:.0f})'>{shape}</g>"
-        # Two copies one fall apart: when the lower one leaves the tile, the upper one has
-        # just entered it where the lower one started, so the loop has no visible jump.
-        copy = f"<g transform='translate({-dx:.0f} {-tile})'>{shape}</g>"
-        flake = f"<g opacity='{op:.2f}'>{shape}{copy}</g>"
-        if animate:
-            q = tile / 4
-            h = dx / 2  # sideways distance per half of the fall
-            path = f"M{x:.0f},{y:.0f} q{a + h / 2:.0f},{q:.0f} {h:.0f},{2 * q:.0f} "
-            path += f"q{-a + h / 2:.0f},{q:.0f} {h:.0f},{2 * q:.0f}"
-            out.append(
-                f"<g>{flake}<animateMotion dur='{dur:.1f}s' begin='-{rng.uniform(0, dur):.1f}s' "
-                f"repeatCount='indefinite' path='{path}'/></g>"
-            )
-        else:
-            out.append(f"<g transform='translate({x:.0f} {y:.0f})'>{flake}</g>")
+            turn = rng.uniform(0, 60)
+            shape = f"<g transform='rotate({turn:.0f})'>{crystal(size, CRYSTAL[theme])}</g>"
+        defs.append(f"<g id='s{i}' opacity='{op:.2f}'>{shape}</g>")
+        reach = size * 1.7  # how far the flake spreads from its centre
+        xs = [x] + [x + d for d in (-w, w) if abs(x + d - w / 2) < w / 2 + reach]
+        ys = [y] + [y + d for d in (-h, h) if abs(y + d - h / 2) < h / 2 + reach]
+        uses += [f"<use href='#s{i}' x='{px:.0f}' y='{py:.0f}'/>" for px in xs for py in ys]
+    out[-1] = out[-1].replace("</defs>", "".join(defs) + "</defs>")
+    out += uses
     out.append("</svg>")
     return "".join(out)
+
+
+def _move(x: float, y: float) -> dict[str, str]:
+    return {"transform": f"translate3d({x:.0f}px, {y:.0f}px, 0)"}
+
+
+def falling(theme: str) -> dict[str, Any]:
+    """The four falling layers, with their motion (dark theme) or just their flakes (light)."""
+    rng = random.Random(SEED)  # same flakes in both themes
+    css: dict[str, Any] = {}
+    for i, layer in enumerate(LAYERS):
+        image = {"backgroundImage": url(layer_svg(rng, layer, theme))}
+        if theme == "light":
+            host = layer.host.replace("html::", "html.light::")
+            css[host if host.startswith("html.light") else f"html.light {host}"] = image
+            continue
+        name = f"dagwickSnow{i}"
+        side = f"-{max(layer.width, SWAY * 2)}px"
+        css[layer.host] = {
+            "content": '""',
+            "position": "fixed",
+            "top": f"-{layer.height}px",
+            "bottom": "0",
+            "left": side,
+            "right": side,
+            "pointerEvents": "none",
+            "zIndex": "2147483646",
+            "backgroundSize": f"{layer.width}px {layer.height}px",
+            "willChange": "transform",
+            "animation": f"{name} {layer.seconds}s linear infinite",
+            **image,
+        }
+        h = layer.height
+        if layer.wind:
+            steps = {"from": _move(0, 0), "to": _move(layer.wind * layer.width, h)}
+        else:
+            steps = {
+                "0%": _move(0, 0),
+                "25%": _move(SWAY, h / 4),
+                "50%": _move(0, h / 2),
+                "75%": _move(-SWAY, h * 3 / 4),
+                "100%": _move(0, h),
+            }
+        css[f"@keyframes {name}"] = steps
+    return css
 
 
 def drift_svg(theme: str) -> str:
@@ -163,17 +206,17 @@ def cap_svg(seed: int, width: int, big: bool, theme: str) -> str:
             for shift in (-width, 0, width)
         )
 
-    xs = [i * width / 48 for i in range(49)]
+    xs = [i * width / 32 for i in range(33)]
     base = EDGE - 2.5
     top = [max(1.0, base - bump(x, heaps)) for x in xs]
     bottom = [EDGE + 1.8 + bump(x, drips) for x in xs]
 
     def path(dy: float) -> str:
-        up = " ".join(f"L{x:.1f} {y + dy:.2f}" for x, y in zip(xs, top, strict=True))
+        up = " ".join(f"{x:.0f} {y + dy:.1f}" for x, y in zip(xs, top, strict=True))
         down = " ".join(
-            f"L{x:.1f} {y + dy:.2f}" for x, y in reversed(list(zip(xs, bottom, strict=True)))
+            f"{x:.0f} {y + dy:.1f}" for x, y in reversed(list(zip(xs, bottom, strict=True)))
         )
-        return f"M0 {top[0] + dy:.2f} {up} {down} Z"
+        return f"M{up} L{down}Z"
 
     shadow = "#b9cbe0" if theme == "light" else "#9fb3cc"
     return (
@@ -194,8 +237,8 @@ def caps(theme: str) -> dict[str, Any]:
     css: dict[str, Any] = (
         {'[data-testid="card-list"]': {"paddingTop": f"{EDGE}px"}} if (theme == "dark") else {}
     )
-    for sel, pick in CAPPED.items():
-        if theme == "dark":
+    if theme == "dark":
+        for sel in CAPPED:
             inside = sel in INSIDE
             css[sel] = {"position": "relative"}
             css[f"{sel}::after"] = {
@@ -209,20 +252,19 @@ def caps(theme: str) -> dict[str, Any]:
                 "pointerEvents": "none",
                 "zIndex": "1",
             }
-        for k in range(VARIANTS):
-            rng = random.Random(1000 + k)
-            big_w, small_w = rng.randint(380, 520), rng.randint(230, 310)
-            key = f"{pick(k + 1)}::after"
-            if theme == "light":
-                key = f"html.light {key}"
-            css[key] = {
-                "backgroundImage": ", ".join(
-                    url(cap_svg(seed, w, big, theme))
-                    for seed, w, big in ((2000 + k, big_w, True), (3000 + k, small_w, False))
-                ),
-                "backgroundSize": f"{big_w}px {CAP_H}px, {small_w}px {CAP_H}px",
-                "backgroundPosition": f"{rng.randint(0, big_w)}px 0, {rng.randint(0, small_w)}px 0",
-            }
+    for k in range(VARIANTS):
+        rng = random.Random(1000 + k)
+        big_w, small_w = rng.randint(380, 520), rng.randint(230, 310)
+        prefix = "html.light " if theme == "light" else ""
+        key = ", ".join(f"{prefix}{pick(k + 1)}::after" for pick in CAPPED.values())
+        css[key] = {
+            "backgroundImage": ", ".join(
+                url(cap_svg(seed, w, big, theme))
+                for seed, w, big in ((2000 + k, big_w, True), (3000 + k, small_w, False))
+            ),
+            "backgroundSize": f"{big_w}px {CAP_H}px, {small_w}px {CAP_H}px",
+            "backgroundPosition": f"{rng.randint(0, big_w)}px 0, {rng.randint(0, small_w)}px 0",
+        }
     return css
 
 
@@ -230,24 +272,8 @@ def url(svg: str) -> str:
     return f'url("data:image/svg+xml,{quote(svg, safe="")}")'
 
 
-def snow(theme: str, animate: bool) -> dict[str, str]:
-    rng = random.Random(SEED)  # same flake positions in both themes and in the still version
-    layers = [layer_svg(rng, layer, theme, animate) for layer in LAYERS]
-    return {
-        "backgroundImage": ", ".join(url(s) for s in reversed(layers)),
-        "backgroundSize": ", ".join(f"{t}px {t}px" for t, *_ in reversed(LAYERS)),
-    }
-
-
 def global_css() -> dict[str, Any]:
     """The snow as Airflow theme ``globalCss`` (selector -> style)."""
-    flakes = {
-        "content": '""',
-        "position": "fixed",
-        "inset": "0",
-        "pointerEvents": "none",
-        "zIndex": "2147483646",
-    }
     drift = {
         "content": '""',
         "position": "fixed",
@@ -263,12 +289,11 @@ def global_css() -> dict[str, Any]:
     return {
         **caps("dark"),
         **caps("light"),
-        "body::after": {**flakes, **snow("dark", True)},
+        **falling("dark"),
+        **falling("light"),
         "body::before": {**drift, "backgroundImage": url(drift_svg("dark"))},
-        "html.light body::after": snow("light", True),
         "html.light body::before": {"backgroundImage": url(drift_svg("light"))},
         "@media (prefers-reduced-motion: reduce)": {
-            "body::after": snow("dark", False),
-            "html.light body::after": snow("light", False),
+            layer.host: {"animation": "none"} for layer in LAYERS
         },
     }
