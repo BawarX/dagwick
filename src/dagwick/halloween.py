@@ -15,7 +15,7 @@ import math
 import random
 from typing import Any
 
-from dagwick.snow import CAPPED, url
+from dagwick.snow import CAPPED, INSIDE, url
 
 SEED = 1031
 
@@ -314,6 +314,173 @@ def spider_svg(thread: int) -> str:
     )
 
 
+# ---- dead branches on cards ----
+
+BRANCH_H = 42  # px; the card's top edge is BRANCH_EDGE px down from the top of the branch
+BRANCH_EDGE = 24
+BARK, RIM = "#24160f", "rgba(214, 196, 255, 0.4)"
+LEAVES = ("#9a3412", "#7c2d12", "#b45309", "#78350f")
+
+
+def _stroke(d: str, width: float) -> str:
+    """A branch line with a faint moonlit rim under it, so it shows on dark cards."""
+    return (
+        f"<path d='{d}' fill='none' stroke='{RIM}' stroke-width='{width + 1.6:.1f}' "
+        "stroke-linecap='round' stroke-linejoin='round'/>"
+        f"<path d='{d}' fill='none' stroke='{BARK}' stroke-width='{width:.1f}' "
+        "stroke-linecap='round' stroke-linejoin='round'/>"
+    )
+
+
+def _twig(rng: random.Random, x: float, y: float, angle: float, length: float, width: float):
+    """A crooked twig from (x, y), with a smaller fork, thorns and maybe a dead leaf."""
+    parts, leaves = [], []
+    rad = math.radians(angle)
+    bend = rng.uniform(-0.35, 0.35)
+    mx, my = x + math.cos(rad) * length * 0.5, y + math.sin(rad) * length * 0.5
+    ex = x + math.cos(rad + bend) * length
+    ey = y + math.sin(rad + bend) * length
+    parts.append(_stroke(f"M{x:.1f} {y:.1f} Q{mx:.1f} {my:.1f} {ex:.1f} {ey:.1f}", width))
+    side = rng.choice((-1, 1))
+    frad = rad + side * rng.uniform(0.6, 1.0)
+    fl = length * rng.uniform(0.35, 0.55)
+    parts.append(
+        _stroke(
+            f"M{mx:.1f} {my:.1f} L{mx + math.cos(frad) * fl:.1f} {my + math.sin(frad) * fl:.1f}",
+            max(1.2, width * 0.6),
+        )
+    )
+    for _ in range(2):  # thorns
+        t = rng.uniform(0.2, 0.8)
+        tx, ty = x + (ex - x) * t, y + (ey - y) * t
+        trad = rad + rng.choice((-1, 1)) * 1.2
+        parts.append(
+            f"<path d='M{tx:.1f} {ty:.1f} l{math.cos(trad) * 3:.1f} {math.sin(trad) * 3:.1f}' "
+            f"stroke='{BARK}' stroke-width='.8' stroke-linecap='round'/>"
+        )
+    if rng.random() < 0.45:
+        leaves.append(
+            f"<ellipse cx='{ex:.1f}' cy='{ey:.1f}' rx='3.2' ry='1.6' "
+            f"transform='rotate({rng.uniform(0, 180):.0f} {ex:.1f} {ey:.1f})' "
+            f"fill='{rng.choice(LEAVES)}' opacity='.9'/>"
+        )
+    return parts, leaves, (ex, ey)
+
+
+def branch_svg(seed: int, width: int) -> str:
+    """One repeat of a gnarled branch lying along a card's top edge, with twigs.
+
+    The branch wobbles with waves that fit the repeat exactly, and twigs near an edge are
+    drawn on both sides, so the repeats join without a seam.
+    """
+    rng = random.Random(seed)
+    waves = [(rng.randint(1, 3), rng.uniform(0.8, 2.2), rng.uniform(0, math.tau)) for _ in range(3)]
+
+    def y_at(x: float) -> float:
+        return (
+            BRANCH_EDGE
+            - 1.5
+            + sum(a * math.sin(k * math.tau * x / width + ph) for k, a, ph in waves)
+        )
+
+    knots = [(rng.uniform(0, width), rng.uniform(1.5, 3), rng.uniform(5, 12)) for _ in range(3)]
+
+    def thick(x: float) -> float:
+        swell = 1.2 * math.sin(2 * math.tau * x / width + waves[0][2])
+        knot = sum(
+            h * math.exp(-(((x - c - shift) / w) ** 2))
+            for c, h, w in knots
+            for shift in (-width, 0, width)
+        )
+        return 5.2 + swell + knot
+
+    xs = [i * width / 60 for i in range(61)]
+    top = " L".join(f"{x:.1f} {y_at(x) - thick(x) / 2:.1f}" for x in xs)
+    bottom = " L".join(f"{x:.1f} {y_at(x) + thick(x) / 2:.1f}" for x in reversed(xs))
+    grain = " ".join(
+        f"M{x:.1f} {y_at(x) - 0.6:.1f} l{rng.uniform(5, 11):.1f} {rng.uniform(-0.6, 0.6):.1f}"
+        for x in (rng.uniform(0, width - 12) for _ in range(6))
+    )
+    parts = [
+        f"<path d='M{top} L{bottom} Z' fill='{BARK}' stroke='{RIM}' stroke-width='.9' "
+        "stroke-linejoin='round'/>",
+        f"<path d='{grain}' stroke='#4a3226' stroke-width='.8' stroke-linecap='round'/>",
+    ]
+    leaves, tips = [], []
+    for _ in range(rng.randint(3, 4)):
+        x = rng.uniform(0, width)
+        up = rng.random() < 0.75  # most twigs reach up, a few droop
+        angle = rng.uniform(-150, -30) if up else rng.uniform(30, 150)
+        length = rng.uniform(13, 22) if up else rng.uniform(8, 12)
+        for dx in (-width, 0, width):
+            if abs(x + dx - width / 2) < width / 2 + 24:
+                p, lv, tip = _twig(random.Random(int(x * 100)), x + dx, y_at(x), angle, length, 3)
+                parts += p
+                leaves += lv
+                if dx == 0 and up:
+                    tips.append(tip)
+    if len(tips) >= 2 and rng.random() < 0.6:  # a strand of cobweb between two twigs
+        (x0, y0), (x1, y1) = sorted(tips)[:2]
+        parts.append(
+            f"<path d='M{x0:.1f} {y0:.1f} Q{(x0 + x1) / 2:.1f} {max(y0, y1) + 6:.1f} "
+            f"{x1:.1f} {y1:.1f}' fill='none' stroke='#e9e3ff' stroke-opacity='.45' "
+            "stroke-width='.6'/>"
+        )
+    return (
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{BRANCH_H}' "
+        f"viewBox='0 0 {width} {BRANCH_H}'>{''.join(parts)}{''.join(leaves)}</svg>"
+    )
+
+
+def corner_svg(seed: int) -> str:
+    """A branch curling over the card's top-left corner and down its side."""
+    rng = random.Random(seed)
+    h = 74
+    d = (
+        f"M2 {BRANCH_EDGE + 2} C{rng.uniform(4, 9):.1f} {BRANCH_EDGE + 14} "
+        f"{rng.uniform(1, 5):.1f} {BRANCH_EDGE + 30} {rng.uniform(5, 9):.1f} {h - 6}"
+    )
+    parts = [_stroke(d, 4.2)]
+    for t, ang in ((0.35, rng.uniform(150, 175)), (0.7, rng.uniform(165, 200))):
+        y = BRANCH_EDGE + 2 + (h - BRANCH_EDGE - 8) * t
+        p, lv, _ = _twig(rng, 5, y, ang, rng.uniform(7, 11), 2.2)
+        parts += p + lv
+    return f"<svg xmlns='http://www.w3.org/2000/svg' width='30' height='{h}'>{''.join(parts)}</svg>"
+
+
+def branches() -> dict[str, Any]:
+    """Dead branches along the top of every card, in five random variants."""
+    # Airflow's DAG list clips its top edge: leave room for the first card's branch.
+    css: dict[str, Any] = {'[data-testid="card-list"]': {"paddingTop": f"{BRANCH_EDGE}px"}}
+    # The small grade cards keep only their spiders: a branch would cross their numbers.
+    targets = {sel: pick for sel, pick in CAPPED.items() if sel != ".dagwick-gcard"}
+    for sel in targets:
+        inside = sel in INSIDE
+        css[sel] = {"position": "relative"}
+        css[f"{sel}::before"] = {
+            "content": '""',
+            "position": "absolute",
+            "top": "-1px" if inside else f"-{BRANCH_EDGE}px",
+            "left": "-12px",
+            "right": "4px",
+            "height": "74px",
+            "backgroundRepeat": "repeat-x, no-repeat",
+            "pointerEvents": "none",
+            "zIndex": "1",
+        }
+    for k in range(5):
+        rng = random.Random(SEED + 200 + k)
+        w = rng.randint(300, 420)
+        key = ", ".join(f"{pick(k + 1)}::before" for pick in targets.values())
+        css[key] = {
+            "backgroundImage": f"{url(branch_svg(SEED + 300 + k, w))}, "
+            f"{url(corner_svg(SEED + 400 + k))}",
+            "backgroundSize": f"{w}px {BRANCH_H}px, 30px 74px",
+            "backgroundPosition": f"{rng.randint(0, w)}px 0, 0 0",
+        }
+    return css
+
+
 def spiders() -> dict[str, Any]:
     """Spiders dangle from the top of about three in five cards, each a little different."""
     css: dict[str, Any] = {}
@@ -357,6 +524,7 @@ def global_css() -> dict[str, Any]:
     far_w, far_h, near_w, near_h = 1400, 900, 1700, 1000
     ember_w, ember_h, fog_w, fog_h = 1100, 640, 1400, 130
     css: dict[str, Any] = {
+        **branches(),
         **spiders(),
         # Embers rising from below, with a gentle sway.
         "html::before": {
