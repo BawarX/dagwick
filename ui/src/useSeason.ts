@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { fetchThemes, loadConfig } from "./api";
-import { pickTheme, readChoice, themeSeason } from "./themes";
+import { type Choice, type ThemeInfo, pickTheme, readChoice, themeSeason } from "./themes";
 import { SEASONS, type Season, isSeasonId, seasonFor } from "./season";
 
 const STORAGE_KEY = "dagwick.moods.hidden";
@@ -45,6 +45,27 @@ function loadThemes() {
   return themesRequest;
 }
 
+/**
+ * The banner's seasonal look for this viewer.
+ *
+ * A theme showing on Airflow (by date, or applied by this viewer) sets it. Otherwise
+ * the admin's seasonal_moods setting decides, unless this viewer turned off "Show
+ * themes on their dates" on the Themes page: then nothing appears by date, banner
+ * included. `setting` is undefined when the setting couldn't be read (stay off).
+ */
+export function bannerSeason(
+  themes: ThemeInfo[],
+  choice: Choice,
+  setting: "auto" | "off" | string[] | undefined,
+  date: Date,
+): Season | undefined {
+  const fromTheme = themeSeason(pickTheme(themes, choice));
+  if (fromTheme) return SEASONS[fromTheme];
+  if (!choice.auto || setting === undefined) return undefined;
+  const allowed = setting === "auto" || setting === "off" ? setting : setting.filter(isSeasonId);
+  return seasonFor(date, allowed);
+}
+
 export interface SeasonState {
   /** The mood to show now (undefined: everyday, or hidden by the viewer). */
   season?: Season;
@@ -63,19 +84,10 @@ export function useSeason(): SeasonState {
   useEffect(() => {
     if (preview !== undefined) return; // a preview ignores the admin setting
     const ctrl = new AbortController();
-    // A theme showing on Airflow (by date, or applied by this viewer) sets the banner's
-    // look; otherwise the admin's seasonal_moods setting decides.
     Promise.all([loadThemes().catch(() => []), loadConfig().catch(() => undefined)])
       .then(([themes, cfg]) => {
         if (ctrl.signal.aborted) return;
-        const fromTheme = themeSeason(pickTheme(themes, readChoice(document.cookie)));
-        if (fromTheme) return setAvailable(SEASONS[fromTheme]);
-        if (!cfg) return; // setting unreadable: stay off
-        const allowed =
-          cfg.seasonal_moods === "auto" || cfg.seasonal_moods === "off"
-            ? cfg.seasonal_moods
-            : cfg.seasonal_moods.filter(isSeasonId);
-        setAvailable(seasonFor(new Date(), allowed));
+        setAvailable(bannerSeason(themes, readChoice(document.cookie), cfg?.seasonal_moods, new Date()));
       })
       .catch(() => {
         /* stay off */

@@ -39,7 +39,7 @@ in a browser at 1280 × 640 and take a screenshot (or use headless Chrome with
 
 - Every pull request needs an **approving review from someone other than its
   author** before it is merged, even small or docs-only ones. `CODEOWNERS`
-  requests a reviewer automatically.
+  requests two reviewers automatically.
 - **CI, CodeQL and Fuzz** run on every pull request and must pass.
 - The reviewer checks the rules above: tests for behaviour changes, no new
   runtime dependencies, nothing that writes to Airflow or calls the network,
