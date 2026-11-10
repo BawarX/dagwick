@@ -148,6 +148,21 @@ Dagwick has no dependencies of its own, so installing it never changes your
 other packages. It is read-only and only shows each user the DAGs they can
 already see.
 
+## Verify a release
+
+From 0.3.0, every release is built and signed by the release workflow in this
+repository. To check that the wheel you install is the one it built:
+
+```bash
+pip download dagwick==0.3.0 --no-deps -d dagwick-download
+gh attestation verify dagwick-download/*.whl -R ardalan-jalal/dagwick
+```
+
+The GitHub release also carries a Sigstore bundle (`.sigstore.json`) for the
+wheel and the sdist. See
+[Releasing](https://github.com/ardalan-jalal/dagwick/blob/main/RELEASING.md#verify-a-release)
+for how to check those.
+
 ## Remove
 
 ```bash

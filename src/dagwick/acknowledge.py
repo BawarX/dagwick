@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import functools
 import io
+import logging
 import re
 import tokenize
 from collections.abc import Mapping
@@ -23,6 +24,8 @@ _ACK = re.compile(
     r"\s*(?:(?:--|—|–)\s*(?P<reason>.*))?$",
     re.IGNORECASE,
 )
+
+log = logging.getLogger(__name__)
 
 _NONE: Mapping[str, str] = MappingProxyType({})
 
@@ -44,5 +47,11 @@ def acknowledgements(source: str) -> Mapping[str, str]:
                 if reason and reason not in seen:
                     seen.append(reason)
     except (tokenize.TokenError, SyntaxError):
+        return _NONE
+    except Exception:  # noqa: BLE001
+        # tokenize itself can fail on odd text, for example a bare "\r" before a
+        # non-ASCII character on Python 3.12 (UnicodeDecodeError, SystemError).
+        # A comment must never stop a DAG from being scored.
+        log.debug("dagwick: could not read ack comments", exc_info=True)
         return _NONE
     return MappingProxyType({k: "; ".join(v) for k, v in reasons.items()})
