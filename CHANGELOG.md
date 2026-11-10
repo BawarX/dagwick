@@ -80,6 +80,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Releases carry their build provenance as a file.** Next to the wheel, the
+  sdist and their Sigstore bundles, the GitHub release now includes
+  `dagwick-<version>.intoto.jsonl`, the same signed provenance GitHub stores
+  for `gh attestation verify`. OpenSSF Scorecard's Signed-Releases check looks
+  for it there.
 - **New mascot and icon.** Dagwick's mascot is now Wick, a little flame on a
   candle stamped with a DAG: one more node lights up with every grade, and at F
   the flame is out and only smoke is left. The seasonal moods dress Wick up
