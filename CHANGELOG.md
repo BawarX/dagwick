@@ -15,6 +15,11 @@ All notable changes to this project are documented here. The format follows
   only the DAGs the user may read. Cells that a spreadsheet would run as a
   formula are written as text.
 - `/api/fleet` includes each DAG's `tags`.
+- **Fleet data in a dashboard** (`docs/dashboards.md`): how to read
+  `/dagwick/api/fleet` with an Airflow API token and feed it to Grafana, a
+  warehouse or alerts. Dagwick does not add a metrics endpoint or push
+  metrics: scrapers can't easily authenticate against Airflow 3, and the
+  plugin makes no network calls.
 - **Tune the scoring in `airflow.cfg`.** Three optional `[dagwick]` settings:
   `disabled_checks` leaves checks out of every score, `weights` changes how
   many points a check is worth, and `grades` sets the grade thresholds.

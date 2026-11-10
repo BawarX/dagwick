@@ -40,6 +40,8 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
   common issues. **Download CSV** saves the DAGs shown (dag_id, owners, tags,
   score, grade, failing and warning checks, runs and success rate over 30
   days). The file is built in your browser from what you are allowed to see.
+  To put the same data in a dashboard, see
+  [Fleet data in a dashboard](https://github.com/ardalan-jalal/dagwick/blob/main/docs/dashboards.md).
 - **`dagwick check` and a pre-commit hook** to grade DAG files before they are
   merged. See [Check DAGs before they are merged](#check-dags-before-they-are-merged).
 - **Break a check on purpose, with a reason.** Some DAGs need `catchup=True`
