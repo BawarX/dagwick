@@ -1,0 +1,148 @@
+{
+  "tokens": {
+    "colors": {
+      "brand": {
+        "50": {
+          "value": "oklch(0.982 0.018 155.826)"
+        },
+        "100": {
+          "value": "oklch(0.962 0.044 156.743)"
+        },
+        "200": {
+          "value": "oklch(0.925 0.084 155.995)"
+        },
+        "300": {
+          "value": "oklch(0.871 0.15 154.449)"
+        },
+        "400": {
+          "value": "oklch(0.792 0.209 151.711)"
+        },
+        "500": {
+          "value": "oklch(0.723 0.219 149.579)"
+        },
+        "600": {
+          "value": "oklch(0.627 0.194 149.214)"
+        },
+        "700": {
+          "value": "oklch(0.527 0.154 150.069)"
+        },
+        "800": {
+          "value": "oklch(0.448 0.119 151.328)"
+        },
+        "900": {
+          "value": "oklch(0.393 0.095 152.535)"
+        },
+        "950": {
+          "value": "oklch(0.266 0.065 152.934)"
+        }
+      }
+    }
+  },
+  "globalCss": {
+    "html.dark": {
+      "backgroundImage": "linear-gradient(180deg, rgba(20,83,45,0.30) 0, transparent 360px)"
+    },
+    "html.light": {
+      "backgroundImage": "linear-gradient(180deg, #effbf3 0, transparent 300px)"
+    },
+    "html::before": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "top": "18px",
+      "right": "72px",
+      "width": "96px",
+      "height": "96px",
+      "borderRadius": "50%",
+      "backgroundImage": "radial-gradient(circle, #f6c90e 0 30%, transparent 31%), repeating-conic-gradient(from -4deg, #f6c90e 0 8deg, transparent 8deg 17.142857deg)",
+      "boxShadow": "0 0 60px 20px rgba(246,201,14,0.18)",
+      "opacity": "0.85"
+    },
+    "html.light::before": {
+      "opacity": "0.95"
+    },
+    "html::after": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "left": "0",
+      "right": "0",
+      "bottom": "0",
+      "height": "160px",
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='800'%20height='160'%20viewBox='0%200%20800%20160'%3E%3Cpath%20d='M0%20160%20V95%20L80%2060%20L160%2092%20L250%2040%20L340%2088%20L430%2048%20L540%20100%20L630%2042%20L720%2086%20L800%2060%20V160Z'%20fill='rgba(45,105,90,0.6)'/%3E%3Cpath%20d='M0%20160%20V120%20L110%2084%20L210%20116%20L320%2070%20L430%20118%20L540%2088%20L660%20122%20L800%2092%20V160Z'%20fill='rgba(22,66,54,0.75)'/%3E%3Cpath%20d='M320%2071%20l-6%200%20q6%20-16%206%20-24%20q0%208%206%2024z'%20fill='%23ffb347'/%3E%3Cpath%20d='M320%2070%20l-3%200%20q3%20-9%203%20-14%20q0%205%203%2014z'%20fill='%23fff1a8'/%3E%3Cpath%20d='M540%2089%20l-6%200%20q6%20-16%206%20-24%20q0%208%206%2024z'%20fill='%23ffb347'/%3E%3Cpath%20d='M540%2088%20l-3%200%20q3%20-9%203%20-14%20q0%205%203%2014z'%20fill='%23fff1a8'/%3E%3C/svg%3E\")",
+      "backgroundRepeat": "repeat-x",
+      "backgroundSize": "800px 160px",
+      "backgroundPosition": "center bottom"
+    },
+    "html.light::after": {
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='800'%20height='160'%20viewBox='0%200%20800%20160'%3E%3Cpath%20d='M0%20160%20V95%20L80%2060%20L160%2092%20L250%2040%20L340%2088%20L430%2048%20L540%20100%20L630%2042%20L720%2086%20L800%2060%20V160Z'%20fill='%23cfe9d8'/%3E%3Cpath%20d='M0%20160%20V120%20L110%2084%20L210%20116%20L320%2070%20L430%20118%20L540%2088%20L660%20122%20L800%2092%20V160Z'%20fill='%239fcdb4'/%3E%3Cpath%20d='M320%2071%20l-6%200%20q6%20-16%206%20-24%20q0%208%206%2024z'%20fill='%23ffb347'/%3E%3Cpath%20d='M320%2070%20l-3%200%20q3%20-9%203%20-14%20q0%205%203%2014z'%20fill='%23fff1a8'/%3E%3Cpath%20d='M540%2089%20l-6%200%20q6%20-16%206%20-24%20q0%208%206%2024z'%20fill='%23ffb347'/%3E%3Cpath%20d='M540%2088%20l-3%200%20q3%20-9%203%20-14%20q0%205%203%2014z'%20fill='%23fff1a8'/%3E%3C/svg%3E\")"
+    },
+    "body::after": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "left": "0",
+      "right": "0",
+      "bottom": "0",
+      "height": "160px",
+      "backgroundImage": "radial-gradient(70px 50px at 320px 64px, rgba(255,170,60,0.45), transparent 70%), radial-gradient(70px 50px at 540px 82px, rgba(255,170,60,0.45), transparent 70%)",
+      "backgroundRepeat": "repeat-x",
+      "backgroundSize": "800px 160px",
+      "backgroundPosition": "center bottom",
+      "animation": "dagwickFire 1.6s ease-in-out infinite alternate"
+    },
+    "@keyframes dagwickFire": {
+      "0%": {
+        "opacity": "0.7"
+      },
+      "100%": {
+        "opacity": "1"
+      }
+    },
+    "body::before": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "left": "-20px",
+      "bottom": "-300px",
+      "width": "calc(100% + 40px)",
+      "height": "calc(55vh + 300px)",
+      "backgroundRepeat": "repeat",
+      "backgroundSize": "300px 300px",
+      "backgroundImage": "radial-gradient(2.0px 2.0px at 165px 77px, rgba(255,150,60,0.61) 40%, transparent 100%), radial-gradient(2.0px 2.0px at 274px 48px, rgba(255,150,60,0.62) 40%, transparent 100%), radial-gradient(1.6px 1.6px at 259px 109px, rgba(255,150,60,0.73) 40%, transparent 100%), radial-gradient(1.7px 1.7px at 35px 123px, rgba(255,150,60,0.73) 40%, transparent 100%), radial-gradient(2.5px 2.5px at 289px 63px, rgba(255,150,60,0.79) 40%, transparent 100%), radial-gradient(2.2px 2.2px at 298px 31px, rgba(255,150,60,0.72) 40%, transparent 100%), radial-gradient(2.2px 2.2px at 113px 23px, rgba(255,150,60,0.64) 40%, transparent 100%), radial-gradient(2.1px 2.1px at 214px 73px, rgba(255,150,60,0.77) 40%, transparent 100%), radial-gradient(1.7px 1.7px at 286px 92px, rgba(255,150,60,0.77) 40%, transparent 100%)",
+      "maskImage": "linear-gradient(to top, #000 55%, transparent)",
+      "WebkitMaskImage": "linear-gradient(to top, #000 55%, transparent)",
+      "willChange": "transform",
+      "animation": "dagwickEmbers 16s linear infinite"
+    },
+    "@keyframes dagwickEmbers": {
+      "0%": {
+        "transform": "translate3d(0,0,0)"
+      },
+      "25%": {
+        "transform": "translate3d(8px,-75px,0)"
+      },
+      "50%": {
+        "transform": "translate3d(0,-150px,0)"
+      },
+      "75%": {
+        "transform": "translate3d(-8px,-225px,0)"
+      },
+      "100%": {
+        "transform": "translate3d(0,-300px,0)"
+      }
+    },
+    "@media (prefers-reduced-motion: reduce)": {
+      "body::before": {
+        "animation": "none"
+      },
+      "body::after": {
+        "animation": "none"
+      }
+    }
+  }
+}

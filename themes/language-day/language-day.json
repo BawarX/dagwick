@@ -1,0 +1,72 @@
+{
+  "globalCss": {
+    "html.dark": {
+      "backgroundImage": "linear-gradient(180deg, rgba(234,179,8,0.10) 0, transparent 360px)"
+    },
+    "html.light": {
+      "backgroundImage": "linear-gradient(180deg, #fff8e6 0, transparent 300px)"
+    },
+    "html::before": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "left": "0",
+      "right": "0",
+      "top": "0",
+      "bottom": "-600px",
+      "backgroundRepeat": "repeat",
+      "backgroundSize": "720px 600px",
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='720'%20height='600'%20viewBox='0%200%20720%20600'%3E%3Ctext%20x='483'%20y='506'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(248,113,113,0.6)'%3E%DA%86%3C/text%3E%3Ctext%20x='209'%20y='554'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(248,113,113,0.6)'%3E%DA%98%3C/text%3E%3Ctext%20x='116'%20y='487'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%DA%A4%3C/text%3E%3Ctext%20x='571'%20y='72'%20font-size='27'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3Ex%3C/text%3E%3Ctext%20x='689'%20y='191'%20font-size='27'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%DA%A9%D9%88%D8%B1%D8%AF%DB%8C%3C/text%3E%3Ctext%20x='84'%20y='90'%20font-size='18'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%DA%AF%3C/text%3E%3Ctext%20x='634'%20y='60'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3Ex%3C/text%3E%3Ctext%20x='625'%20y='230'%20font-size='26'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%C3%AA%3C/text%3E%3Ctext%20x='531'%20y='34'%20font-size='19'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3E%D9%BE%3C/text%3E%3Ctext%20x='436'%20y='115'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3E%DA%AF%3C/text%3E%3Ctext%20x='545'%20y='325'%20font-size='18'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%DB%8E%3C/text%3E%3Ctext%20x='430'%20y='140'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3E%DA%A4%3C/text%3E%3C/svg%3E\")",
+      "opacity": "0.35",
+      "willChange": "transform",
+      "animation": "dagwickLetters0 70s linear infinite"
+    },
+    "html.light::before": {
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='720'%20height='600'%20viewBox='0%200%20720%20600'%3E%3Ctext%20x='483'%20y='506'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(60,60,80,0.3)'%3E%DA%86%3C/text%3E%3Ctext%20x='209'%20y='554'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(60,60,80,0.3)'%3E%DA%98%3C/text%3E%3Ctext%20x='116'%20y='487'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%DA%A4%3C/text%3E%3Ctext%20x='571'%20y='72'%20font-size='27'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3Ex%3C/text%3E%3Ctext%20x='689'%20y='191'%20font-size='27'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%DA%A9%D9%88%D8%B1%D8%AF%DB%8C%3C/text%3E%3Ctext%20x='84'%20y='90'%20font-size='18'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%DA%AF%3C/text%3E%3Ctext%20x='634'%20y='60'%20font-size='25'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3Ex%3C/text%3E%3Ctext%20x='625'%20y='230'%20font-size='26'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%C3%AA%3C/text%3E%3Ctext%20x='531'%20y='34'%20font-size='19'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3E%D9%BE%3C/text%3E%3Ctext%20x='436'%20y='115'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3E%DA%AF%3C/text%3E%3Ctext%20x='545'%20y='325'%20font-size='18'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%DB%8E%3C/text%3E%3Ctext%20x='430'%20y='140'%20font-size='22'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3E%DA%A4%3C/text%3E%3C/svg%3E\")"
+    },
+    "@keyframes dagwickLetters0": {
+      "0%": {
+        "transform": "translate3d(0,0,0)"
+      },
+      "100%": {
+        "transform": "translate3d(0,-600px,0)"
+      }
+    },
+    "html::after": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "left": "0",
+      "right": "0",
+      "top": "0",
+      "bottom": "-600px",
+      "backgroundRepeat": "repeat",
+      "backgroundSize": "720px 600px",
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='720'%20height='600'%20viewBox='0%200%20720%20600'%3E%3Ctext%20x='505'%20y='305'%20font-size='41'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%C5%9F%3C/text%3E%3Ctext%20x='31'%20y='413'%20font-size='45'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3Ex%3C/text%3E%3Ctext%20x='635'%20y='263'%20font-size='30'%20font-family='system-ui,sans-serif'%20fill='rgba(248,113,113,0.6)'%3E%DB%86%3C/text%3E%3Ctext%20x='470'%20y='406'%20font-size='35'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3E%DA%86%3C/text%3E%3Ctext%20x='80'%20y='234'%20font-size='32'%20font-family='system-ui,sans-serif'%20fill='rgba(248,113,113,0.6)'%3E%C3%AE%3C/text%3E%3Ctext%20x='434'%20y='119'%20font-size='30'%20font-family='system-ui,sans-serif'%20fill='rgba(250,204,21,0.7)'%3E%DA%A9%D9%88%D8%B1%D8%AF%DB%8C%3C/text%3E%3Ctext%20x='248'%20y='123'%20font-size='43'%20font-family='system-ui,sans-serif'%20fill='rgba(255,255,255,0.45)'%3E%DB%8E%3C/text%3E%3C/svg%3E\")",
+      "opacity": "0.4",
+      "willChange": "transform",
+      "animation": "dagwickLetters1 45s linear infinite"
+    },
+    "html.light::after": {
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='720'%20height='600'%20viewBox='0%200%20720%20600'%3E%3Ctext%20x='505'%20y='305'%20font-size='41'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%C5%9F%3C/text%3E%3Ctext%20x='31'%20y='413'%20font-size='45'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3Ex%3C/text%3E%3Ctext%20x='635'%20y='263'%20font-size='30'%20font-family='system-ui,sans-serif'%20fill='rgba(60,60,80,0.3)'%3E%DB%86%3C/text%3E%3Ctext%20x='470'%20y='406'%20font-size='35'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3E%DA%86%3C/text%3E%3Ctext%20x='80'%20y='234'%20font-size='32'%20font-family='system-ui,sans-serif'%20fill='rgba(60,60,80,0.3)'%3E%C3%AE%3C/text%3E%3Ctext%20x='434'%20y='119'%20font-size='30'%20font-family='system-ui,sans-serif'%20fill='rgba(202,138,4,0.45)'%3E%DA%A9%D9%88%D8%B1%D8%AF%DB%8C%3C/text%3E%3Ctext%20x='248'%20y='123'%20font-size='43'%20font-family='system-ui,sans-serif'%20fill='rgba(220,38,38,0.35)'%3E%DB%8E%3C/text%3E%3C/svg%3E\")"
+    },
+    "@keyframes dagwickLetters1": {
+      "0%": {
+        "transform": "translate3d(0,0,0)"
+      },
+      "100%": {
+        "transform": "translate3d(0,-600px,0)"
+      }
+    },
+    "@media (prefers-reduced-motion: reduce)": {
+      "html::before": {
+        "animation": "none"
+      },
+      "html::after": {
+        "animation": "none"
+      }
+    }
+  }
+}

@@ -7,6 +7,9 @@ During holidays Wick, the Dagwick flame, dresses up and the page header gets a
 small animated scene. Moods are **decoration only**: scores, grades and text never
 change, and everything goes back to normal when the holiday ends.
 
+Moods dress up Dagwick's own pages. To decorate all of Airflow for a holiday,
+see the [config-only themes](https://github.com/ardalan-jalal/dagwick/blob/main/themes/README.md).
+
 ![All seasonal moods](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/moods.png)
 
 | Mood | When | What you see |
