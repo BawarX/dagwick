@@ -1,0 +1,106 @@
+{
+  "tokens": {
+    "colors": {
+      "brand": {
+        "50": {
+          "value": "oklch(0.98 0.016 73.684)"
+        },
+        "100": {
+          "value": "oklch(0.954 0.038 75.164)"
+        },
+        "200": {
+          "value": "oklch(0.901 0.076 70.697)"
+        },
+        "300": {
+          "value": "oklch(0.837 0.128 66.29)"
+        },
+        "400": {
+          "value": "oklch(0.75 0.183 55.934)"
+        },
+        "500": {
+          "value": "oklch(0.705 0.213 47.604)"
+        },
+        "600": {
+          "value": "oklch(0.646 0.222 41.116)"
+        },
+        "700": {
+          "value": "oklch(0.553 0.195 38.402)"
+        },
+        "800": {
+          "value": "oklch(0.47 0.157 37.304)"
+        },
+        "900": {
+          "value": "oklch(0.408 0.123 38.172)"
+        },
+        "950": {
+          "value": "oklch(0.266 0.079 36.259)"
+        }
+      }
+    }
+  },
+  "globalCss": {
+    "html.dark": {
+      "backgroundImage": "linear-gradient(180deg, rgba(88,28,135,0.35) 0, transparent 380px)"
+    },
+    "html.light": {
+      "backgroundImage": "linear-gradient(180deg, #f6ecff 0, transparent 320px)"
+    },
+    "html::before": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "top": "36px",
+      "right": "110px",
+      "width": "84px",
+      "height": "84px",
+      "borderRadius": "50%",
+      "backgroundImage": "radial-gradient(8px 8px at 60% 62%, rgba(0,0,0,0.08), transparent), radial-gradient(5px 5px at 36% 70%, rgba(0,0,0,0.08), transparent), radial-gradient(circle at 38% 36%, #fff8dc, #f1e3a6 55%, #d9c27a)",
+      "boxShadow": "0 0 48px 14px rgba(255,236,170,0.28)"
+    },
+    "html.light::before": {
+      "opacity": "0.55"
+    },
+    "html::after": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "top": "0",
+      "left": "-480px",
+      "width": "calc(100% + 960px)",
+      "height": "150px",
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='480'%20height='150'%20viewBox='0%200%20480%20150'%3E%3Cdefs%3E%3Cpath%20id='b'%20d='M30%2021%20C28%2017%2025%2016%2022%2018%20C21%2013%2014%2010%204%2012%20C9%209%2015%207%2020%208%20C23%205%2027%205%2029%209%20L29%204%20L31%204%20L31%209%20C33%205%2037%205%2040%208%20C45%207%2051%209%2056%2012%20C46%2010%2039%2013%2038%2018%20C35%2016%2032%2017%2030%2021%20Z'%20fill='%231a1024'%20stroke='rgba(190,160,255,0.5)'%20stroke-width='1'/%3E%3C/defs%3E%3Cuse%20href='%23b'%20transform='translate(40%2030)%20scale(1.1)'/%3E%3Cuse%20href='%23b'%20transform='translate(250%2086)%20scale(0.8)'/%3E%3Cuse%20href='%23b'%20transform='translate(380%2018)%20scale(0.95)'/%3E%3C/svg%3E\")",
+      "backgroundRepeat": "repeat-x",
+      "backgroundSize": "480px 150px",
+      "opacity": "0.85",
+      "willChange": "transform",
+      "animation": "dagwickBats 28s linear infinite"
+    },
+    "@keyframes dagwickBats": {
+      "0%": {
+        "transform": "translate3d(0,0,0)"
+      },
+      "100%": {
+        "transform": "translate3d(-480px,0,0)"
+      }
+    },
+    "body::before": {
+      "content": "\"\"",
+      "position": "fixed",
+      "pointerEvents": "none",
+      "zIndex": "-1",
+      "right": "0",
+      "bottom": "0",
+      "width": "180px",
+      "height": "180px",
+      "backgroundImage": "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%20viewBox='0%200%20180%20180'%3E%3Cg%20fill='none'%20stroke='rgba(165,165,185,0.6)'%20stroke-width='1'%3E%3Cpath%20d='M180%20180%20L180%200'/%3E%3Cpath%20d='M180%20180%20L140%200'/%3E%3Cpath%20d='M180%20180%20L95%200'/%3E%3Cpath%20d='M180%20180%20L50%200'/%3E%3Cpath%20d='M180%20180%20L5%200'/%3E%3Cpath%20d='M180%20180%20L0%205'/%3E%3Cpath%20d='M180%20180%20L0%2050'/%3E%3Cpath%20d='M180%20180%20L0%2095'/%3E%3Cpath%20d='M180%20180%20L0%20140'/%3E%3Cpath%20d='M180%20180%20L0%20180'/%3E%3Cpath%20d='M180%20142%20A38%2038%200%200%200%20142%20180'/%3E%3Cpath%20d='M180%20106%20A74%2074%200%200%200%20106%20180'/%3E%3Cpath%20d='M180%2070%20A110%20110%200%200%200%2070%20180'/%3E%3Cpath%20d='M180%2034%20A146%20146%200%200%200%2034%20180'/%3E%3C/g%3E%3C/svg%3E\")",
+      "opacity": "0.5"
+    },
+    "@media (prefers-reduced-motion: reduce)": {
+      "html::after": {
+        "animation": "none"
+      }
+    }
+  }
+}
