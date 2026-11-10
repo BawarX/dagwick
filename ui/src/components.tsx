@@ -1,7 +1,7 @@
 import { type ComponentType, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BRAND, DAG_TAB_ROUTE } from "./brand";
-import { Lamp, moodFor } from "./Lamp";
+import { Wick, moodFor } from "./Wick";
 import type { SeasonId } from "./season";
 import type { Grade } from "./types";
 
@@ -87,10 +87,10 @@ export function CodeBlock({ code }: { code: string }) {
   );
 }
 
-const LAMP_SAYS: Record<Grade, string> = {
+const WICK_SAYS: Record<Grade, string> = {
   A: "I'm glowing! ✨",
   B: "Nice and warm.",
-  C: "A little more oil?",
+  C: "Trim my wick?",
   D: "I'm flickering…",
   F: "It's dark in here.",
 };
@@ -98,8 +98,8 @@ const LAMP_SAYS: Record<Grade, string> = {
 export function Mascot({ grade, size = 150, season }: { grade: Grade; size?: number; season?: SeasonId }) {
   return (
     <div className="dagwick-mascot">
-      <div className="dagwick-bubble">{LAMP_SAYS[grade]}</div>
-      <Lamp mood={moodFor(grade)} size={size} season={season} />
+      <div className="dagwick-bubble">{WICK_SAYS[grade]}</div>
+      <Wick mood={moodFor(grade)} size={size} season={season} />
     </div>
   );
 }
@@ -107,7 +107,7 @@ export function Mascot({ grade, size = 150, season }: { grade: Grade; size?: num
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
     <div className="dagwick-empty">
-      <Lamp mood="out" size={110} />
+      <Wick mood="out" size={110} />
       <h3>{title}</h3>
       <p className="dagwick-muted">{body}</p>
       {action}
@@ -115,10 +115,10 @@ export function Empty({ title, body, action }: { title: string; body: string; ac
   );
 }
 
-export function Loading({ label = "Lighting the lamp…" }: { label?: string }) {
+export function Loading({ label = "Lighting the wick…" }: { label?: string }) {
   return (
-    <div className="dagwick-empty">
-      <Lamp mood="calm" size={110} />
+    <div className="dagwick-empty dagwick-loading">
+      <Wick mood="calm" size={110} />
       <p className="dagwick-muted">{label}</p>
     </div>
   );

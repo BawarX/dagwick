@@ -147,3 +147,11 @@ def test_the_acknowledgement_demo_dag_shows_every_case():
     assert "can't be acknowledged" in checks["docs"]["ack_note"]  # not allowed
     assert "add a reason" in checks["retry_alerts"]["ack_note"]  # no reason
     assert report["counts"]["ack"] == 2
+
+
+@pytest.mark.parametrize("source", ["\ré", "\r�"])
+def test_text_that_crashes_tokenize_has_no_acknowledgements(source, dim):
+    # Found by fuzz/fuzz_dag_source.py: on Python 3.12, tokenize raises
+    # UnicodeDecodeError for a bare "\r" before a non-ASCII character.
+    assert acknowledgements(source) == {}
+    assert score_dag(dim, Context(source=source))["score"] >= 0

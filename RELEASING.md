@@ -89,6 +89,35 @@ must be dated. The workflow stops if either is wrong.
   ```bash
   pip install "dagwick==0.2.0"
   ```
+- The GitHub release lists the wheel, the sdist and a `.sigstore.json` bundle
+  for each, and the files pass the checks in
+  [Verify a release](#verify-a-release).
+
+## Verify a release
+
+The release workflow signs what it builds in two ways (from 0.3.0):
+
+- A **build provenance attestation** for the wheel and sdist, stored by GitHub.
+  It works for the files on PyPI too, because they are the same files:
+
+  ```bash
+  pip download dagwick==0.3.0 --no-deps -d dagwick-download
+  gh attestation verify dagwick-download/*.whl -R ardalan-jalal/dagwick
+  ```
+
+- **Sigstore bundles** (`*.sigstore.json`) attached to the GitHub release, next
+  to the wheel and sdist:
+
+  ```bash
+  gh release download v0.3.0 -R ardalan-jalal/dagwick -D dagwick-release
+  uvx sigstore verify identity \
+    --cert-identity "https://github.com/ardalan-jalal/dagwick/.github/workflows/release.yml@refs/tags/v0.3.0" \
+    --cert-oidc-issuer https://token.actions.githubusercontent.com \
+    dagwick-release/*.whl dagwick-release/*.tar.gz
+  ```
+
+PyPI also shows its own attestations for each file (made by the publish step),
+on the file's page under **Provenance**.
 
 ## Troubleshooting
 
@@ -100,6 +129,7 @@ must be dated. The workflow stops if either is wrong.
 | `CHANGELOG.md section X is not dated yet` | Date the section (step 3), commit, and move the tag (see below). |
 | `Unknown classifiers` | PyPI does not accept a classifier in `pyproject.toml`. Fix it before tagging. |
 | The upload failed after the build | Fix the cause and click **Re-run failed jobs**. Files already on PyPI are skipped. |
+| `release-assets` failed | The package is already on PyPI. Click **Re-run failed jobs**; existing release files are replaced. |
 
 ## Moving a tag
 

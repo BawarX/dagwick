@@ -1,5 +1,7 @@
 # Dagwick
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ardalan-jalal/dagwick/badge)](https://scorecard.dev/viewer/?uri=github.com/ardalan-jalal/dagwick) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16521/badge)](https://www.bestpractices.dev/projects/16521)
+
 ![Dagwick: grade your Airflow DAGs from A to F, right inside the Airflow UI](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/banner.png)
 
 ## Setup
@@ -40,6 +42,8 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
   common issues. **Download CSV** saves the DAGs shown (dag_id, owners, tags,
   score, grade, failing and warning checks, runs and success rate over 30
   days). The file is built in your browser from what you are allowed to see.
+  To put the same data in a dashboard, see
+  [Fleet data in a dashboard](https://github.com/ardalan-jalal/dagwick/blob/main/docs/dashboards.md).
 - **`dagwick check` and a pre-commit hook** to grade DAG files before they are
   merged. See [Check DAGs before they are merged](#check-dags-before-they-are-merged).
 - **Break a check on purpose, with a reason.** Some DAGs need `catchup=True`
@@ -48,8 +52,8 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
   through an entry point. See
   [Write a check pack](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md#write-a-check-pack).
 
-Experimental and off by default: the lantern can dress up for holidays like
-Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
+Experimental and off by default: Wick, the little flame, dresses up for holidays
+like Newroz, Eid, Christmas and Halloween ([seasonal moods](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)).
 
 ![The Dagwick tab on a DAG](https://raw.githubusercontent.com/ardalan-jalal/dagwick/main/docs/screenshots/dag-tab.png)
 
@@ -144,6 +148,21 @@ Dagwick has no dependencies of its own, so installing it never changes your
 other packages. It is read-only and only shows each user the DAGs they can
 already see.
 
+## Verify a release
+
+From 0.3.0, every release is built and signed by the release workflow in this
+repository. To check that the wheel you install is the one it built:
+
+```bash
+pip download dagwick==0.3.0 --no-deps -d dagwick-download
+gh attestation verify dagwick-download/*.whl -R ardalan-jalal/dagwick
+```
+
+The GitHub release also carries a Sigstore bundle (`.sigstore.json`) for the
+wheel and the sdist. See
+[Releasing](https://github.com/ardalan-jalal/dagwick/blob/main/RELEASING.md#verify-a-release)
+for how to check those.
+
 ## Remove
 
 ```bash
@@ -155,6 +174,7 @@ Then restart the api-server.
 ## More
 
 - [Seasonal moods, and how to turn them off](https://github.com/ardalan-jalal/dagwick/blob/main/docs/moods.md)
+- [Seasonal themes for all of Airflow, config only](https://github.com/ardalan-jalal/dagwick/blob/main/themes/README.md)
 - [What it checks, and how to add your own checks](https://github.com/ardalan-jalal/dagwick/blob/main/docs/checks.md)
 - [Roadmap](https://github.com/ardalan-jalal/dagwick/blob/main/ROADMAP.md)
 - [Security](https://github.com/ardalan-jalal/dagwick/blob/main/SECURITY.md) · [Contributing](https://github.com/ardalan-jalal/dagwick/blob/main/CONTRIBUTING.md) · [Changelog](https://github.com/ardalan-jalal/dagwick/blob/main/CHANGELOG.md) · [Releasing](https://github.com/ardalan-jalal/dagwick/blob/main/RELEASING.md)

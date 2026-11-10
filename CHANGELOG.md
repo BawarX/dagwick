@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Seasonal themes for all of Airflow** (`themes/`, config only): realistic
+  snow, Halloween, Newroz and Kurdish Language Day as plain `[api] theme`
+  files for Airflow 3.2+. The scenery is drawn behind the page, stops under
+  reduced motion and loads nothing from the network. No plugin code.
 - **Seasonal themes for all of Airflow, built in.** A new Themes tab next to
   Fleet lists them. By default each theme appears on its dates on every Airflow
   page and goes away afterwards, with nothing to set in Airflow's
@@ -22,12 +26,12 @@ All notable changes to this project are documented here. The format follows
   already set in Airflow is kept.
 - **Halloween theme** (24 October to 1 November): dark bats flit about on
   their own random paths, beating their wings, ghosts drift across Airflow,
-  embers rise, a full moon with seas, craters and thin clouds peeks from the corner, darkness closes in from the
-  edges, glowing eyes blink in the fog along the bottom, a small cobweb hangs in
-  the corner, black gnarled branches lie on top of the cards (like the snow at
-  Christmas), and spiders dangle from them. Airflow's sidebar, with the user
-  menu, always stays clear of the decorations. Switching
-  between themes without a reload clears the old theme first.
+  embers rise, a full moon with seas, craters and thin clouds peeks from the
+  corner, darkness closes in from the edges, glowing eyes blink in the fog along
+  the bottom, a small cobweb hangs in the corner, black gnarled branches lie on
+  top of the cards (like the snow at Christmas), and spiders dangle from them.
+  Airflow's sidebar, with the user menu, always stays clear of the decorations.
+  Switching between themes without a reload clears the old theme first.
 - **Download the fleet as CSV.** A button on the fleet page saves the DAGs
   shown (with the current search and filters) as a CSV file: dag_id, owners,
   tags, paused, score, grade, failing and warning checks, runs and success
@@ -35,6 +39,11 @@ All notable changes to this project are documented here. The format follows
   only the DAGs the user may read. Cells that a spreadsheet would run as a
   formula are written as text.
 - `/api/fleet` includes each DAG's `tags`.
+- **Fleet data in a dashboard** (`docs/dashboards.md`): how to read
+  `/dagwick/api/fleet` with an Airflow API token and feed it to Grafana, a
+  warehouse or alerts. Dagwick does not add a metrics endpoint or push
+  metrics: scrapers can't easily authenticate against Airflow 3, and the
+  plugin makes no network calls.
 - **Tune the scoring in `airflow.cfg`.** Three optional `[dagwick]` settings:
   `disabled_checks` leaves checks out of every score, `weights` changes how
   many points a check is worth, and `grades` sets the grade thresholds.
@@ -47,12 +56,32 @@ All notable changes to this project are documented here. The format follows
   tests. The guide says which parts of the check interface are stable.
 - Each check now records which pack it came from: `pack` in `/api/checks` and
   in score reports, and a tag on pack checks in the DAG tab.
+- **Signed releases.** Each release now has a build provenance attestation,
+  and its GitHub release carries the wheel, the sdist and their Sigstore
+  bundles. See "Verify a release" in the README.
+
+### Changed
+
+- **New mascot and icon.** Dagwick's mascot is now Wick, a little flame on a
+  candle stamped with a DAG: one more node lights up with every grade, and at F
+  the flame is out and only smoke is left. The seasonal moods dress Wick up
+  (a bonfire at Newroz, a pumpkin at Halloween, a fanous at Ramadan, a cupcake
+  on its birthday, ...). The sidebar icon and the README banner match.
+- `SECURITY.md` links the private reporting form and published advisories,
+  and lists every `[dagwick]` setting.
+
+### Fixed
+
+- A DAG file with a bare carriage return (`\r`) before a non-ASCII character
+  could not be scored on Python 3.12: reading its `# dagwick: ack` comments
+  crashed. Such a file is now scored as if it had no ack comments. Found by
+  the new fuzz tests.
 
 ## [0.2.0] - 2026-11-09
 
 ### Added
 
-- **Seasonal moods (experimental, off by default).** During holidays the lantern dresses up and the page
+- **Seasonal moods (experimental, off by default).** During holidays the mascot dresses up and the page
   header gets an animated scene: falling snow at Christmas, bats at Halloween,
   bonfires and govend dancers at Newroz, Kurdish letters on Kurdish Language
   Day, lanterns at Ramadan, kulîçe at Eid, fireworks at New Year. Each mood
