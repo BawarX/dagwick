@@ -54,6 +54,11 @@ class Theme:
     calendar: str = "Islamic calendar"  # the calendar the windows follow, for when()
     css: Callable[[], dict[str, Any]] = _no_css  # decorations; none means banner only
 
+    @property
+    def ready(self) -> bool:
+        """Its decorations for Airflow are made; otherwise it is "coming soon"."""
+        return self.css is not _no_css
+
     def active_on(self, day: date) -> bool:
         if self.windows:
             return any(first <= day <= last for first, last in self.windows)
@@ -100,7 +105,7 @@ class Theme:
             "end": list(end) if end else None,
             "when": self.when(today),
             "active": self.active_on(today),
-            "decorated": self.css is not _no_css,
+            "decorated": self.ready,
         }
 
 
@@ -168,9 +173,12 @@ def _carsema_sor(year: int) -> date:
 
 CARSEMA_SOR = tuple((d, d) for d in (_carsema_sor(y) for y in range(2026, 2032)))
 
-BANNER_ONLY = (
-    "For now this theme changes Dagwick's banner only; decorations for all of Airflow "
-    "are still to come."
+# Themes whose decorations for all of Airflow aren't made yet. They are listed as
+# "Coming soon" and can't be applied; on their dates Dagwick's banner still dresses up
+# (that is the seasonal mood, which doesn't need a theme).
+COMING_SOON = (
+    "Decorations for all of Airflow are on the way. Until then, Dagwick's banner "
+    "dresses up on these dates."
 )
 
 # When two themes overlap, the earlier one in this list shows: a short festival wins over
@@ -189,14 +197,14 @@ THEMES: tuple[Theme, ...] = (
     Theme(
         id="birthday",
         name="Dagwick's birthday",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         start=(11, 8),
         end=(11, 8),
     ),
     Theme(
         id="diwali",
         name="Diwali",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         windows=DIWALI,
         calendar="Hindu calendar",
     ),
@@ -209,31 +217,31 @@ THEMES: tuple[Theme, ...] = (
         end=(11, 1),
         css=halloween.global_css,
     ),
-    Theme(id="newroz", name="Newroz", description=BANNER_ONLY, start=(3, 19), end=(3, 23)),
-    Theme(id="eid", name="Eid", description=BANNER_ONLY, windows=EID),
+    Theme(id="newroz", name="Newroz", description=COMING_SOON, start=(3, 19), end=(3, 23)),
+    Theme(id="eid", name="Eid", description=COMING_SOON, windows=EID),
     Theme(
         id="carsema-sor",
         name="Çarşema Sor",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         windows=CARSEMA_SOR,
         calendar="Yazidi New Year",
     ),
     Theme(
         id="lantern-festival",
         name="Lantern Festival",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         windows=LANTERN_FESTIVAL,
         calendar="Chinese calendar",
     ),
-    Theme(id="ramadan", name="Ramadan", description=BANNER_ONLY, windows=RAMADAN),
+    Theme(id="ramadan", name="Ramadan", description=COMING_SOON, windows=RAMADAN),
     Theme(
         id="language-day",
         name="Kurdish Language Day",
-        description=BANNER_ONLY,
+        description=COMING_SOON,
         start=(5, 15),
         end=(5, 15),
     ),
-    Theme(id="new-year", name="New Year", description=BANNER_ONLY, start=(12, 31), end=(1, 2)),
+    Theme(id="new-year", name="New Year", description=COMING_SOON, start=(12, 31), end=(1, 2)),
 )
 BY_ID = {t.id: t for t in THEMES}
 
@@ -255,16 +263,17 @@ def _cookies(header: str) -> dict[str, str]:
 
 def pick_theme(cookies: dict[str, str], today: date) -> Theme | None:
     """The theme this viewer sees today: the one they applied, else the first in season.
+    Themes that are coming soon are never picked.
 
     Must match pickTheme in ui/src/themes.ts.
     """
     applied = BY_ID.get(cookies.get(APPLIED_COOKIE, "").strip())
-    if applied:
+    if applied and applied.ready:
         return applied
     off = {part.strip() for part in cookies.get(OFF_COOKIE, "").split(",")}
     if ALL in off:
         return None
-    return next((t for t in THEMES if t.id not in off and t.active_on(today)), None)
+    return next((t for t in THEMES if t.ready and t.id not in off and t.active_on(today)), None)
 
 
 def _decls(style: dict[str, Any], important: bool = False) -> str:

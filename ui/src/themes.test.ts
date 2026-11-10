@@ -4,6 +4,7 @@ import {
   type Choice,
   applyTheme,
   choiceCookies,
+  comingSoon,
   dateRange,
   pickTheme,
   readChoice,
@@ -75,6 +76,20 @@ describe("theme choices", () => {
     expect(readChoice(jar)).toEqual(c);
     expect(choiceCookies(fresh).every((s) => s.includes("Max-Age=0"))).toBe(true);
     expect(choiceCookies(c)[0]).toMatch(/^dagwick_themes_off=\*,christmas; Path=\/; Max-Age=\d+; SameSite=Lax$/);
+  });
+});
+
+describe("themes coming soon", () => {
+  const diwali = { ...newroz, id: "diwali", active: true, decorated: false };
+  const list = [diwali, christmas];
+
+  it("are never picked, by date or by hand, and say so", () => {
+    expect(comingSoon(diwali)).toBe(true);
+    expect(comingSoon(christmas)).toBe(false);
+    expect(pickTheme(list, fresh)).toBe("christmas"); // in season too, but coming soon
+    expect(pickTheme(list, applyTheme(fresh, "diwali"))).toBe("christmas");
+    expect(themeStatus(diwali, list, fresh)).toBe("soon");
+    expect(themeStatus(christmas, list, fresh)).toBe("showing");
   });
 });
 

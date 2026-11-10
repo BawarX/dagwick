@@ -263,7 +263,6 @@ def test_fixed_dates_in_words():
 def test_overlapping_themes_show_the_earlier_one():
     # New Year (31 Dec - 2 Jan) falls inside Christmas (18 Dec - 2 Jan).
     assert pick_theme({}, date(2027, 1, 1)).id == "christmas"
-    assert pick_theme({}, date(2026, 5, 15)).id == "language-day"
 
 
 def test_banner_only_themes_leave_airflow_untouched():
@@ -313,18 +312,23 @@ def test_every_carsema_sor_is_a_wednesday_in_mid_april():
         assert 14 <= first.day <= 20
 
 
-@pytest.mark.parametrize(
-    ("day", "shown"),
-    [
-        (date(2026, 11, 8), "birthday"),  # Dagwick's birthday falls during Diwali 2026
-        (date(2026, 11, 7), "diwali"),
-        (date(2027, 10, 29), "diwali"),  # Diwali 2027 falls during Halloween
-        (date(2027, 10, 26), "halloween"),
-        (date(2026, 3, 3), "lantern-festival"),  # during Ramadan 2026
-    ],
-)
-def test_a_short_festival_wins_over_a_longer_one(day, shown):
-    assert themes.pick_theme({}, day).id == shown
+@pytest.mark.parametrize("theme_id", [t.id for t in themes.THEMES if not t.ready])
+def test_coming_soon_themes_are_never_picked(theme_id):
+    theme = themes.BY_ID[theme_id]
+    assert theme.description == themes.COMING_SOON
+    first, _ = theme.next_window(date(2026, 1, 1)) if theme.windows else (None, None)
+    day = first or date(2027, *theme.start)
+    assert theme.active_on(day)
+    assert pick_theme({}, day) is None or pick_theme({}, day).ready  # by date
+    assert pick_theme({APPLIED_COOKIE: theme_id}, day) is None or (
+        pick_theme({APPLIED_COOKIE: theme_id}, day).id != theme_id
+    )  # nor applied by hand
+
+
+def test_a_theme_that_is_ready_shows_over_one_coming_soon():
+    # Diwali 2027 falls during Halloween; Diwali has no Airflow decorations yet.
+    assert pick_theme({}, date(2027, 10, 29)).id == "halloween"
+    assert pick_theme({}, date(2026, 5, 15)) is None  # Kurdish Language Day: coming soon
 
 
 def test_new_festivals_name_their_calendar():
