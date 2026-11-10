@@ -223,6 +223,15 @@ def _score_by_id(
     return report
 
 
+def _dag_exists(dag_id: str) -> bool:
+    from airflow.models.serialized_dag import SerializedDagModel
+
+    return SerializedDagModel.has_dag(dag_id)
+
+
+NOT_FOUND = "DAG not found or not parsed yet."
+
+
 def _server_error(what: str, exc: BaseException) -> HTTPException:
     ref = uuid.uuid4().hex[:12]
     log.error("dagwick: %s (ref %s)", what, ref, exc_info=exc)
@@ -255,9 +264,13 @@ def health(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, 
     from dagwick.health import dag_health
 
     try:
-        return dag_health(dag_id)
+        found = _dag_exists(dag_id)
+        result = dag_health(dag_id) if found else None
     except Exception as exc:
         raise _server_error(f"failed to read run health for DAG {dag_id}", exc) from None
+    if result is None:
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    return result
 
 
 def _fleet_tags(dag_ids: list[str]) -> dict[str, list[str]]:
@@ -294,9 +307,13 @@ def history(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str,
     from dagwick.history import dag_history
 
     try:
-        return dag_history(dag_id)
+        found = _dag_exists(dag_id)
+        result = dag_history(dag_id) if found else None
     except Exception as exc:
         raise _server_error(f"failed to read score history for DAG {dag_id}", exc) from None
+    if result is None:
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    return result
 
 
 @app.get("/api/score", dependencies=[_require_dag_read()])
@@ -306,7 +323,7 @@ def score(dag_id: str = Query(..., min_length=1, max_length=250)) -> dict[str, A
     except Exception as exc:
         raise _server_error(f"failed to score DAG {dag_id}", exc) from None
     if report is None:
-        raise HTTPException(status_code=404, detail="DAG not found or not parsed yet.")
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
     return report
 
 
