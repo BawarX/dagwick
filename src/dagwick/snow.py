@@ -9,6 +9,7 @@ Viewers who prefer reduced motion get still snow. A snow drift sits along the bo
 
 from __future__ import annotations
 
+import math
 import random
 from typing import Any
 from urllib.parse import quote
@@ -120,77 +121,108 @@ def drift_svg(theme: str) -> str:
     )
 
 
-# Cards that collect a little snow on their top edge: Airflow's DAG cards (stable test id)
-# and Dagwick's own cards.
-CAPPED = (
-    '[data-testid="dag-card"]',
-    ".dagwick-gcard",
-    ".dagwick-cat",
-    ".dagwick-list",
-    ".dagwick-theme",
-)
+# Cards that collect snow on their top edge: Airflow's DAG cards and Dagwick's own cards.
+# For each card, the selector that picks every fifth card starting at k, so neighbouring
+# cards get different snow. A DAG card hides anything outside its rounded edge, so its
+# snow goes on the plain wrapper around it, which has the same top edge.
+CAPPED: dict[str, Any] = {
+    '[data-testid="card-list"] > *': lambda k: f'[data-testid="card-list"] > :nth-child(5n+{k})',
+    ".dagwick-gcard": lambda k: f".dagwick-gcard:nth-child(5n+{k})",
+    ".dagwick-cat": lambda k: f".dagwick-cat:nth-child(5n+{k})",
+    ".dagwick-list": lambda k: f".dagwick-list:nth-child(5n+{k})",
+    ".dagwick-theme": lambda k: f".dagwick-theme:nth-child(5n+{k})",
+}
+# Cards that hide anything outside their edges: their snow sits just inside the top.
+INSIDE = {".dagwick-gcard"}
+VARIANTS = 5
+CAP_H = 22  # px; the card's top edge is EDGE px down from the top of the snow
+EDGE = 10
 
 
-CAP_W = 140  # width of one repeat of the snow on a card
+def cap_svg(seed: int, width: int, big: bool, theme: str) -> str:
+    """One repeat of snow lying on a card edge: soft heaps, a few drips, a blue shadow.
 
-
-def cap_svg(seed: int, theme: str) -> str:
-    """A lumpy layer of snow lying on a card's top edge, a little different for each seed."""
+    Heaps are bell-shaped bumps placed at random; each one is also drawn one repeat to the
+    left and right, so the ends of the pattern meet without a seam.
+    """
     rng = random.Random(seed)
-    steps = 8
-    xs = [i * CAP_W / steps for i in range(steps + 1)]
-    top = [rng.uniform(1, 7) for _ in xs]
-    bottom = [rng.uniform(13, 17) if rng.random() < 0.3 else rng.uniform(10, 12) for _ in xs]
-    # The pattern repeats along the card, so both ends must meet.
-    top[-1], bottom[-1] = top[0], bottom[0]
+    heaps = [
+        (
+            rng.uniform(0, width),  # centre
+            rng.uniform(4, 9) if big else rng.uniform(1.5, 4),  # height
+            rng.uniform(18, 46) if big else rng.uniform(8, 20),  # spread
+        )
+        for _ in range(rng.randint(3, 5) if big else rng.randint(5, 8))
+    ]
+    drips = [(rng.uniform(0, width), rng.uniform(3, 6.5), rng.uniform(3, 6)) for _ in range(2)]
 
-    def smooth(pts: list[tuple[float, float]]) -> str:
-        """A soft curve through the points (each point is a control point)."""
-        return " ".join(
-            f"Q{x0:.0f} {y0:.1f} {(x0 + x1) / 2:.0f} {(y0 + y1) / 2:.1f}"
-            for (x0, y0), (x1, y1) in zip(pts, pts[1:], strict=False)
+    def bump(x: float, items) -> float:
+        return sum(
+            h * math.exp(-(((x - c - shift) / w) ** 2))
+            for c, h, w in items
+            for shift in (-width, 0, width)
         )
 
-    upper = list(zip(xs, top, strict=True))
-    lower = list(zip(xs, bottom, strict=True))[::-1]  # back from right to left
-    edge = "#c9d8ea" if theme == "light" else "#ffffff"
-    d = (
-        f"M0 {top[0]:.1f} {smooth(upper)} L{CAP_W} {top[-1]:.1f} "
-        f"L{CAP_W} {bottom[-1]:.1f} {smooth(lower)} L0 {bottom[0]:.1f} Z"
-    )
+    xs = [i * width / 48 for i in range(49)]
+    base = EDGE - 2.5
+    top = [max(1.0, base - bump(x, heaps)) for x in xs]
+    bottom = [EDGE + 1.8 + bump(x, drips) for x in xs]
+
+    def path(dy: float) -> str:
+        up = " ".join(f"L{x:.1f} {y + dy:.2f}" for x, y in zip(xs, top, strict=True))
+        down = " ".join(
+            f"L{x:.1f} {y + dy:.2f}" for x, y in reversed(list(zip(xs, bottom, strict=True)))
+        )
+        return f"M0 {top[0] + dy:.2f} {up} {down} Z"
+
+    shadow = "#b9cbe0" if theme == "light" else "#9fb3cc"
     return (
-        f"<svg xmlns='http://www.w3.org/2000/svg' width='{CAP_W}' height='18' "
-        f"viewBox='0 0 {CAP_W} 18'>"
-        f"<path d='{d}' fill='#ffffff' stroke='{edge}' stroke-width='.8'/>"
+        f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{CAP_H}' "
+        f"viewBox='0 0 {width} {CAP_H}'>"
+        "<defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'>"
+        "<stop offset='0' stop-color='#ffffff'/><stop offset='.7' stop-color='#f6f9fc'/>"
+        "<stop offset='1' stop-color='#dde8f3'/></linearGradient></defs>"
+        f"<path d='{path(1.3)}' fill='{shadow}' opacity='.7'/>"
+        f"<path d='{path(0)}' fill='url(#s)'/>"
         "</svg>"
     )
 
 
 def caps(theme: str) -> dict[str, Any]:
-    """Snow on the top edge of each card, in three shapes so neighbours differ."""
-    css: dict[str, Any] = {}
-    for sel in CAPPED:
+    """Snow on each card's top edge, in five random variants spread over the cards."""
+    # Airflow's DAG list clips its top edge: leave room for the first card's snow.
+    css: dict[str, Any] = (
+        {'[data-testid="card-list"]': {"paddingTop": f"{EDGE}px"}} if (theme == "dark") else {}
+    )
+    for sel, pick in CAPPED.items():
         if theme == "dark":
+            inside = sel in INSIDE
             css[sel] = {"position": "relative"}
             css[f"{sel}::after"] = {
                 "content": '""',
                 "position": "absolute",
-                "top": "-7px",
-                "left": "6px",
-                "right": "6px",
-                "height": "18px",
-                "backgroundSize": f"{CAP_W}px 18px",
+                "top": "-1px" if inside else f"-{EDGE}px",
+                "left": "4px",
+                "right": "4px",
+                "height": f"{CAP_H}px",
                 "backgroundRepeat": "repeat-x",
-                "borderRadius": "8px 8px 0 0",
                 "pointerEvents": "none",
                 "zIndex": "1",
-                "filter": "drop-shadow(0 1px 1px rgba(15, 30, 60, 0.18))",
             }
-        for n in range(3):
-            key = f"{sel}:nth-of-type(3n+{n + 1})::after"
+        for k in range(VARIANTS):
+            rng = random.Random(1000 + k)
+            big_w, small_w = rng.randint(380, 520), rng.randint(230, 310)
+            key = f"{pick(k + 1)}::after"
             if theme == "light":
                 key = f"html.light {key}"
-            css[key] = {"backgroundImage": url(cap_svg(n + 7, theme))}
+            css[key] = {
+                "backgroundImage": ", ".join(
+                    url(cap_svg(seed, w, big, theme))
+                    for seed, w, big in ((2000 + k, big_w, True), (3000 + k, small_w, False))
+                ),
+                "backgroundSize": f"{big_w}px {CAP_H}px, {small_w}px {CAP_H}px",
+                "backgroundPosition": f"{rng.randint(0, big_w)}px 0, {rng.randint(0, small_w)}px 0",
+            }
     return css
 
 
