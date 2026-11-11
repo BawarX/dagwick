@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Dispute a check.** A failing or warning built-in check in the Dagwick tab
+  now links to a "Dispute a check" GitHub issue form, pre-filled with the
+  check id only (never the DAG id, file or code; the link sends no referrer).
+  `dagwick check` prints the same link to stderr when a check is flagged; JSON
+  output is unchanged. Checks from check packs get no link.
+
 ### Changed
 
 - **Dagwick checks the same DAG permissions as Airflow.** Each endpoint now
