@@ -27,6 +27,23 @@ All notable changes to this project are documented here. The format follows
   for `gh attestation verify`. OpenSSF Scorecard's Signed-Releases check looks
   for it there.
 
+### Fixed
+
+- **Small hardening from a source security audit** (Cloudflare's
+  security-audit skill):
+  - **Ack reasons** are shown to everyone who can see a DAG's grade, so a
+    credential pasted into a `# dagwick: ack` comment is now hidden, and
+    reasons are capped at 200 characters.
+  - **Secret findings** no longer repeat a dict key that isn't a plain name,
+    since such a key could itself contain a credential.
+  - **The theme middleware** now changes only Airflow's own `/ui/config`
+    route (also under `[api] base_url`), not any path that ends the same way.
+  - **`dev/run.sh`** binds the sandbox to `127.0.0.1`. Every visitor is an
+    admin there, so it must not be reachable from the network.
+  - **`scripts/fleet_review.py`** no longer resends the token when the server
+    redirects, and refuses to send it over plain `http://` except to this
+    machine.
+
 ## [0.3.0] - 2026-11-10
 
 ### Added
