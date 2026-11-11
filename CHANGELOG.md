@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Dagwick checks the same DAG permissions as Airflow.** Each endpoint now
+  also requires the DAG sub-permissions core Airflow asks for before showing
+  the same data:
+  - the score needs DAG Code and Task Instances;
+  - score history needs DAG Code and DAG Versions;
+  - run health needs DAG Runs and Task Instances;
+  - the fleet page needs all three.
+
+  Before, plain DAG read was enough, so under the FAB auth manager a role
+  without "DAG Code" could still see a DAG's ack comments and where its
+  secrets are. Check custom roles; the default SimpleAuthManager doesn't
+  separate these permissions, so nothing changes there. Found by
+  a source audit with Cloudflare's security-audit skill.
+- **Releases carry their build provenance as a file.** Next to the wheel, the
+  sdist and their Sigstore bundles, the GitHub release now includes
+  `dagwick-<version>.intoto.jsonl`, the same signed provenance GitHub stores
+  for `gh attestation verify`. OpenSSF Scorecard's Signed-Releases check looks
+  for it there.
+
 ## [0.3.0] - 2026-11-10
 
 ### Added
@@ -80,11 +101,6 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **Releases carry their build provenance as a file.** Next to the wheel, the
-  sdist and their Sigstore bundles, the GitHub release now includes
-  `dagwick-<version>.intoto.jsonl`, the same signed provenance GitHub stores
-  for `gh attestation verify`. OpenSSF Scorecard's Signed-Releases check looks
-  for it there.
 - **New mascot and icon.** Dagwick's mascot is now Wick, a little flame on a
   candle stamped with a DAG: one more node lights up with every grade, and at F
   the flame is out and only smoke is left. The seasonal moods dress Wick up
