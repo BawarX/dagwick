@@ -1,10 +1,7 @@
 # Roadmap
 
-What Dagwick plans to do, and not do, from **November 2026 to November 2027**.
-Priorities can change; ideas and feedback are welcome in
-[issues](https://github.com/dagwick/dagwick/issues) and
-[discussions](https://github.com/dagwick/dagwick/discussions). The maintainers
-review this page at least every three months (see [GOVERNANCE.md](GOVERNANCE.md)).
+Where Dagwick is heading. Priorities can change; ideas and feedback are welcome
+in [issues](https://github.com/dagwick/dagwick/issues).
 
 ## Next 12 months
 
