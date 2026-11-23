@@ -38,6 +38,10 @@ def _inputs() -> list[bytes]:
         b"# dagwick: ack catchup, retries -- backfills\n# dagwick: ack x\n",
         b"from airflow.models import Variable\nx = Variable.get('k')\npassword = 'hunter22'\n",
         b"from airflow.operators.bash import BashOperator\n",
+        b"from airflow.operators.python import (\n"
+        b"    PythonOperator,\n    get_current_context as g,\n)\n",
+        b"default_args = {\r\n    r'owner': 'x'  # c\r\n}\r\nDAG('d', default_args={})\n",
+        b"if 1: from airflow.operators.bash import BashOperator; x = 1\n",
         b"(" * 300 + b")" * 300,
         b"def f(:\n\t\x0c'''",
     ]
@@ -46,7 +50,7 @@ def _inputs() -> list[bytes]:
     return fixed
 
 
-@pytest.mark.parametrize("name", ["fuzz_settings", "fuzz_dag_source"])
+@pytest.mark.parametrize("name", ["fuzz_settings", "fuzz_dag_source", "fuzz_fix"])
 def test_fuzz_target_accepts_inputs(name):
     target = _target(name)
     for data in _inputs():

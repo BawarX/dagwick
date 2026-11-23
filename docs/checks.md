@@ -33,6 +33,10 @@ Why each check exists, with bad and good code, is in the
 lists every check and `dagwick explain <check>` explains one, without needing
 Airflow.
 
+`dagwick fix` repairs two checks automatically (see the README): **Uses current
+Airflow imports** as a safe fix, and **Tasks retry on failure** as an unsafe
+fix (`--unsafe-fixes`), because retrying is only right for idempotent tasks.
+
 ## Tune the scoring
 
 Every Dagwick setting is optional. Without them, scores are exactly as
