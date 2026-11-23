@@ -13,9 +13,12 @@ tolerated.
 
 ## Reporting
 
-Report unacceptable behaviour privately to the maintainers at
-**TODO-conduct-contact**. Reports are read only by the maintainers. If a
-report is about a maintainer, that maintainer is left out of handling it.
+Report unacceptable behaviour privately to the lead maintainer, Ardalan Jalal,
+at [ardalan.jalal.seaid@gmail.com](mailto:ardalan.jalal.seaid@gmail.com).
+If the report is about Ardalan, contact any other maintainer listed in
+[GOVERNANCE.md](GOVERNANCE.md) instead. Reports are read only by the
+maintainers. If a report is about a maintainer, that maintainer is left out of
+handling it.
 
 We will acknowledge a report within **3 working days** and keep the reporter's
 identity confidential.
