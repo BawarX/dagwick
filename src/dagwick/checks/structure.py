@@ -12,6 +12,15 @@ SNAKE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)*$")  # dots come from task groups
 
 @check(
     id="decomposition",
+    why=(
+        "A DAG with a single task does everything in one step. A failure near the end "
+        "reruns the whole job, and Airflow can't show which part is slow or broken."
+    ),
+    bad="@task\ndef everything():\n    extract()\n    transform()\n    load()",
+    ack_when=(
+        "The work really is one atomic step, for example a single SQL statement or "
+        "triggering an external job."
+    ),
     title="Split into steps",
     category=Category.STRUCTURE,
     weight=5,
@@ -27,6 +36,12 @@ def decomposition(dag: Any) -> Finding:
 
 @check(
     id="naming",
+    why=(
+        "dag_ids and task_ids show up in URLs, logs, metric names and CLI commands. "
+        "snake_case ids are consistent and easy to type, search and grep; a mix of styles"
+        " makes DAGs harder to find."
+    ),
+    bad='DAG("DailySales")\nEmptyOperator(task_id="Load-Payments")',
     title="Consistent names",
     category=Category.STRUCTURE,
     weight=3,
@@ -45,6 +60,12 @@ def naming(dag: Any) -> Finding:
 
 @check(
     id="file_name",
+    why=(
+        "When a DAG fails, people search the repository for its dag_id. A file named "
+        "after the DAG puts its code one step away. Files that define several DAGs (DAG "
+        "factories) are skipped."
+    ),
+    bad='# dags/sales.py\nDAG("daily_sales")',
     title="File named after the DAG",
     category=Category.STRUCTURE,
     weight=3,
@@ -67,6 +88,13 @@ def file_name(dag: Any, context: Context) -> Finding:
 
 @check(
     id="current_imports",
+    why=(
+        "Airflow 3 moved many classes: operators to provider packages, the DAG authoring "
+        "API to airflow.sdk. The old paths still work through deprecation shims that a "
+        "future Airflow release removes. When that happens, the file fails to import and "
+        "every DAG in it disappears."
+    ),
+    bad="from airflow.operators.bash import BashOperator",
     title="Uses current Airflow imports",
     category=Category.STRUCTURE,
     weight=3,

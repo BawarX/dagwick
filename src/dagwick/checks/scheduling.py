@@ -8,6 +8,16 @@ from dagwick.core import Category, Finding, Status, check
 
 @check(
     id="schedule",
+    why=(
+        "A DAG without a schedule only runs when something triggers it: a person, another"
+        " DAG or the API. That is right for some DAGs, but often the schedule was simply "
+        "forgotten and the DAG never runs. Asset schedules count as a schedule."
+    ),
+    bad='DAG("daily_sales", schedule=None)',
+    ack_when=(
+        "The DAG is meant to be triggered, for example by another DAG, the API or a "
+        "person (a manual reprocessing DAG)."
+    ),
     title="Has a schedule",
     category=Category.SCHEDULING,
     weight=5,
@@ -27,6 +37,17 @@ def schedule(dag: Any) -> Finding:
 
 @check(
     id="catchup",
+    why=(
+        "With catchup=True, unpausing the DAG, or deploying it with an old start_date, "
+        "starts a run for every missed interval, possibly hundreds at once. They can "
+        "flood the warehouse and the systems the DAG reads from."
+    ),
+    bad='DAG("daily_sales", schedule="@daily", catchup=True)',
+    ack_when=(
+        "The DAG must process every interval, for example an ingest that loads one "
+        "partition per day and has to fill the gaps after an outage. Limit "
+        "max_active_runs as well."
+    ),
     title="No surprise backfills",
     category=Category.SCHEDULING,
     weight=5,
@@ -44,6 +65,16 @@ def catchup(dag: Any) -> Finding:
 
 @check(
     id="auto_pause",
+    why=(
+        "A broken DAG on a frequent schedule fails on every run, all night: alerts pile "
+        "up and worker slots are wasted. max_consecutive_failed_dag_runs pauses it after "
+        "a few failures in a row, which stops the noise and is itself a clear signal."
+    ),
+    bad='DAG("sync_orders", schedule="*/5 * * * *")  # fails forever if broken',
+    ack_when=(
+        "Something else stops the DAG when it keeps failing, for example on-call pauses "
+        "it by hand, or it must keep trying until a source comes back."
+    ),
     title="Stops after repeated failures",
     category=Category.SCHEDULING,
     weight=3,
@@ -65,6 +96,16 @@ def auto_pause(dag: Any) -> Finding:
 
 @check(
     id="max_active_runs",
+    why=(
+        "Without a limit, a backfill or catchup can start many runs at once, all reading "
+        "the same sources and writing the same tables. For most ETL, runs of the same DAG"
+        " should not overlap. Dagwick accepts up to 4."
+    ),
+    bad='DAG("daily_sales", schedule="@daily")  # max_active_runs defaults to 16',
+    ack_when=(
+        "Runs are independent (for example each one processes its own partition) and the "
+        "systems they use can take the parallel load."
+    ),
     title="Bounded parallel runs",
     category=Category.SCHEDULING,
     weight=5,

@@ -18,6 +18,8 @@ export interface CheckResult {
   ack_note: string;
   /** The package that registered the check: "dagwick" for built-ins, else the check pack. */
   pack?: string;
+  /** Why the check matters; set when the check needs work (older servers omit it). */
+  why?: string;
 }
 
 export interface ScoreReport {

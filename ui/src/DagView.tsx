@@ -3,6 +3,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { fetchScore, useLoad } from "./api";
 import { BRAND, VERSION } from "./brand";
 import { CodeBlock, Empty, Loading, Mascot, ScoreRing, brandEyebrow } from "./components";
+import { checkDocsUrl } from "./checkDocs";
 import { canDispute, disputeUrl } from "./dispute";
 import { RunHealth } from "./RunHealth";
 import { ScoreHistory } from "./ScoreHistory";
@@ -208,6 +209,7 @@ function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean
   const [allItems, setAllItems] = useState(false);
   const actionable = Boolean(check.fix);
   const items = allItems ? check.items : check.items.slice(0, MAX_ITEMS);
+  const docsUrl = checkDocsUrl(check);
   return (
     <li
       id={`dagwick-check-${check.id}`}
@@ -260,22 +262,35 @@ function CheckRow({ check, open, onToggle }: { check: CheckResult; open: boolean
                 )}
               </div>
             )}
+            {check.why && (
+              <div className="dagwick-why">
+                <span className="dagwick-why-label">Why it matters</span>
+                {check.why}
+              </div>
+            )}
             <div className="dagwick-fix">
               <span className="dagwick-fix-label">How to fix</span>
               {check.fix}
               {check.example && <CodeBlock code={check.example} />}
             </div>
-            {canDispute(check) && (
-              <a
-                className="dagwick-dispute"
-                href={disputeUrl(check.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Opens a GitHub issue that names only this check, never your DAG"
-              >
-                Disagree with this check? Open a dispute on GitHub ↗
-              </a>
-            )}
+            <div className="dagwick-links">
+              {docsUrl && (
+                <a className="dagwick-dispute" href={docsUrl} target="_blank" rel="noopener noreferrer">
+                  More about this check ↗
+                </a>
+              )}
+              {canDispute(check) && (
+                <a
+                  className="dagwick-dispute"
+                  href={disputeUrl(check.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Opens a GitHub issue that names only this check, never your DAG"
+                >
+                  Disagree with this check? Open a dispute on GitHub ↗
+                </a>
+              )}
+            </div>
           </div>
         )}
       </div>

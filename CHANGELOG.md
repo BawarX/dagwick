@@ -14,6 +14,18 @@ All notable changes to this project are documented here. The format follows
   `dagwick check` prints the same link to stderr when a check is flagged; JSON
   output is unchanged. Checks from check packs get no link.
   The form replaces the "False alarm" form: pick "False alarm" in it instead.
+- **Every check explains itself** (#107). Each built-in check now says why it
+  matters, with bad and good code, how to fix it and when it's fine to
+  acknowledge it:
+  - `dagwick explain` lists every check, and `dagwick explain <check>`
+    explains one. It works without Airflow installed.
+  - The new "Check reference" in `docs/checks.md` has the same text. It is
+    generated from the checks, so the docs and the CLI can't disagree.
+  - In the Dagwick tab, a check that needs work shows **Why it matters** above
+    **How to fix**, and links to its section of the reference.
+  - `/api/checks` and score reports include `why`.
+  - Check packs can explain their checks too, with the new optional `why`,
+    `bad` and `ack_when` parameters of `@check`.
 
 ### Changed
 

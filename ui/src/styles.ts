@@ -168,6 +168,9 @@ html.dark .dagwick {
 .dagwick-check-msg { font-size: 14px; color: var(--dagwick-muted); margin-top: 2px; }
 .dagwick-fix { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--dagwick-surface); border-left: 3px solid var(--dagwick-accent); }
 .dagwick-fix-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-accent-text); margin-bottom: 2px; }
+.dagwick-why { margin-top: 8px; font-size: 13px; color: var(--dagwick-text); }
+.dagwick-why-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dagwick-muted); margin-bottom: 2px; }
+.dagwick-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .dagwick-dispute { display: inline-block; margin-top: 6px; font-size: 12px; color: var(--dagwick-muted); text-decoration: underline; text-underline-offset: 2px; }
 .dagwick-dispute:hover, .dagwick-dispute:focus-visible { color: var(--dagwick-accent-text); }
 .dagwick-clear { padding: 28px; text-align: center; color: var(--dagwick-muted); }

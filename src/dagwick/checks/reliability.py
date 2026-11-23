@@ -8,6 +8,17 @@ from dagwick.core import Category, Finding, Status, check
 
 @check(
     id="retries",
+    why=(
+        "Most task failures are transient: a network blip, a database restart, a rate "
+        "limit. Without retries, one of them fails the whole run and someone has to clear"
+        " it by hand, often at night. Retries are only safe for idempotent tasks (running"
+        " twice gives the same result), so make tasks idempotent first."
+    ),
+    bad='default_args={"retries": 0}',
+    ack_when=(
+        "The task is not idempotent, so a retry would duplicate data (for example it "
+        "appends rows without de-duplicating), and it can't be made idempotent yet."
+    ),
     title="Tasks retry on failure",
     category=Category.RELIABILITY,
     weight=15,
@@ -27,6 +38,12 @@ def retries(dag: Any) -> Finding:
 
 @check(
     id="execution_timeout",
+    why=(
+        "A task that hangs (a stuck query, a connection that never times out) holds its "
+        "worker slot forever. Other tasks queue behind it, and because it never fails, no"
+        " alert fires. Set the limit a little above the task's longest normal run."
+    ),
+    bad='BashOperator(task_id="load", bash_command="load.sh")  # can run forever',
     title="Tasks have a time limit",
     category=Category.RELIABILITY,
     weight=10,
@@ -45,6 +62,12 @@ def execution_timeout(dag: Any) -> Finding:
 
 @check(
     id="dagrun_timeout",
+    why=(
+        "A stuck run still counts as active. With max_active_runs=1, the next scheduled "
+        "run waits behind it forever and the data silently stops updating. dagrun_timeout"
+        " fails the stuck run, so the failure alert fires and the schedule moves on."
+    ),
+    bad='DAG("daily_sales", schedule="@daily")  # no dagrun_timeout',
     title="Runs have a time limit",
     category=Category.RELIABILITY,
     weight=8,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import difflib
 import json
 import os
 import sys
@@ -17,6 +18,7 @@ GRADES = ("A", "B", "C", "D", "F")
 ICON = {"fail": "x", "warn": "!"}
 
 OK, BELOW_GRADE, LOAD_ERROR = 0, 1, 2
+USAGE_ERROR = 2  # same code argparse uses for a bad command line
 
 DISPUTE_URL = "https://github.com/dagwick/dagwick/issues/new?template=dispute.yml"
 DISPUTE_HINT = f"Disagree with a check or hit a false positive? Tell us: {DISPUTE_URL}"
@@ -120,10 +122,31 @@ def flagged(reports: list[dict[str, Any]]) -> bool:
     )
 
 
+def _explain(check_id: str | None, out: TextIO, err: TextIO) -> int:
+    from dagwick.core import registered_checks
+    from dagwick.explain import explain_text, list_text
+
+    specs = {s.id: s for s in registered_checks()}
+    if check_id is None:
+        out.write(list_text(specs.values()))
+        return OK
+    spec = specs.get(check_id.strip().lower())
+    if spec is None:
+        close = difflib.get_close_matches(check_id, specs, n=3)
+        hint = f" Did you mean: {', '.join(close)}?" if close else ""
+        print(f"dagwick: unknown check {check_id!r}.{hint}", file=err)
+        print("Run `dagwick explain` to list every check.", file=err)
+        return USAGE_ERROR
+    out.write(explain_text(spec))
+    return OK
+
+
 def main(
     argv: Sequence[str] | None = None, out: TextIO = sys.stdout, err: TextIO = sys.stderr
 ) -> int:
-    parser = argparse.ArgumentParser(prog="dagwick", description="Grade Airflow DAGs.")
+    parser = argparse.ArgumentParser(
+        prog="dagwick", description="Grade Airflow DAGs and explain the checks."
+    )
     parser.add_argument("--version", action="version", version=f"dagwick {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser(
@@ -142,7 +165,20 @@ def main(
         help="exit with status 1 if any DAG scores below this grade",
     )
     check.add_argument("--json", action="store_true", help="print the reports as JSON")
+    explain = sub.add_parser(
+        "explain",
+        help="explain why a check exists and how to fix it",
+        description=(
+            "Explain a check: why it matters, bad and good code, how to fix it and when "
+            "it is fine to acknowledge. Without a check id, list every check. "
+            "Does not need Airflow."
+        ),
+    )
+    explain.add_argument("check_id", nargs="?", help="the check to explain, e.g. retries")
     args = parser.parse_args(argv)
+
+    if args.command == "explain":
+        return _explain(args.check_id, out, err)
 
     missing = [str(p) for p in args.paths if not p.exists()]
     if missing:

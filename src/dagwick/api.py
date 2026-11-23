@@ -518,6 +518,7 @@ def checks() -> list[dict[str, Any]]:
             "acknowledgeable": c.acknowledgeable,
             "ack_hint": c.ack_hint,
             "pack": c.pack,
+            "why": c.why,
         }
         for c in registered_checks()
     ]

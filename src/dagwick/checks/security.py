@@ -9,6 +9,13 @@ from dagwick.core import Category, Context, Finding, Status, check
 
 @check(
     id="hardcoded_secrets",
+    why=(
+        "A credential in a DAG file is in the repository's history for good, in every "
+        "clone, and in Airflow's database, where the DAG's code is shown to everyone who "
+        "can read the DAG. Connections and secrets backends keep it out of the code and "
+        "let you rotate it."
+    ),
+    bad='PASSWORD = "s3cr3t-p4ss"  # in the DAG file',
     title="No secrets in the DAG file",
     category=Category.SECURITY,
     weight=10,

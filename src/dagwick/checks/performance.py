@@ -26,6 +26,13 @@ def parse_status(seconds: float | None) -> Status:
 
 @check(
     id="parse_time",
+    why=(
+        "Airflow re-parses every DAG file every few minutes, so top-level code runs on "
+        "every parse, not once. Slow files delay every change from showing up, and a file"
+        " slower than dagbag_import_timeout (30 s by default) fails to load. See 'Top "
+        "level Python code' in Airflow's best practices."
+    ),
+    bad="rows = requests.get(URL).json()  # runs on every parse",
     title="Fast to parse",
     category=Category.PERFORMANCE,
     weight=5,
@@ -55,6 +62,13 @@ def parse_time(dag: Any, context: Context) -> Finding:
 
 @check(
     id="parse_time_variables",
+    why=(
+        "Each Variable.get at parse time is a metadata-database or secrets-backend call "
+        "on every parse: thousands a day for one file. It slows parsing and loads the "
+        "database, or a secrets backend that may charge per call. A template or a read "
+        "inside the task runs only when the task runs."
+    ),
+    bad='bucket = Variable.get("bucket")  # top level: runs on every parse',
     title="No Variable.get at parse time",
     category=Category.PERFORMANCE,
     weight=5,
@@ -88,6 +102,16 @@ def _minutes(seconds: float) -> str:
 
 @check(
     id="sensor_slots",
+    why=(
+        "A sensor in poke mode holds a worker slot for its whole wait, doing nothing. Ten"
+        " sensors that each wait an hour take ten slots that real tasks need. A "
+        "deferrable sensor waits in the triggerer without a worker slot; reschedule mode "
+        "frees the slot between checks."
+    ),
+    bad='S3KeySensor(task_id="wait_for_file", ..., poke_interval=60)  # pokes for hours',
+    ack_when=(
+        "The sensor must react within seconds, faster than reschedule mode or the triggerer allows."
+    ),
     title="Sensors free their worker slot",
     category=Category.PERFORMANCE,
     weight=5,

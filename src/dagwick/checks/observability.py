@@ -8,6 +8,17 @@ from dagwick.core import Category, Finding, Status, check
 
 @check(
     id="failure_alerts",
+    why=(
+        "A DAG that fails without telling anyone keeps failing until someone notices "
+        "stale data, often days later and often a user of the data. A failure callback or"
+        " notifier sends the failure to where the owners look."
+    ),
+    bad='default_args={"owner": "data-team"}  # no on_failure_callback',
+    ack_when=(
+        "Failures are alerted somewhere else, for example by a central listener plugin, a"
+        " Grafana or Prometheus rule on task state, or an on-call system that watches "
+        "Airflow."
+    ),
     title="Someone hears about failures",
     category=Category.OBSERVABILITY,
     weight=15,
@@ -29,6 +40,16 @@ def failure_alerts(dag: Any) -> Finding:
 
 @check(
     id="retry_alerts",
+    why=(
+        "A task that only succeeds on its second or third try works today and fails "
+        "tomorrow. A retry notification shows the flakiness while there is still time to "
+        "fix it."
+    ),
+    bad='default_args={"retries": 3}  # retries happen silently',
+    ack_when=(
+        "Retries are expected and would only be noise, for example a task that polls an "
+        "API which rate-limits by design."
+    ),
     title="Retries are visible",
     category=Category.OBSERVABILITY,
     weight=3,
