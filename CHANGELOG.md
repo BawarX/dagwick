@@ -26,6 +26,17 @@ All notable changes to this project are documented here. The format follows
   - `/api/checks` and score reports include `why`.
   - Check packs can explain their checks too, with the new optional `why`,
     `bad` and `ack_when` parameters of `@check`.
+- **`dagwick fix`** (#105) repairs DAG files automatically. It shows a diff
+  (and exits 1 if there is something to fix); `--write` changes the files.
+  - Safe fix: deprecated Airflow imports move to the path Airflow points to.
+    An import that mixes moved and current names is split.
+  - Unsafe fix, only with `--unsafe-fixes`: missing retries get
+    `"retries": 2` in `default_args`. It is left out when the file already
+    sets retries anywhere, even `retries=0`.
+  - It never imports or runs the files, keeps formatting, comments and line
+    endings, skips checks the file acknowledges, and is idempotent. A new fuzz
+    target checks that a fix always leaves valid Python.
+  - `dagwick check` marks fixable problems with `[dagwick fix]`.
 
 ### Changed
 

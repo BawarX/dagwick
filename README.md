@@ -128,6 +128,29 @@ developer machine or in CI. The Airflow plugin itself never runs DAG code.
 Exit codes: `0` all good, `1` a DAG is below `--min-grade`, `2` a file failed
 to load.
 
+`dagwick explain <check>` says why a check exists, with bad and good code.
+
+### Fix them automatically
+
+`dagwick fix` repairs what can be repaired safely. It shows a diff first:
+
+```bash
+dagwick fix dags/                  # show the diff; exit 1 if there is something to fix
+dagwick fix dags/ --write          # change the files
+dagwick fix dags/ --write --unsafe-fixes   # also fixes that change what the DAG does
+```
+
+- **Safe fixes** don't change what the DAG does: deprecated Airflow imports
+  move to the path Airflow points to.
+- **Unsafe fixes** change behaviour, so they need `--unsafe-fixes`: missing
+  retries get `"retries": 2` in `default_args`. Retrying is only safe for
+  idempotent tasks, so review each one.
+
+`dagwick fix` only reads the files: it never imports or runs them. It keeps
+your formatting, comments and line endings, and leaves alone anything a
+`# dagwick: ack` comment marks as on purpose. `dagwick check` marks the
+problems it can fix with `[dagwick fix]`.
+
 ### pre-commit
 
 ```yaml
