@@ -108,6 +108,30 @@ def variable_get_lines(tree: ast.Module) -> list[int]:
     return sorted(set(visitor.lines))
 
 
+def lines_set_true(tree: ast.Module, names: frozenset[str]) -> list[tuple[int, str]]:
+    """Where an argument or dict key in ``names`` is set to True: ``(line, name)``.
+
+    Finds ``depends_on_past=True`` on a call and ``"depends_on_past": True`` in a dict,
+    such as default_args.
+    """
+    found: set[tuple[int, str]] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.keyword):
+            pairs = [(node.arg, node.value)]
+        elif isinstance(node, ast.Dict):
+            pairs = [
+                (key.value, value)
+                for key, value in zip(node.keys, node.values, strict=True)
+                if isinstance(key, ast.Constant)
+            ]
+        else:
+            continue
+        for name, value in pairs:
+            if name in names and isinstance(value, ast.Constant) and value.value is True:
+                found.add((value.lineno, name))
+    return sorted(found)
+
+
 NEVER_IMPORT = ("airflow.providers.", "airflow.example_dags")
 
 
