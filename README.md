@@ -40,7 +40,7 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
 
 ## What you get
 
-- **A score and a grade for every DAG.** 22 checks in 7 categories:
+- **A score and a grade for every DAG.** 23 checks in 7 categories:
   reliability, observability, ownership, scheduling, structure, performance
   and security. Each check that doesn't pass tells you how to fix it. See
   [what it checks](https://github.com/dagwick/dagwick/blob/main/docs/checks.md).
@@ -115,6 +115,7 @@ comment.
 | Split into steps | `decomposition` | why the DAG breaks it on purpose |
 | Tasks are connected | `isolated_tasks` | why the DAG breaks it on purpose |
 | Someone hears about failures | `failure_alerts` | where failures are alerted instead, e.g. a central listener or a Grafana rule |
+| Someone hears about late runs | `deadline_alerts` | how a late run is noticed instead, e.g. a freshness check on the data |
 | Stops after repeated failures | `auto_pause` | what stops the DAG when it keeps failing, e.g. on-call pausing it by hand |
 | Sensors free their worker slot | `sensor_slots` | why the sensor must keep its worker slot, e.g. it needs sub-minute reaction |
 

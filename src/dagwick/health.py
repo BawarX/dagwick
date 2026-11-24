@@ -9,6 +9,7 @@ WINDOW_DAYS = 30
 RECENT_DAYS = 7
 MAX_RUNS = 500
 MIN_RUNS_FOR_TREND = 3
+TYPICAL_RUNS = 20  # the last successful runs that make "a typical run" for the checks
 FINISHED = ("success", "failed")
 
 Run = tuple[str, datetime | None, datetime | None]
@@ -68,6 +69,53 @@ def summarise(
         "last_end": _utc(last[2]).isoformat() if last and last[2] else None,
         "truncated": len(runs) >= MAX_RUNS,
     }
+
+
+def median_seconds(
+    runs: Iterable[tuple[str, datetime | None, datetime | None]],
+) -> dict[str, float]:
+    """dag_id -> median duration of the given ``(dag_id, start, end)`` runs, in seconds."""
+    durations: dict[str, list[float]] = {}
+    for dag_id, start, end in runs:
+        took = _seconds(start, end)
+        if took is not None:
+            durations.setdefault(dag_id, []).append(took)
+    return {dag_id: _median(values) for dag_id, values in durations.items()}
+
+
+def typical_run_seconds(dag_ids: list[str], now: datetime | None = None) -> dict[str, float]:
+    """The median duration of each DAG's last TYPICAL_RUNS successful runs in the window.
+
+    One query for the whole fleet: a window function keeps at most TYPICAL_RUNS rows
+    per DAG, so DAGs that run every few minutes don't bring back thousands of rows.
+    DAGs without a successful run in the window are left out.
+    """
+    from airflow.models.dagrun import DagRun
+    from airflow.utils.session import create_session
+    from sqlalchemy import func, select
+
+    if not dag_ids:
+        return {}
+    since = (now or datetime.now(timezone.utc)) - timedelta(days=WINDOW_DAYS)
+    ranked = (
+        select(
+            DagRun.dag_id,
+            DagRun.start_date,
+            DagRun.end_date,
+            func.row_number()
+            .over(partition_by=DagRun.dag_id, order_by=DagRun.end_date.desc())
+            .label("n"),
+        )
+        .where(DagRun.dag_id.in_(dag_ids), DagRun.state == "success", DagRun.end_date >= since)
+        .subquery()
+    )
+    with create_session() as session:
+        rows = session.execute(
+            select(ranked.c.dag_id, ranked.c.start_date, ranked.c.end_date).where(
+                ranked.c.n <= TYPICAL_RUNS
+            )
+        ).all()
+    return median_seconds(rows)
 
 
 def success_rate(succeeded: int, failed: int) -> float | None:

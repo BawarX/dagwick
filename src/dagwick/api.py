@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from dagwick import __version__, settings, themes
 from dagwick.checks._sensors import sensor_task_ids
 from dagwick.checks.performance import SLOW_POKE_SECONDS, parse_status
+from dagwick.checks.reliability import LONG_RUN_SECONDS
 from dagwick.core import Context, registered_checks, score_dag
 
 log = logging.getLogger(__name__)
@@ -224,6 +225,22 @@ def _sensor_band(runs: SensorRuns) -> str:
     )
 
 
+def _typical_runs(dag_ids: list[str]) -> dict[str, float]:
+    """dag_id -> median seconds of its recent successful runs; {} when unknown."""
+    from dagwick.health import typical_run_seconds
+
+    try:
+        return typical_run_seconds(dag_ids)
+    except Exception:
+        log.exception("dagwick: could not read run times")
+        return {}
+
+
+def _run_band(seconds: float | None) -> str:
+    """The part of the cache key that run times change: long, short or unknown."""
+    return "-" if seconds is None else str(int(seconds >= LONG_RUN_SECONDS))
+
+
 def _latest_dag_hash(dag_id: str) -> str | None:
     """The hash of the DAG's latest serialized version, read without its data blob.
 
@@ -250,7 +267,10 @@ def _latest_dag_hash(dag_id: str) -> str | None:
 
 
 def _score_by_id(
-    dag_id: str, dags_in_file: int | None = None, facts: FileFacts | None = None
+    dag_id: str,
+    dags_in_file: int | None = None,
+    facts: FileFacts | None = None,
+    run_seconds: float | None | object = MISSING,
 ) -> dict[str, Any] | None:
     from airflow.models.serialized_dag import SerializedDagModel
 
@@ -274,11 +294,14 @@ def _score_by_id(
     source_hash, parse_seconds = facts
     parse_band = parse_status(parse_seconds).value
     sensor_runs = _sensor_runs(dag_id, sensors) if sensors else {}
+    if run_seconds is MISSING:
+        run_seconds = _typical_runs([dag_id]).get(dag_id)
     default_deferrable = _default_deferrable()
     scoring = settings.scoring()
     key = (
         f"{dag_hash}:{dags_in_file}:{source_hash}:{parse_band}:"
-        f"{_sensor_band(sensor_runs)}:{int(default_deferrable)}:{scoring.key}"
+        f"{_sensor_band(sensor_runs)}:{_run_band(run_seconds)}:{int(default_deferrable)}:"
+        f"{scoring.key}"
     )
     cached = _cache.get(dag_id, key)
     if cached is not None:
@@ -298,6 +321,7 @@ def _score_by_id(
         sensor_tasks=sensors,
         sensor_runs=sensor_runs,
         default_deferrable=default_deferrable,
+        typical_run_seconds=run_seconds,
     )
     report = score_dag(sdm.dag, context, scoring)
     _cache.put(dag_id, key, report)
@@ -465,9 +489,12 @@ def fleet(user: Annotated[Any, _user()]) -> dict[str, Any]:
         facts = _file_facts(dag_ids)
         health = _fleet_health(dag_ids)
         tags = _fleet_tags(dag_ids)
+        runs = _typical_runs(dag_ids)
         dags = []
         for dag_id, is_paused, owners, fileloc in rows:
-            report = _score_by_id(dag_id, per_file.get(fileloc), facts.get(dag_id, (None, None)))
+            report = _score_by_id(
+                dag_id, per_file.get(fileloc), facts.get(dag_id, (None, None)), runs.get(dag_id)
+            )
             if report is not None:
                 dags.append(
                     fleet_entry(

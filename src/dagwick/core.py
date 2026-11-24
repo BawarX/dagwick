@@ -79,6 +79,7 @@ class Context:
     sensor_tasks: tuple[str, ...] | None = None
     sensor_runs: dict[str, tuple[float | None, bool]] | None = None
     default_deferrable: bool = False
+    typical_run_seconds: float | None = None  # median of the DAG's recent successful runs
 
 
 @dataclass(frozen=True)

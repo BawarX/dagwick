@@ -62,6 +62,18 @@ All notable changes to this project are documented here. The format follows
   `depends_on_past` is meant to work. Read per task from the serialized DAG
   (`wait_for_downstream` counts too); the line comes from the DAG file. DAGs
   without it are skipped. Reliability, 8 points; it can be acknowledged.
+- New check, **Someone hears about late runs** (`deadline_alerts`, #110).
+  Airflow 3 replaced SLAs with deadline alerts (Airflow 3.1 and later). The
+  check warns when a DAG has none, and its recent runs usually take an hour
+  or more, or its `dagrun_timeout` is over two hours: a run that is late but
+  hasn't failed tells nobody. It passes when a deadline alert is set, and is
+  skipped for short runs, when there is nothing to judge, and on an Airflow
+  without deadline alerts. The run times come from the same run history as
+  run health (the median of the last 20 successful runs in 30 days), read in
+  one query for the fleet page; `dagwick check` has no run history, so it
+  only judges `dagrun_timeout`. Checked how deadline alerts serialize on
+  Airflow 3.1, 3.2, 3.3 and 3.4. Reliability, 5 points; it can be
+  acknowledged with a reason that says how late runs are noticed instead.
 
 ### Changed
 

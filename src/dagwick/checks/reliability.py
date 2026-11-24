@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 from dagwick.checks._source import lines_set_true, parse
@@ -135,6 +136,90 @@ def execution_timeout(dag: Any) -> Finding:
         noun="have an execution_timeout",
         all_msg="Every task has an execution_timeout.",
         none_msg="No task has an execution_timeout; a hung task can run forever.",
+    )
+
+
+LONG_RUN_SECONDS = 3600.0  # runs that usually take an hour or more
+LONG_DAGRUN_TIMEOUT = timedelta(hours=2)  # runs allowed to go on for over two hours
+NO_DEADLINES = object()  # the Airflow running Dagwick has no deadline alerts
+
+
+def _duration(seconds: float) -> str:
+    if seconds >= 3600:
+        return f"{seconds / 3600:.1f} h"
+    if seconds >= 60:
+        return f"{seconds / 60:.0f} min"
+    return f"{seconds:.0f} s"
+
+
+@check(
+    id="deadline_alerts",
+    why=(
+        "A run that is late but hasn't failed sets off nothing: on_failure_callback waits for "
+        "a failure, and dagrun_timeout for the timeout, hours away for a long DAG. Airflow 3 "
+        "removed SLAs; deadline alerts (Airflow 3.1 and later) replace them and call back "
+        "when a run isn't done in time. Only long-running DAGs are judged: recent runs that "
+        "usually take an hour or more, or a dagrun_timeout over two hours."
+    ),
+    bad=(
+        'DAG("nightly_warehouse", schedule="@daily", dagrun_timeout=timedelta(hours=6))\n'
+        "# no deadline: a run that is five hours late tells nobody"
+    ),
+    ack_when=(
+        "Something else notices late runs, for example a freshness check on the tables the "
+        "DAG writes, or an SLO alert in Grafana."
+    ),
+    title="Someone hears about late runs",
+    category=Category.RELIABILITY,
+    weight=5,
+    ack_hint="how a late run is noticed instead (for example a freshness check on the data)",
+    example=(
+        "from airflow.sdk.definitions.deadline import AsyncCallback, DeadlineAlert, "
+        "DeadlineReference\n\n"
+        "DAG(\n"
+        "    ...,\n"
+        "    deadline=DeadlineAlert(\n"
+        "        reference=DeadlineReference.DAGRUN_QUEUED_AT,\n"
+        "        interval=timedelta(hours=3),\n"
+        '        callback=AsyncCallback(SlackWebhookNotifier, kwargs={"text": "Late"}),\n'
+        "    ),\n"
+        ")"
+    ),
+    fix=(
+        "Add a deadline alert (Airflow 3.1 and later) that calls back when a run isn't done "
+        "in time, for example 3 hours after it was queued."
+    ),
+)
+def deadline_alerts(dag: Any, context: Context) -> Finding:
+    # Airflow 3.1 keeps DeadlineAlert objects on the DAG. From 3.2 on, a round trip keeps
+    # encoded alerts, and the DAG read from the database keeps the ids of its
+    # deadline_alert rows. Any of them means an alert is set; no deadline is None.
+    deadline = getattr(dag, "deadline", NO_DEADLINES)
+    if deadline is NO_DEADLINES:
+        return Finding(Status.SKIP, "This Airflow version has no deadline alerts.")
+    if deadline:
+        count = len(deadline) if isinstance(deadline, list | tuple) else 1
+        noun = "deadline alert is" if count == 1 else "deadline alerts are"
+        return Finding(Status.PASS, f"{count} {noun} set.")
+    typical = context.typical_run_seconds
+    if typical is not None and typical >= LONG_RUN_SECONDS:
+        return Finding(
+            Status.WARN,
+            f"Runs usually take {_duration(typical)}, and no deadline alert says when one is late.",
+        )
+    timeout = getattr(dag, "dagrun_timeout", None)
+    if timeout is not None and timeout > LONG_DAGRUN_TIMEOUT:
+        return Finding(
+            Status.WARN,
+            f"A run may take up to {_duration(timeout.total_seconds())} (dagrun_timeout), "
+            "and no deadline alert says when one is late.",
+        )
+    if typical is not None:
+        return Finding(
+            Status.SKIP, f"Runs usually take {_duration(typical)}, too short to need a deadline."
+        )
+    return Finding(
+        Status.SKIP, "Not enough to judge: no recent runs, and dagrun_timeout is not over 2 hours."
     )
 
 

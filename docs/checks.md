@@ -10,6 +10,7 @@ not apply to a DAG is left out of the score.
 | Reliability | Tasks retry on failure | 15 | yes |
 | Reliability | Safe use of `depends_on_past` (fails with `catchup=True` and more than one active run; warns when `default_args` sets it for every task) | 8 | yes |
 | Reliability | Tasks have a time limit (`execution_timeout`) | 10 | no |
+| Reliability | Someone hears about late runs (a deadline alert on DAGs whose runs usually take an hour or more, or whose `dagrun_timeout` is over two hours; run times need run history) | 5 | yes, see below |
 | Reliability | Runs have a time limit (`dagrun_timeout`) | 8 | no |
 | Observability | Someone hears about failures (`on_failure_callback`) | 15 | yes, see below |
 | Observability | Retries are visible (`on_retry_callback`) | 3 | yes |
@@ -64,9 +65,9 @@ or set the same values as environment variables:
   `dagrun_timeout`, `failure_alerts`, `retry_alerts`, `owner`, `docs`, `tags`,
   `schedule`, `catchup`, `auto_pause`, `max_active_runs`, `decomposition`,
   `isolated_tasks`, `naming`, `file_name`, `current_imports`, `parse_time`,
-  `parse_time_variables`, `sensor_slots`, `hardcoded_secrets` and
-  `depends_on_past`. Checks from a check pack can be disabled or re-weighted
-  the same way.
+  `parse_time_variables`, `sensor_slots`, `hardcoded_secrets`,
+  `depends_on_past` and `deadline_alerts`. Checks from a check pack can be
+  disabled or re-weighted the same way.
 - A disabled check is left out completely: it is not run, not shown, and earns
   no points.
 - **Grades** must go A > B > C > D, each from 0 to 100. The DAG tab and the
@@ -104,12 +105,14 @@ An acknowledged check:
 
 Only the checks marked in the table above can be acknowledged. The others
 protect things no DAG should go without, and an acknowledgement for them is
-ignored with a note. A reason after `--` is required. For the three checks marked
+ignored with a note. A reason after `--` is required. For the four checks marked
 "see below", it must say where the problem is handled instead, or why it
 cannot be:
 
 - **Someone hears about failures:** where failures are alerted instead (for
   example a central listener or a Grafana rule).
+- **Someone hears about late runs:** how a late run is noticed instead (for
+  example a freshness check on the data).
 - **Stops after repeated failures:** what stops the DAG when it keeps failing
   (for example on-call pausing it by hand).
 - **Sensors free their worker slot:** why the sensor must keep its slot (for
@@ -255,8 +258,9 @@ Check packs can rely on these, imported from `dagwick`:
   may be added, so read them by name.
 
 Everything else is internal and may change in any release before 1.0. That
-includes the other `Context` fields (`sensor_tasks`, `sensor_runs`,
-`default_deferrable`, which exist for the built-in sensor check), `CheckSpec`,
+includes the other `Context` fields (`sensor_tasks`, `sensor_runs` and
+`default_deferrable` for the built-in sensor check, `typical_run_seconds` for
+the deadline check), `CheckSpec`,
 the registry in `dagwick.core`, the modules under `dagwick.checks`, and the
 layout of `score_dag`'s report.
 
@@ -472,6 +476,38 @@ DAG(..., dagrun_timeout=timedelta(hours=2))
 **How to fix.** Set dagrun_timeout on the DAG so a stuck run cannot block the next one.
 
 **When it's fine to acknowledge.** Never: this check can't be acknowledged.
+
+### deadline_alerts
+
+**Someone hears about late runs** · reliability · 5 points · can be acknowledged
+
+**Why it matters.** A run that is late but hasn't failed sets off nothing: on_failure_callback waits for a failure, and dagrun_timeout for the timeout, hours away for a long DAG. Airflow 3 removed SLAs; deadline alerts (Airflow 3.1 and later) replace them and call back when a run isn't done in time. Only long-running DAGs are judged: recent runs that usually take an hour or more, or a dagrun_timeout over two hours.
+
+Bad:
+
+```python
+DAG("nightly_warehouse", schedule="@daily", dagrun_timeout=timedelta(hours=6))
+# no deadline: a run that is five hours late tells nobody
+```
+
+Good:
+
+```python
+from airflow.sdk.definitions.deadline import AsyncCallback, DeadlineAlert, DeadlineReference
+
+DAG(
+    ...,
+    deadline=DeadlineAlert(
+        reference=DeadlineReference.DAGRUN_QUEUED_AT,
+        interval=timedelta(hours=3),
+        callback=AsyncCallback(SlackWebhookNotifier, kwargs={"text": "Late"}),
+    ),
+)
+```
+
+**How to fix.** Add a deadline alert (Airflow 3.1 and later) that calls back when a run isn't done in time, for example 3 hours after it was queued.
+
+**When it's fine to acknowledge.** Something else notices late runs, for example a freshness check on the tables the DAG writes, or an SLO alert in Grafana. The reason must say how a late run is noticed instead (for example a freshness check on the data).
 
 ### depends_on_past
 
