@@ -40,7 +40,7 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
 
 ## What you get
 
-- **A score and a grade for every DAG.** 22 checks in 7 categories:
+- **A score and a grade for every DAG.** 23 checks in 7 categories:
   reliability, observability, ownership, scheduling, structure, performance
   and security. Each check that doesn't pass tells you how to fix it. See
   [what it checks](https://github.com/dagwick/dagwick/blob/main/docs/checks.md).
@@ -113,6 +113,7 @@ comment.
 | Has a schedule | `schedule` | why the DAG breaks it on purpose |
 | No surprise backfills | `catchup` | why the DAG breaks it on purpose |
 | Bounded parallel runs | `max_active_runs` | why the DAG breaks it on purpose |
+| Safe use of depends_on_past | `depends_on_past` | why the DAG breaks it on purpose |
 | Split into steps | `decomposition` | why the DAG breaks it on purpose |
 | Tasks are connected | `isolated_tasks` | why the DAG breaks it on purpose |
 | Someone hears about failures | `failure_alerts` | where failures are alerted instead, e.g. a central listener or a Grafana rule |
