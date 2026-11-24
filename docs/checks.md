@@ -21,6 +21,7 @@ not apply to a DAG is left out of the score.
 | Scheduling | Stops after repeated failures (`max_consecutive_failed_dag_runs`) | 3 | yes, see below |
 | Scheduling | Bounded parallel runs (`max_active_runs`) | 5 | yes |
 | Structure | Split into steps | 5 | yes |
+| Structure | Tasks are connected (a task with no upstream or downstream task, a forgotten `>>`; skipped when most tasks are independent) | 3 | yes |
 | Structure | Consistent names (snake_case) | 3 | no |
 | Structure | File named after the DAG (`<dag_id>.py`; skipped for files that define several DAGs) | 3 | no |
 | Structure | Uses current Airflow imports (no path Airflow itself marks as deprecated) | 3 | no |
@@ -63,7 +64,7 @@ or set the same values as environment variables:
   `dagrun_timeout`, `dynamic_start_date`, `failure_alerts`, `retry_alerts`,
   `owner`, `docs`, `tags`,
   `schedule`, `catchup`, `auto_pause`, `max_active_runs`, `decomposition`,
-  `naming`, `file_name`, `current_imports`, `parse_time`,
+  `isolated_tasks`, `naming`, `file_name`, `current_imports`, `parse_time`,
   `parse_time_variables`, `sensor_slots` and `hardcoded_secrets`. Checks from
   a check pack can be disabled or re-weighted the same way.
 - A disabled check is left out completely: it is not run, not shown, and earns
@@ -718,6 +719,31 @@ dags/load_payments.py   ->   DAG(dag_id="load_payments")
 **How to fix.** Name the file <dag_id>.py (one DAG per file), so the DAG's code is easy to find.
 
 **When it's fine to acknowledge.** Never: this check can't be acknowledged.
+
+### isolated_tasks
+
+**Tasks are connected** · structure · 3 points · can be acknowledged
+
+**Why it matters.** A task with no upstream and no downstream task is usually a forgotten >>. Airflow runs it as soon as the DAG run begins, in parallel with everything else, so it can read data before it is written, and the graph no longer shows where it belongs. DAGs where most tasks have no dependencies, such as a batch of independent jobs, are skipped.
+
+Bad:
+
+```python
+extract = BashOperator(task_id="extract", bash_command="extract.sh")
+load = BashOperator(task_id="load", bash_command="load.sh")
+report = BashOperator(task_id="report", bash_command="report.sh")
+extract >> load  # report is not connected: it starts before the data is loaded
+```
+
+Good:
+
+```python
+extract >> load >> report
+```
+
+**How to fix.** Connect the task with >> or chain() so it runs in the right order.
+
+**When it's fine to acknowledge.** The task is independent of the others on purpose, for example housekeeping that cleans up old files while the pipeline runs.
 
 ### naming
 

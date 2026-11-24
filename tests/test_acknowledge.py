@@ -17,6 +17,7 @@ ACKNOWLEDGEABLE = {
     "max_active_runs",
     "schedule",
     "decomposition",
+    "isolated_tasks",  # a task can be independent on purpose (housekeeping, say)
     "retry_alerts",
     "failure_alerts",  # with a reason saying where failures are alerted instead
     "auto_pause",  # with a reason saying what stops the DAG when it keeps failing
