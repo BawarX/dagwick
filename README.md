@@ -40,13 +40,14 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
 
 ## What you get
 
-- **A score and a grade for every DAG.** 22 checks in 7 categories:
+- **A score and a grade for every DAG.** 23 checks in 7 categories:
   reliability, observability, ownership, scheduling, structure, performance
   and security. Each check that doesn't pass tells you how to fix it. See
   [what it checks](https://github.com/dagwick/dagwick/blob/main/docs/checks.md).
 - **Checks that read your DAG file without running it:** `Variable.get` at
   parse time, deprecated Airflow imports, hard-coded secrets (the value is
-  never shown), and sensors that hold a worker slot while they wait.
+  never shown), a `start_date` that moves on every parse, and sensors that
+  hold a worker slot while they wait.
 - **Run health** next to the score: success rate, retries, typical run time
   and its trend over the last 30 days. It never changes the score.
 - **Score history:** the score of each of the last 20 versions of a DAG, and
@@ -107,6 +108,7 @@ comment.
 | Check | Id | The reason must say |
 | --- | --- | --- |
 | Tasks retry on failure | `retries` | why the DAG breaks it on purpose |
+| Fixed start_date | `dynamic_start_date` | why the DAG breaks it on purpose |
 | Retries are visible | `retry_alerts` | why the DAG breaks it on purpose |
 | Has a schedule | `schedule` | why the DAG breaks it on purpose |
 | No surprise backfills | `catchup` | why the DAG breaks it on purpose |

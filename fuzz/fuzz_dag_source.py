@@ -1,7 +1,8 @@
 """Fuzz target: everything Dagwick reads from a DAG file's source text.
 
 Dagwick never runs DAG code, but it parses the file: "# dagwick: ack"
-comments, hardcoded secrets, Variable.get at parse time, deprecated imports.
+comments, hardcoded secrets, Variable.get at parse time, deprecated imports,
+a start_date that reads the clock.
 Any text, valid Python or not, must give each check a Finding and never
 raise, and the whole report must still score from 0 to 100.
 
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from dagwick.acknowledge import acknowledgements
@@ -21,10 +23,12 @@ from dagwick.core import Context, Finding, Status, registered_checks, score_dag
 from dagwick.settings import Scoring
 
 # A DAG with no tasks: the checks that read the DAG object return a fixed
-# result, so the fuzzer spends its time on the source-based checks.
+# result, so the fuzzer spends its time on the source-based checks. It has a
+# start_date, or dynamic_start_date would skip without reading the source.
 DAG = SimpleNamespace(
     dag_id="fuzz",
     fileloc="/dags/fuzz.py",
+    start_date=datetime(2025, 1, 1, tzinfo=timezone.utc),
     tasks=[],
     tags=[],
     owner="",
