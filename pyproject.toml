@@ -1,13 +1,13 @@
 [project]
 name = "dagwick"
 dynamic = ["version"]
-description = "The wick that keeps your DAGs lit: DAG quality scores, a fleet view, and fixes you can act on, inside the Airflow 3 UI."
+description = "Lint and fix Airflow DAGs: checks for reliable, readable DAGs, automatic fixes, and A–F grades inside the Airflow 3 UI."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "The Dagwick Authors" }]
-keywords = ["airflow", "apache-airflow", "airflow-plugin", "dag", "data-quality", "linting"]
+keywords = ["airflow", "apache-airflow", "airflow-plugin", "dag", "linter", "lint", "linting", "data-quality", "pre-commit"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Plugins",

@@ -6,3 +6,10 @@
   language: system
   types: [python]
   require_serial: true
+- id: dagwick-fix
+  name: dagwick fix
+  description: Apply Dagwick's safe fixes to changed Airflow DAG files (the commit stops so you can review them).
+  entry: dagwick fix --write
+  language: system
+  types: [python]
+  require_serial: true

@@ -233,9 +233,8 @@ def _explain(check_id: str | None, out: TextIO, err: TextIO) -> int:
     return OK
 
 
-def main(
-    argv: Sequence[str] | None = None, out: TextIO = sys.stdout, err: TextIO = sys.stderr
-) -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """The command line: ``dagwick check``, ``dagwick explain`` and ``dagwick fix``."""
     parser = argparse.ArgumentParser(
         prog="dagwick", description="Grade Airflow DAGs and explain the checks."
     )
@@ -283,6 +282,13 @@ def main(
         action="store_true",
         help="also apply fixes that change what the DAG does (for example adding retries)",
     )
+    return parser
+
+
+def main(
+    argv: Sequence[str] | None = None, out: TextIO = sys.stdout, err: TextIO = sys.stderr
+) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "explain":
