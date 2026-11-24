@@ -15,6 +15,7 @@ ACKNOWLEDGEABLE = {
     "retries",
     "max_active_runs",
     "schedule",
+    "depends_on_past",  # each run may have to build on the one before
     "decomposition",
     "isolated_tasks",  # a task can be independent on purpose (housekeeping, say)
     "retry_alerts",

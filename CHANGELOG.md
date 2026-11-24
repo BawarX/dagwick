@@ -52,6 +52,16 @@ All notable changes to this project are documented here. The format follows
   of separate jobs) are skipped. It reads the serialized DAG, so dependencies
   set through task groups, `chain()` or a task's input, including mapped
   tasks, count. Structure, 3 points; it can be acknowledged.
+- New check, **Safe use of depends_on_past** (`depends_on_past`, #109). Tried
+  on a real Airflow 3 scheduler: after one failure, the later runs of a task
+  with `depends_on_past` stay "running" with no error, because Airflow's
+  deadlock check skips them. The check fails when `depends_on_past` meets
+  `catchup=True` and more than one active run (every missed interval is stuck
+  at once), and warns when `default_args` sets it for every task. With
+  `max_active_runs=1` a failure holds up one run, which is how
+  `depends_on_past` is meant to work. Read per task from the serialized DAG
+  (`wait_for_downstream` counts too); the line comes from the DAG file. DAGs
+  without it are skipped. Reliability, 8 points; it can be acknowledged.
 
 ### Changed
 

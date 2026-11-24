@@ -8,6 +8,7 @@ not apply to a DAG is left out of the score.
 | Category | Check | Points | Can acknowledge |
 | --- | --- | --- | --- |
 | Reliability | Tasks retry on failure | 15 | yes |
+| Reliability | Safe use of `depends_on_past` (fails with `catchup=True` and more than one active run; warns when `default_args` sets it for every task) | 8 | yes |
 | Reliability | Tasks have a time limit (`execution_timeout`) | 10 | no |
 | Reliability | Runs have a time limit (`dagrun_timeout`) | 8 | no |
 | Observability | Someone hears about failures (`on_failure_callback`) | 15 | yes, see below |
@@ -63,8 +64,9 @@ or set the same values as environment variables:
   `dagrun_timeout`, `failure_alerts`, `retry_alerts`, `owner`, `docs`, `tags`,
   `schedule`, `catchup`, `auto_pause`, `max_active_runs`, `decomposition`,
   `isolated_tasks`, `naming`, `file_name`, `current_imports`, `parse_time`,
-  `parse_time_variables`, `sensor_slots` and `hardcoded_secrets`. Checks from
-  a check pack can be disabled or re-weighted the same way.
+  `parse_time_variables`, `sensor_slots`, `hardcoded_secrets` and
+  `depends_on_past`. Checks from a check pack can be disabled or re-weighted
+  the same way.
 - A disabled check is left out completely: it is not run, not shown, and earns
   no points.
 - **Grades** must go A > B > C > D, each from 0 to 100. The DAG tab and the
@@ -470,6 +472,30 @@ DAG(..., dagrun_timeout=timedelta(hours=2))
 **How to fix.** Set dagrun_timeout on the DAG so a stuck run cannot block the next one.
 
 **When it's fine to acknowledge.** Never: this check can't be acknowledged.
+
+### depends_on_past
+
+**Safe use of depends_on_past** · reliability · 8 points · can be acknowledged
+
+**Why it matters.** depends_on_past=True makes a task wait until the same task succeeded in the previous run. After one failure, later runs stop: their tasks never start, the runs stay running, and Airflow logs no error. With catchup=True and more than one active run, every missed interval starts at once and all of them get stuck. dagrun_timeout doesn't fix it: it fails those runs but marks their tasks skipped, which counts as done, so later runs go on without the failed interval. Set in default_args, depends_on_past applies to every task, usually by accident.
+
+Bad:
+
+```python
+DAG("daily_ingest", schedule="@daily", catchup=True,
+    default_args={"depends_on_past": True})  # up to 16 runs at once
+```
+
+Good:
+
+```python
+DAG("daily_ingest", schedule="@daily", catchup=True, max_active_runs=1)
+BashOperator(task_id="load_day", ..., depends_on_past=True)  # only where needed
+```
+
+**How to fix.** Set depends_on_past only on the tasks that need it, not in default_args. With catchup=True, also set max_active_runs=1, so a failure holds up one run, not all.
+
+**When it's fine to acknowledge.** Every run must build on the one before (for example each run applies changes to the previous day's table), failures are alerted, and someone fixes the failed run before later runs may go on.
 
 ### execution_timeout
 
