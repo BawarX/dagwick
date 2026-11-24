@@ -44,6 +44,14 @@ All notable changes to this project are documented here. The format follows
   workflow, adopting Dagwick in an existing repository, and how it fits next
   to Ruff's Airflow rules. A test checks every `dagwick` command and hook the
   docs show.
+- New check, **Tasks are connected** (`isolated_tasks`, #111): warns when a
+  task has no upstream and no downstream task while most of the DAG's tasks
+  are connected. That is usually a forgotten `>>`: the task runs as soon as
+  the DAG run begins, in parallel with everything else. The affected tasks are
+  listed. DAGs whose tasks are all or mostly independent on purpose (a batch
+  of separate jobs) are skipped. It reads the serialized DAG, so dependencies
+  set through task groups, `chain()` or a task's input, including mapped
+  tasks, count. Structure, 3 points; it can be acknowledged.
 
 ### Changed
 
