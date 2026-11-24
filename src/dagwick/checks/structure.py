@@ -34,6 +34,73 @@ def decomposition(dag: Any) -> Finding:
     return Finding(Status.WARN, f"Only {n} task; a failure reruns everything.")
 
 
+def _neighbours(task: Any) -> set[str]:
+    """The task ids directly upstream or downstream of ``task``."""
+    upstream = getattr(task, "upstream_task_ids", None) or ()
+    downstream = getattr(task, "downstream_task_ids", None) or ()
+    return {*upstream, *downstream}
+
+
+@check(
+    id="isolated_tasks",
+    why=(
+        "A task with no upstream and no downstream task is usually a forgotten >>. Airflow "
+        "runs it as soon as the DAG run begins, in parallel with everything else, so it can "
+        "read data before it is written, and the graph no longer shows where it belongs. "
+        "DAGs where most tasks have no dependencies, such as a batch of independent jobs, "
+        "are skipped."
+    ),
+    bad=(
+        'extract = BashOperator(task_id="extract", bash_command="extract.sh")\n'
+        'load = BashOperator(task_id="load", bash_command="load.sh")\n'
+        'report = BashOperator(task_id="report", bash_command="report.sh")\n'
+        "extract >> load  # report is not connected: it starts before the data is loaded"
+    ),
+    ack_when=(
+        "The task is independent of the others on purpose, for example housekeeping that "
+        "cleans up old files while the pipeline runs."
+    ),
+    title="Tasks are connected",
+    category=Category.STRUCTURE,
+    weight=3,
+    acknowledgeable=True,
+    example="extract >> load >> report",
+    fix="Connect the task with >> or chain() so it runs in the right order.",
+)
+def isolated_tasks(dag: Any) -> Finding:
+    tasks = list(dag.tasks)
+    if len(tasks) < 2:
+        return Finding(Status.SKIP, "Fewer than two tasks, so there is nothing to connect.")
+    # The serialized DAG stores each task's downstream ids and rebuilds the upstream
+    # ones when it is loaded. Both ends of every edge count, so either side is enough.
+    with_edges: set[str] = set()
+    for task in tasks:
+        neighbours = _neighbours(task)
+        if neighbours:
+            with_edges |= {task.task_id, *neighbours}
+    isolated = sorted(t.task_id for t in tasks if t.task_id not in with_edges)
+    connected = len(tasks) - len(isolated)
+    if not isolated:
+        return Finding(Status.PASS, "Every task is connected to another task.")
+    if not connected:
+        return Finding(
+            Status.SKIP, "No task depends on another, so the tasks look independent on purpose."
+        )
+    if len(isolated) >= connected:
+        return Finding(
+            Status.SKIP,
+            f"{len(isolated)} of {len(tasks)} tasks have no upstream or downstream task, "
+            "so they look independent on purpose.",
+        )
+    noun, verb = ("task has", "it runs") if len(isolated) == 1 else ("tasks have", "they run")
+    return Finding(
+        Status.WARN,
+        f"{len(isolated)} {noun} no upstream or downstream task, so {verb} in parallel "
+        "with the rest.",
+        tuple(isolated),
+    )
+
+
 @check(
     id="naming",
     why=(

@@ -1,6 +1,6 @@
 # Lint and fix your DAGs
 
-Dagwick is a linter for Airflow DAGs. The same 20 checks run in two places:
+Dagwick is a linter for Airflow DAGs. The same 21 checks run in two places:
 
 - **On your DAG files**, with the `dagwick` command: on your machine, in
   pre-commit and in CI, before a DAG is merged.
@@ -170,7 +170,7 @@ checks that need the real DAG, a grade, and the view inside Airflow.
 Dagwick's other checks look at the DAG as Airflow sees it, after
 `default_args`, defaults and DAG factories: retries, timeouts, failure alerts,
 owner, docs, tags, catchup, parallel runs, auto-pause, naming, file names,
-parse time, sensors (with run history) and secrets. Ruff can't see those from
-the source alone.
+tasks with no dependencies, parse time, sensors (with run history) and secrets.
+Ruff can't see those from the source alone.
 
 Where both report the same problem, fixing it once clears both.
