@@ -42,6 +42,8 @@ def _inputs() -> list[bytes]:
         b"    PythonOperator,\n    get_current_context as g,\n)\n",
         b"default_args = {\r\n    r'owner': 'x'  # c\r\n}\r\nDAG('d', default_args={})\n",
         b"if 1: from airflow.operators.bash import BashOperator; x = 1\n",
+        b"S = S + d\nA = B\nB = A\ndefault_args = {**default_args, 'start_date': A}\n"
+        b"default_args['start_date'] = now()\nDAG('d', start_date=S, default_args=dict(x | y))\n",
         b"(" * 300 + b")" * 300,
         b"def f(:\n\t\x0c'''",
     ]

@@ -13,6 +13,7 @@ from dagwick.core import registered_checks, score_dag
 ACKNOWLEDGEABLE = {
     "catchup",
     "retries",
+    "dynamic_start_date",  # rarely right: say why the start_date can't be fixed
     "max_active_runs",
     "schedule",
     "decomposition",

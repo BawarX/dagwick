@@ -1,6 +1,6 @@
 # Lint and fix your DAGs
 
-Dagwick is a linter for Airflow DAGs. The same 20 checks run in two places:
+Dagwick is a linter for Airflow DAGs. The same 21 checks run in two places:
 
 - **On your DAG files**, with the `dagwick` command: on your machine, in
   pre-commit and in CI, before a DAG is merged.
@@ -165,6 +165,7 @@ checks that need the real DAG, a grade, and the view inside Airflow.
 | Removed or moved Airflow imports | `AIR301`, `AIR302`, `AIR311`, `AIR312`, `AIR321` | `current_imports`, fixed by `dagwick fix` |
 | Explicit `schedule` | `AIR002` (the argument is missing) | `schedule` (the DAG never runs on its own) |
 | `Variable.get` outside a task | `AIR003` (preview) | `parse_time_variables` |
+| Values that change on every parse | `AIR304` (preview): a call like `datetime.now()` written in a DAG or task argument | `dynamic_start_date`, for `start_date`: also through variables and `default_args`, and helpers like `days_ago()` or `timezone.utcnow()` |
 | Task variable named after its `task_id` | `AIR001` | — |
 
 Dagwick's other checks look at the DAG as Airflow sees it, after
@@ -174,3 +175,9 @@ parse time, sensors (with run history) and secrets. Ruff can't see those from
 the source alone.
 
 Where both report the same problem, fixing it once clears both.
+
+Airflow 3.2 and later also look for values that change on every parse when
+they parse a DAG file, and show a DAG warning in the UI
+(`[dag_processor] dag_version_inflation_check_level`: `warning` by default,
+`error` to stop such a DAG from loading). Dagwick finds a moving `start_date`
+before the DAG is deployed, and on Airflow 3.1 too.

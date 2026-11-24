@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from dagwick.checks._source import moving_start_dates, parse
 from dagwick.checks._util import coverage
-from dagwick.core import Category, Finding, Status, check
+from dagwick.core import Category, Context, Finding, Status, check
 
 
 @check(
@@ -79,3 +80,53 @@ def dagrun_timeout(dag: Any) -> Finding:
     if timeout is None:
         return Finding(Status.FAIL, "dagrun_timeout is not set.")
     return Finding(Status.PASS, f"Runs time out after {timeout}.")
+
+
+def _has_start_date(dag: Any) -> bool:
+    if getattr(dag, "start_date", None) is not None:
+        return True
+    return any(getattr(t, "start_date", None) is not None for t in getattr(dag, "tasks", ()))
+
+
+@check(
+    id="dynamic_start_date",
+    why=(
+        "A start_date built from the current time, such as datetime.now(), pendulum.today()"
+        " or days_ago(1), is a new value every time Airflow parses the file, every few "
+        "minutes. Runs are scheduled from that date, so a run may never become due, or runs "
+        "appear and disappear, and in Airflow 3 each new value makes a new DAG version. The "
+        "serialized DAG only keeps the timestamp, so Dagwick reads the DAG file."
+    ),
+    bad=(
+        "START = datetime.now() - timedelta(days=1)  # a new value on every parse\n"
+        'DAG("daily_sales", schedule="@daily", start_date=START)'
+    ),
+    ack_when=(
+        "Rarely: for example a DAG that only runs when triggered (schedule=None), so "
+        "start_date doesn't decide when it runs. Even then, removing the start_date is better."
+    ),
+    title="Fixed start_date",
+    category=Category.RELIABILITY,
+    weight=10,
+    acknowledgeable=True,
+    example='DAG(..., start_date=pendulum.datetime(2026, 1, 1, tz="UTC"))',
+    fix=(
+        'Use a fixed date, for example pendulum.datetime(2026, 1, 1, tz="UTC"). With '
+        "catchup=False, a date in the past doesn't start a backfill."
+    ),
+)
+def dynamic_start_date(dag: Any, context: Context) -> Finding:
+    if not _has_start_date(dag):
+        return Finding(Status.SKIP, "The DAG has no start_date.")
+    tree = parse(context.source) if context.source else None
+    if tree is None:
+        return Finding(Status.SKIP, "The DAG's source code is not available.")
+    found = moving_start_dates(tree)
+    if not found:
+        return Finding(Status.PASS, "No start_date changes when the file is parsed.")
+    where = "" if len(found) == 1 else f" in {len(found)} places"
+    return Finding(
+        Status.FAIL,
+        f"start_date uses the current time{where}, so it moves forward on every parse.",
+        tuple(f"line {line}: {what}" for line, what in found),
+    )
