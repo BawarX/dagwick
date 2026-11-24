@@ -37,9 +37,19 @@ All notable changes to this project are documented here. The format follows
     endings, skips checks the file acknowledges, and is idempotent. A new fuzz
     target checks that a fix always leaves valid Python.
   - `dagwick check` marks fixable problems with `[dagwick fix]`.
+- **`dagwick-fix` pre-commit hook.** It applies the safe fixes to changed DAG
+  files; pre-commit then stops the commit so you can review them.
+- **Lint and fix your DAGs** (`docs/linting.md`, #113): install, check, fix,
+  explain, acknowledging checks, exit codes, pre-commit, a GitHub Actions
+  workflow, adopting Dagwick in an existing repository, and how it fits next
+  to Ruff's Airflow rules. A test checks every `dagwick` command and hook the
+  docs show.
 
 ### Changed
 
+- **Dagwick presents itself as a DAG linter.** The README and the PyPI
+  summary now lead with linting and fixing DAG files; the Airflow UI is the
+  other half. The pre-commit example uses `rev: v0.3.0`.
 - **The repository moved to the `dagwick` organization:**
   <https://github.com/dagwick/dagwick>. Old links redirect. Releases up to
   0.3.x still verify against `ardalan-jalal/dagwick`, where they were signed.
