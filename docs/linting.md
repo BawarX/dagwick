@@ -1,6 +1,6 @@
 # Lint and fix your DAGs
 
-Dagwick is a linter for Airflow DAGs. The same 21 checks run in two places:
+Dagwick is a linter for Airflow DAGs. The same 22 checks run in two places:
 
 - **On your DAG files**, with the `dagwick` command: on your machine, in
   pre-commit and in CI, before a DAG is merged.

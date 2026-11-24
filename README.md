@@ -40,7 +40,7 @@ off, change their weights or move the grade thresholds in `airflow.cfg`
 
 ## What you get
 
-- **A score and a grade for every DAG.** 21 checks in 7 categories:
+- **A score and a grade for every DAG.** 22 checks in 7 categories:
   reliability, observability, ownership, scheduling, structure, performance
   and security. Each check that doesn't pass tells you how to fix it. See
   [what it checks](https://github.com/dagwick/dagwick/blob/main/docs/checks.md).
