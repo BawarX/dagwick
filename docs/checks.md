@@ -12,6 +12,7 @@ not apply to a DAG is left out of the score.
 | Reliability | Tasks have a time limit (`execution_timeout`) | 10 | no |
 | Reliability | Someone hears about late runs (a deadline alert on DAGs whose runs usually take an hour or more, or whose `dagrun_timeout` is over two hours; run times need run history) | 5 | yes, see below |
 | Reliability | Runs have a time limit (`dagrun_timeout`) | 8 | no |
+| Reliability | Fixed `start_date` (not `datetime.now()`, `pendulum.today()`, `days_ago()` and the like, on the DAG, a task, in `default_args` or through a variable; read from the DAG file) | 10 | yes |
 | Observability | Someone hears about failures (`on_failure_callback`) | 15 | yes, see below |
 | Observability | Retries are visible (`on_retry_callback`) | 3 | yes |
 | Ownership | Has a real owner (not the default `airflow`) | 8 | no |
@@ -62,7 +63,8 @@ or set the same values as environment variables:
 - **Check ids** are listed by `GET /dagwick/api/checks`, which also shows each
   check's current `weight`, its `default_weight` and whether it is `enabled`.
   The ids of the built-in checks are `retries`, `execution_timeout`,
-  `dagrun_timeout`, `failure_alerts`, `retry_alerts`, `owner`, `docs`, `tags`,
+  `dagrun_timeout`, `dynamic_start_date`, `failure_alerts`, `retry_alerts`,
+  `owner`, `docs`, `tags`,
   `schedule`, `catchup`, `auto_pause`, `max_active_runs`, `decomposition`,
   `isolated_tasks`, `naming`, `file_name`, `current_imports`, `parse_time`,
   `parse_time_variables`, `sensor_slots`, `hardcoded_secrets`,
@@ -532,6 +534,29 @@ BashOperator(task_id="load_day", ..., depends_on_past=True)  # only where needed
 **How to fix.** Set depends_on_past only on the tasks that need it, not in default_args. With catchup=True, also set max_active_runs=1, so a failure holds up one run, not all.
 
 **When it's fine to acknowledge.** Every run must build on the one before (for example each run applies changes to the previous day's table), failures are alerted, and someone fixes the failed run before later runs may go on.
+
+### dynamic_start_date
+
+**Fixed start_date** · reliability · 10 points · can be acknowledged
+
+**Why it matters.** A start_date built from the current time, such as datetime.now(), pendulum.today() or days_ago(1), is a new value every time Airflow parses the file, every few minutes. Runs are scheduled from that date, so a run may never become due, or runs appear and disappear, and in Airflow 3 each new value makes a new DAG version. The serialized DAG only keeps the timestamp, so Dagwick reads the DAG file.
+
+Bad:
+
+```python
+START = datetime.now() - timedelta(days=1)  # a new value on every parse
+DAG("daily_sales", schedule="@daily", start_date=START)
+```
+
+Good:
+
+```python
+DAG(..., start_date=pendulum.datetime(2026, 1, 1, tz="UTC"))
+```
+
+**How to fix.** Use a fixed date, for example pendulum.datetime(2026, 1, 1, tz="UTC"). With catchup=False, a date in the past doesn't start a backfill.
+
+**When it's fine to acknowledge.** Rarely: for example a DAG that only runs when triggered (schedule=None), so start_date doesn't decide when it runs. Even then, removing the start_date is better.
 
 ### execution_timeout
 

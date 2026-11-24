@@ -61,6 +61,16 @@ def test_docs_reference_has_a_section_per_builtin_check():
     assert headings == {s.id for s in builtin_checks()}
 
 
+def test_docs_state_how_many_checks_there_are():
+    # Two pull requests that each add a check both turn "20" into "21", and git merges
+    # that without a conflict. This makes the second one update the count.
+    count, categories = len(builtin_checks()), len(Category)
+    readme = (DOCS.parent.parent / "README.md").read_text(encoding="utf-8")
+    linting = (DOCS.parent / "linting.md").read_text(encoding="utf-8")
+    assert f"{count} checks in {categories} categories" in readme
+    assert f"The same {count} checks run" in linting
+
+
 def test_replace_reference_keeps_the_rest_of_the_document():
     doc = f"intro\n{REFERENCE_START}\nold\n{REFERENCE_END}\noutro\n"
     expected = f"intro\n{REFERENCE_START}\n\nnew\n\n{REFERENCE_END}\noutro\n"

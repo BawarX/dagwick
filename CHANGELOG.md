@@ -39,6 +39,17 @@ All notable changes to this project are documented here. The format follows
   - `dagwick check` marks fixable problems with `[dagwick fix]`.
 - **`dagwick-fix` pre-commit hook.** It applies the safe fixes to changed DAG
   files; pre-commit then stops the commit so you can review them.
+- New check, **Fixed start_date** (`dynamic_start_date`, #108): fails when a
+  `start_date` reads the clock (`datetime.now()`, `pendulum.today()`,
+  `timezone.utcnow()`, a `days_ago()` helper, ...), so it moves forward every
+  time the file is parsed: runs may never become due, and in Airflow 3 each new
+  value makes a new DAG version. The serialized DAG only keeps the timestamp,
+  so the check reads the DAG file: `start_date` on the DAG, `@dag`, a task or
+  in `default_args` (inline, through a variable, `dict()`, `{**base}`,
+  `default_args["start_date"] = ...`), directly or through variables, also
+  inside DAG factories. Code inside tasks runs when the task runs and is left
+  alone. Each finding names the line. Reliability, 10 points; it can be
+  acknowledged. Compared with Ruff's `AIR304` in `docs/linting.md`.
 - **Lint and fix your DAGs** (`docs/linting.md`, #113): install, check, fix,
   explain, acknowledging checks, exit codes, pre-commit, a GitHub Actions
   workflow, adopting Dagwick in an existing repository, and how it fits next
